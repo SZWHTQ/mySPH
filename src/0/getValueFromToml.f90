@@ -80,9 +80,10 @@ contains
         type(toml_table), allocatable :: sph_file
         type(toml_table), pointer :: subtable
         integer :: kpair
-        integer file_unit
-        integer temp
+        integer :: file_unit
+#ifdef _OPENMP
         character(len=512) :: buffer
+#endif
 
         open (newunit=file_unit, file=in_path//"/sph.toml", status='old')
         call toml_parse(sph_file, file_unit)

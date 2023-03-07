@@ -4,13 +4,13 @@ module corr_velo_m
     implicit none
 
 contains
-    subroutine aver_velo(ntotal, v, mass, rho, pair, neighborNum, w, aver_v)
+    subroutine aver_velo(ntotal, v, mass, rho, neighborNum, neighborList, w, aver_v)
         integer, intent(in) :: ntotal
         real(8), intent(in) :: v(:, :)
         real(8), intent(in) :: mass(:)
         real(8), intent(in) :: rho(:)
-        integer, intent(in) :: pair(:, :)
         integer, intent(in) :: neighborNum(:)
+        integer, intent(in) :: neighborList(:, :)
         real(8), intent(in) :: w(:, :)
         real(8), intent(inout) :: aver_v(:, :)
         real(8) :: epsilon
@@ -28,7 +28,7 @@ contains
 
         do i = 1, ntotal
             do k = 1, neighborNum(i)
-                j = pair(i, k)
+                j = neighborList(i, k)
                 
                 dv = v(:, i) - v(:, j)
                 aver_v(:, i) = aver_v(:, i) &

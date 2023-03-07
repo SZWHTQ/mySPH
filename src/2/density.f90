@@ -1,20 +1,20 @@
 module density_m
     use ctrl_dict, only: dim, norm_dens_w, DSPH_w
-    ! use initial_m, only: v, mass, rho, hsml, pair, w, dwdx
+    ! use initial_m, only: v, mass, rho, hsml, neighborList, w, dwdx
     use kernel_m,  only: kernel
 
     implicit none
 
 contains
     !!! Subroutine to calculate the density with SPH summation algorithm
-    subroutine sum_density(ntotal, mass, rho, hsml, pair, neighborNum, w)
+    subroutine sum_density(ntotal, mass, rho, hsml, neighborNum, neighborList, w)
         integer, intent(in)  :: ntotal
-        real(8), intent(in)  :: mass(:)     !! Mass of each particle
-        real(8), intent(in)  :: hsml(:)     !! Smoothing length of each particle
-        integer, intent(in)  :: pair(:,:)   !! Pair of particles
+        real(8), intent(in)  :: mass(:)        !! Mass of each particle
+        real(8), intent(in)  :: hsml(:)        !! Smoothing length of each particle
         integer, intent(in)  :: neighborNum(:) !! Number of neighbors of each particle
-        real(8), intent(in)  :: w(:, :)        !! Kernel value of each pair
-        real(8), intent(inout) :: rho(:)      !! Density of each particle
+        integer, intent(in)  :: neighborList(:,:)      !! Pair of particles
+        real(8), intent(in)  :: w(:, :)        !! Kernel value of each neighborList
+        real(8), intent(inout) :: rho(:)       !! Density of each particle
         real(8) :: self
         real(8) :: hv(dim)
         real(8), allocatable :: wi(:)  !! Integration of the kernel itself
@@ -40,7 +40,7 @@ contains
             !$OMP PARALLEL DO PRIVATE(i, j, k)
             do i = 1, ntotal
                 do k = 1, neighborNum(i)
-                    j = pair(i, k)
+                    j = neighborList(i, k)
                     wi(i) = wi(i) + mass(j)/rho(j) * w(i, k)
                 end do
             end do
@@ -59,7 +59,7 @@ contains
         !$OMP PARALLEL DO PRIVATE(i, j, k)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
-                j = pair(i, k)
+                j = neighborList(i, k)
                 rho(i) = rho(i) + mass(j) * w(i, k)
             end do
         end do
@@ -79,14 +79,14 @@ contains
     end subroutine sum_density
 
     !!! Subroutine to calculate the density with SPH continuity approach
-    subroutine con_density(ntotal, v, mass, pair, neighborNum, dwdx, drhodt)
+    subroutine con_density(ntotal, v, mass, neighborNum, neighborList, dwdx, drhodt)
         integer, intent(in)  :: ntotal
-        real(8), intent(in)  :: v(:, :)     !! Velocity of each particle
-        real(8), intent(in)  :: mass(:)     !! Mass of each particle
-        integer, intent(in)  :: pair(:,:)   !! Pair of particles
+        real(8), intent(in)  :: v(:, :)        !! Velocity of each particle
+        real(8), intent(in)  :: mass(:)        !! Mass of each particle
         integer, intent(in)  :: neighborNum(:) !! Number of neighbors of each particle
-        real(8), intent(in)  :: dwdx(:, :, :)  !! Derivative of kernel value of each pair
-        real(8), intent(inout) :: drhodt(:)   !! Density change rate of each particle
+        integer, intent(in)  :: neighborList(:,:)      !! Pair of particles
+        real(8), intent(in)  :: dwdx(:, :, :)  !! Derivative of kernel value of each neighborList
+        real(8), intent(inout) :: drhodt(:)    !! Density change rate of each particle
 
         integer i, j, k
 
@@ -96,7 +96,7 @@ contains
 
         do i = 1, ntotal
             do k = 1, neighborNum(i)
-                j = pair(i, k)
+                j = neighborList(i, k)
                 drhodt(i) = drhodt(i) &
                     + mass(j)         &
                     * sum((v(:, i) - v(:, j)) * dwdx(:, i, k))
@@ -107,18 +107,18 @@ contains
     end subroutine con_density
 
     !!! PVRS Riemann Solver
-    subroutine con_density_riemann(ntotal, x, v, mass, rho, p, c, pair, neighborNum, dwdx, drhodt)
+    subroutine con_density_riemann(ntotal, x, v, mass, rho, p, c, neighborNum, neighborList, dwdx, drhodt)
         integer, intent(in)  :: ntotal
-        real(8), intent(in)  :: x(:, :)     !! Position of each particle
-        real(8), intent(in)  :: v(:, :)     !! Velocity of each particle
-        real(8), intent(in)  :: mass(:)     !! Mass of each particle
-        real(8), intent(in)  :: rho(:)      !! Density of each particle
-        real(8), intent(in)  :: p(:)        !! Pressure of each particle
-        real(8), intent(in)  :: c(:)        !! Sound speed of each particle
-        integer, intent(in)  :: pair(:,:)   !! Pair of particles
+        real(8), intent(in)  :: x(:, :)        !! Position of each particle
+        real(8), intent(in)  :: v(:, :)        !! Velocity of each particle
+        real(8), intent(in)  :: mass(:)        !! Mass of each particle
+        real(8), intent(in)  :: rho(:)         !! Density of each particle
+        real(8), intent(in)  :: p(:)           !! Pressure of each particle
+        real(8), intent(in)  :: c(:)           !! Sound speed of each particle
         integer, intent(in)  :: neighborNum(:) !! Number of neighbors of each particle
-        real(8), intent(in)  :: dwdx(:, :, :)  !! Derivative of kernel value of each pair
-        real(8), intent(inout) :: drhodt(:)   !! Density change rate of each particle
+        integer, intent(in)  :: neighborList(:,:)      !! Pair of particles
+        real(8), intent(in)  :: dwdx(:, :, :)  !! Derivative of kernel value of each neighborList
+        real(8), intent(inout) :: drhodt(:)    !! Density change rate of each particle
         real(8) :: Z_l, Z_r, v_l, v_r
         real(8) :: v_ij
         real(8) :: v_star(dim), e_ij(dim)
@@ -132,7 +132,7 @@ contains
 
         do i = 1, ntotal
             do k = 1, neighborNum(i)
-                j = pair(i, k)
+                j = neighborList(i, k)
 
                 Z_l = rho(i) * c(i)
                 Z_r = rho(j) * c(j)
@@ -153,14 +153,14 @@ contains
 
     end subroutine con_density_riemann
 
-    subroutine sum_density_dsph(ntotal, mass, rho, hsml, pair, neighborNum, w)
+    subroutine sum_density_dsph(ntotal, mass, rho, hsml, neighborNum, neighborList, w)
         integer, intent(in)  :: ntotal
-        real(8), intent(in)  :: mass(:)     !! Mass of each particle
-        real(8), intent(in)  :: hsml(:)     !! Smoothing length of each particle
-        integer, intent(in)  :: pair(:,:)   !! Pair of particles
+        real(8), intent(in)  :: mass(:)        !! Mass of each particle
+        real(8), intent(in)  :: hsml(:)        !! Smoothing length of each particle
         integer, intent(in)  :: neighborNum(:) !! Number of neighbors of each particle
-        real(8), intent(in)  :: w(:, :)        !! Kernel value of each pair
-        real(8), intent(inout) :: rho(:)      !! Density of each particle
+        integer, intent(in)  :: neighborList(:,:)      !! Pair of particles
+        real(8), intent(in)  :: w(:, :)        !! Kernel value of each neighborList
+        real(8), intent(inout) :: rho(:)       !! Density of each particle
         real(8) :: self
         real(8) :: hv(dim)
         real(8) :: rho_max, rho_min, criteria, ratio
@@ -190,7 +190,7 @@ contains
 
         do i = 1, ntotal
             do k = 1, neighborNum(i)
-                j = pair(i, k)
+                j = neighborList(i, k)
                 wi(i) = wi(i) + mass(j)/rho(j) * w(i, k)
                 if ( abs((rho(j)-rho(i))/(rho_max-rho_min)) >= criteria &
                .and. abs((rho(j)-rho(i))/(rho_max-rho_min)) >= ratio ) then
@@ -211,7 +211,7 @@ contains
 
         do i = 1, ntotal
             do k = 1, neighborNum(i)
-                j = pair(i, k)
+                j = neighborList(i, k)
                 s = dc_point(i)
                 rho(i) = rho(i) + mass(j)*w(i, k)
                 if ( j >= s ) then

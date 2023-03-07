@@ -7,7 +7,8 @@ module in_force_m
     implicit none
 
 contains
-    subroutine in_force(ntotal, itype, x, v, mass, rho, p, e, c, pair, neighborNum, dwdx, dvdt, tdsdt, dedt)
+    subroutine in_force(ntotal, itype, x, v, mass, rho, p, e, c, &
+                        neighborNum, neighborList, dwdx, dvdt, tdsdt, dedt)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         use visc_m
         use eos_m
@@ -22,15 +23,14 @@ contains
         real(8), intent(inout) :: p(:)
         real(8), intent(in)  :: e(:)
         real(8), intent(inout) :: c(:)
-        integer, intent(in)  :: pair(:, :)
         integer, intent(in)  :: neighborNum(:)
+        integer, intent(in)  :: neighborList(:, :)
         real(8), intent(in)  :: dwdx(:, :, :)
         real(8), intent(inout) :: dvdt(:, :), tdsdt(:), dedt(:)
         real(8), allocatable :: edot(:, :, :)
         real(8) :: dv(dim)
-        real(8) :: Z_l, Z_r, v_l, v_r, v_ij, v_star(dim), e_ij(dim)
         real(8) :: rhoij, aux
-        real(8) :: p_star
+        real(8) :: Z_l, Z_r, v_l, v_r, v_ij, e_ij(dim), v_star(dim), p_star
 
         integer i, j, k, d, dd, ddd
 
@@ -49,7 +49,7 @@ contains
                 do i = 1, ntotal !! All particles
                     if ( abs(itype(i)) < 8 ) then !! Fluid
                     do k = 1, neighborNum(i) !! All neighbors of each particle
-                        j = pair(i, k)
+                        j = neighborList(i, k)
                         dv = v(:, j) - v(:, i)
                         do d = 1, dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
                             do dd = 1, dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
@@ -78,7 +78,7 @@ contains
             end do !! i
             !$OMP END PARALLEL DO
         end if !! Viscoisty
-        
+
 
         !$OMP PARALLEL DO PRIVATE(i)
         do i = 1, ntotal !! All particles
@@ -117,16 +117,16 @@ contains
         !!! Calculate SPH sum for pressure force -p_a/rho
         !!! and viscous force eta_b/rho
         !!! and the internal energy change de/dt due to -p/rho*div_v
-        !$OMP PARALLEL DO PRIVATE(i, j, k, d, rhoij, aux, Z_l, Z_r, e_ij, v_l, v_r, v_ij, p_star, v_star)
-        do i = 1, ntotal  !! All particles
-            if ( abs(itype(i)) < 8 ) then !! Fluid
-                do k = 1, neighborNum(i) !! All neighbors of each particle
-                    j = pair(i, k)
+        select case (pa_sph)
 
-                    select case (pa_sph)
+        !!! For SPH algorithm 1
+        case (1)
+            !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux)
+            do i = 1, ntotal  !! All particles
+                if ( abs(itype(i)) < 8 ) then !! Fluid
+                    do k = 1, neighborNum(i) !! All neighbors of each particle
+                        j = neighborList(i, k)
 
-                    !!! For SPH algorithm 1
-                    case (1)
                         !!! Auxiliary variables
                         rhoij = 1._8 / (rho(i)*rho(j))
                         aux = (p(i) + p(j)) * rhoij
@@ -140,12 +140,24 @@ contains
                                          dwdx(:, i, k)) * rhoij )
 
                         !!! Conservation of Energy
-                        dedt(i) = dedt(i) &
-                            + mass(j)     &
-                            * aux         &
+                        dedt(i) = dedt(i)   &
+                            + mass(j) * aux &
                             * dot_product(v(:, i)-v(:, j), dwdx(:, i, k))
 
-                    case (2)
+                    end do !! k
+                else !! Solid
+                end if !! Fluid of Solid
+            end do !! i
+            !$OMP END PARALLEL DO
+
+        !!! For SPH algorithm 2
+        case (2)
+            !$OMP PARALLEL DO PRIVATE(i, j, k, aux)
+            do i = 1, ntotal  !! All particles
+                if ( abs(itype(i)) < 8 ) then !! Fluid
+                    do k = 1, neighborNum(i) !! All neighbors of each particle
+                        j = neighborList(i, k)
+
                         !!! Auxiliary variables
                         aux = (p(i)/rho(i)**2 + p(j)/rho(j)**2)
 
@@ -158,18 +170,70 @@ contains
                                          dwdx(:, i, k)) )
 
                         !!! Conservation of Energy
-                        dedt(i) = dedt(i) &
-                            + mass(j)     &
-                            * aux         &
+                        dedt(i) = dedt(i)   &
+                            + mass(j) * aux &
                             * dot_product(v(:, i)-v(:, j), dwdx(:, i, k))
-                    case default
-                        write(err, "(1X, A, I0)") "Error SPH scheme ", pa_sph
-                        error stop
-                    end select !! pa_sph
-                end do !! k
-            end if
-        end do !! i
-        !$OMP END PARALLEL DO
+
+                    end do !! k
+                else !! Solid
+                end if !! Fluid of Solid
+            end do !! i
+            !$OMP END PARALLEL DO
+
+        !!! Riemann Solver
+        case (3)
+            !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux) &
+            !$OMP PRIVATE(Z_l, Z_r, v_l, v_r, v_ij, v_star, p_star, e_ij)
+            do i = 1, ntotal
+                if ( abs(itype(i)) < 8 ) then
+                    do k = 1, neighborNum(i)
+                        j = neighborList(i, k)
+
+                        !!! Auxiliary variables
+                        rhoij = 1._8 / (rho(i)*rho(j))
+
+                        Z_l = rho(i) * c(i)
+                        Z_r = rho(j) * c(j)
+
+                        e_ij = (x(:, j) - x(:, i)) / norm2(x(:, j) - x(:, i))
+                        v_l = dot_product(v(:, i), e_ij)
+                        v_r = dot_product(v(:, j), e_ij)
+
+                        v_ij = ( Z_l*v_l + Z_r*v_r + (p(i)-p(j)) ) &
+                             / ( Z_l + Z_r )
+
+                        !!! Riemann Solution
+                        p_star = ( Z_l*p(j) + Z_r*p(i) &
+                            +   Z_l*Z_r*(v_l - v_r) )  &
+                            / ( Z_l + Z_r )
+                        v_star = v_ij * e_ij        &
+                            + ( (v(:, i)+v(:, j))/2 &
+                                - ((v_l+v_r)/2)*e_ij )
+
+                        aux = 2 * p_star * rhoij
+
+                        !!! Conservation of Momentum
+                        dvdt(:, i) = dvdt(: ,i)                  &
+                            + mass(j)                            &
+                            * ( - aux * dwdx(:, i, k)            &
+                                + matmul(  eta(i)*edot(:, :, i)  &
+                                         + eta(j)*edot(:, :, j), &
+                                         dwdx(:, i, k)) * rhoij )
+
+                        !!! Conservation of Energy
+                        dedt(i) = dedt(i)   &
+                            + mass(j) * aux &
+                            * dot_product(2 * (v(:, i)-v_star), dwdx(:, i, k))
+
+                    end do
+                else
+                end if
+            end do
+            !$OMP END PARALLEL DO
+        case default
+            write(err, "(1X, A, I0)") "Error SPH Scheme ", pa_sph
+            error stop
+        end select
 
         !!! Change of specific internal energy de/dt = Tds/dt - p/rho*div_v ?
         do i = 1, ntotal

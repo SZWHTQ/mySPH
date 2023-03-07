@@ -57,11 +57,11 @@ do
         r = sqrt(dr)
         if (r < hsml(i) * scale_k) then
             if (niac < max_interaction) then
-                !!! Neighboring pair list, and total interaction number
+                !!! Neighboring neighborList list, and total interaction number
                 !!! and the interaction number for each particle
                 niac = niac + 1
-                pair(niac, 1) = i
-                pair(niac, 2) = j
+                neighborList(niac, 1) = i
+                neighborList(niac, 2) = j
                 neighborNum(i) = neighborNum(i) + 1
                 neighborNum(j) = neighborNum(j) + 1
                 !!! Kernel and derivations of kernel

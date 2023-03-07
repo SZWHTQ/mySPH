@@ -70,10 +70,10 @@ program main
     w    = 0
     dwdx = 0
     call search_particles(nnps, ntotal+ndummy, x, hsml, max_interaction, &
-    niac, pair, w, dwdx, neighborNum)
+    niac, neighborList, w, dwdx, neighborNum)
 
     ! do i = 1, max_interaction
-    !     write(*, "(2(I0, 2X), 2(G0, 2X))") pair(i,:), w(i), dwdx(:, i)
+    !     write(*, "(2(I0, 2X), 2(G0, 2X))") neighborList(i,:), w(i), dwdx(:, i)
     ! end do
 
     criteria = 0.19
@@ -82,8 +82,8 @@ program main
     dsph%d = ntotal + 1
     s = 0
     do k = 1, niac
-        i = pair(k, 1)
-        j = pair(k, 2)
+        i = neighborList(k, 1)
+        j = neighborList(k, 2)
         if ( abs((exact(0,j) - exact(0,i))/(f_max-f_min)) >= criteria &
        .and. abs((exact(0,j) - exact(0,i))/(f_max-f_min)) >= ratio ) then
             ratio     = abs((exact(0,j) - exact(0,i))/(f_max-f_min))
@@ -112,8 +112,8 @@ program main
     end do
 
     do k = 1, niac
-        i = pair(k, 1)
-        j = pair(k, 2)
+        i = neighborList(k, 1)
+        j = neighborList(k, 2)
         sph(i)%y(0) = sph(i)%y(0) + exact(0,j) * w(k) * delta
         sph(j)%y(0) = sph(j)%y(0) + exact(0,i) * w(k) * delta
         sph(i)%y(1) = sph(i)%y(1) + (exact(0,j)-exact(0,i)) * dwdx(1, k) * delta
@@ -178,8 +178,8 @@ program main
             dsph(i)%sum(1) = 0
         end do
         do k = 1, niac
-            i = pair(k, 1)
-            j = pair(k, 2)
+            i = neighborList(k, 1)
+            j = neighborList(k, 2)
             sph(i)%y(0) = sph(i)%y(0) + sph(j)%y(0) * w(k) * delta
             sph(j)%y(0) = sph(j)%y(0) + sph(i)%y(0) * w(k) * delta
             sph(i)%y(1) = sph(i)%y(1) + (sph(j)%y(0)-sph(i)%y(0)) * dwdx(1, k) * delta

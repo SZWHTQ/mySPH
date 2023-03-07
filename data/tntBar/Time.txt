@@ -1,0 +1,14 @@
+Scheme 1:
+Serial: 44.502s
+
+Serial: 55.246s
+OpenMP  1 Thread : 57.029s
+OpenMP  2 Threads: 39.559s
+OpenMP  3 Threads: 34.294s
+OpenMP  4 Threads: 30.356s
+OpenMP  5 Threads: 29.241s
+OpenMP  6 Threads: 28.913s
+OpenMP  7 Threads: 28.203s
+OpenMP  8 Threads: 28.174s
+OpenMP  9 Threads: 29.436s
+OpenMP 10 Threads: 29.990s

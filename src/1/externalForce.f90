@@ -4,16 +4,15 @@ module ex_force_m
     implicit none
 
 contains
-    subroutine ex_force(ntotal, itype, x, hsml, pair, neighborNum, dvdt)
+    subroutine ex_force(ntotal, itype, x, hsml, neighborNum, neighborList, dvdt)
         integer, intent(in)  :: ntotal
         integer, intent(in) :: itype(:)
         real(8), intent(in) :: x(:, :)
         real(8), intent(in) :: hsml(:)
-        integer, intent(in) :: pair(:, :)
         integer, intent(in) :: neighborNum(:)
+        integer, intent(in) :: neighborList(:, :)
         real(8), intent(inout) :: dvdt(:, :)
         real(8) :: dx(dim), dr, r
-        real(8) :: f(dim)
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
         logical, save :: first_entry = .true.
@@ -59,10 +58,10 @@ contains
             first_entry = .false.
         end if
 
-        !$OMP PARALLEL DO PRIVATE(i, j, k, d, dx, dr, r, f, pe)
+        !$OMP PARALLEL DO PRIVATE(i, j, k, d, dx, dr, r, pe)
         do i = 1, ntotal !! All particles
             do k = 1, neighborNum(i) !! All neighbors
-                j = pair(i, k)
+                j = neighborList(i, k)
 
                 !!! Interaction between real particle and dummy particle
                 if ( itype(i) > 0 .and. itype(j) < 0 ) then

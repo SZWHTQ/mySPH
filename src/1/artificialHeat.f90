@@ -2,7 +2,7 @@ module arti_heat_m
     implicit none
 
 contains
-    subroutine arti_heat(ntotal, x, mass, rho, e, c, hsml, pair, neighborNum, dwdx, div_v, dedt)
+    subroutine arti_heat(ntotal, x, mass, rho, e, c, hsml, neighborNum, neighborList, dwdx, div_v, dedt)
         integer, intent(in) :: ntotal
         real(8), intent(in) :: x(:, :)
         real(8), intent(in) :: mass(:)
@@ -10,8 +10,8 @@ contains
         real(8), intent(in) :: e(:)
         real(8), intent(in) :: c(:)
         real(8), intent(in) :: hsml(:)
-        integer, intent(in) :: pair(:, :)
         integer, intent(in) :: neighborNum(:)
+        integer, intent(in) :: neighborList(:, :)
         real(8), intent(in) :: dwdx(:, :, :)
         real(8), intent(in)  :: div_v(:)
         real(8), intent(inout) :: dedt(:)
@@ -31,7 +31,7 @@ contains
         !$OMP PARALLEL DO PRIVATE(i, j, k, q_i, q_j, q_ij, hsml_ij, rho_ij, aux)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
-                j = pair(i, k)
+                j = neighborList(i, k)
 
                 q_i = alpha*hsml(i)*c(i) + beta*(hsml(i)**2)*(abs(div_v(i))-div_v(i))
                 q_j = alpha*hsml(j)*c(j) + beta*(hsml(j)**2)*(abs(div_v(j))-div_v(j))  !! @todo: P375 ?

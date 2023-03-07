@@ -11,33 +11,33 @@ module nnps_m
     public :: search_particles, print_statistics
 
 contains
-    subroutine search_particles(nnps, x, hsml, pair, neighborNum, w, dwdx)
+    subroutine search_particles(nnps, x, hsml, neighborNum, neighborList, w, dwdx)
         integer, intent(in)  :: nnps
         real(8), intent(in)  :: x(:, :)
         real(8), intent(in)  :: hsml(:)
-        integer, intent(inout) :: pair(:, :)
         integer, intent(inout) :: neighborNum(:)  !! The Number of Nearest Neighbors of the Particle Being Counted
+        integer, intent(inout) :: neighborList(:, :)
         real(8), intent(inout) :: w(:, :)
         real(8), intent(inout) :: dwdx(:, :, :)
 
         select case (nnps)
         case (1)
-            call direct_search(x, hsml, pair, neighborNum, w, dwdx)
+            call direct_search(x, hsml, neighborNum, neighborList, w, dwdx)
         case (2)
-            call link_list_search(x, hsml, pair, neighborNum, w, dwdx)
+            call link_list_search(x, hsml, neighborNum, neighborList, w, dwdx)
         case (3)
-            call tree_search(x, hsml, pair, neighborNum, w, dwdx)
+            call tree_search(x, hsml, neighborNum, neighborList, w, dwdx)
         end select
 
     end subroutine search_particles
 
-    subroutine direct_search(x, hsml, pair, neighborNum, w, dwdx)
+    subroutine direct_search(x, hsml, neighborNum, neighborList, w, dwdx)
         !$ use omp_lib
         ! include "mpif.h"
         real(8), intent(in)    :: x(:, :)
         real(8), intent(in)    :: hsml(:)
-        integer, intent(inout) :: pair(:, :)
         integer, intent(inout) :: neighborNum(:)
+        integer, intent(inout) :: neighborList(:, :)
         real(8), intent(inout) :: w(:, :)
         real(8), intent(inout) :: dwdx(:, :, :)
         integer :: ntotal, kpair
@@ -60,7 +60,7 @@ contains
         end select
 
         ntotal = size(x, 2)
-        kpair = size(pair, 2)
+        kpair = size(neighborList, 2)
 
         do i = 1, ntotal - 1
             do j = i + 1, ntotal
@@ -83,8 +83,8 @@ contains
                         error stop "Too many neighbors"
                     end if
 #endif
-                    pair(i, neighborNum(i)) = j
-                    pair(j, neighborNum(j)) = i
+                    neighborList(i, neighborNum(i)) = j
+                    neighborList(j, neighborNum(j)) = i
                     !!! Kernel and derivations of kernel
                     call kernel(r, dx, mhsml, this_w, this_dwdx)
                     w(i, neighborNum(i)) = this_w
@@ -97,11 +97,11 @@ contains
 
     end subroutine direct_search
 
-    subroutine link_list_search(x, hsml, pair, neighborNum, w, dwdx)
+    subroutine link_list_search(x, hsml, neighborNum, neighborList, w, dwdx)
         real(8), intent(in)    :: x(:, :)
         real(8), intent(in)    :: hsml(:)
-        integer, intent(inout) :: pair(:, :)
         integer, intent(inout) :: neighborNum(:)
+        integer, intent(inout) :: neighborList(:, :)
         real(8), intent(inout) :: w(:, :)
         real(8), intent(inout) :: dwdx(:, :, :)
         integer :: ntotal, kpair
@@ -126,7 +126,7 @@ contains
         end select
 
         ntotal = size(x, 2)
-        kpair = size(pair, 2)
+        kpair = size(neighborList, 2)
 
         allocate(cell_index(3, ntotal), source=0)
         allocate(cell_data(ntotal), source=0)
@@ -157,7 +157,7 @@ contains
         end do
 
         !$OMP PARALLEL DO PRIVATE(i, j, d, cell, xcell, ycell, zcell, minxcell, maxxcell, dx, dr, r, mhsml, this_w, this_dwdx) &
-        !$OMP SHARED(grid, cell_index, cell_data, pair, neighborNum, w, dwdx, ghsmlx, cell_num) &
+        !$OMP SHARED(grid, cell_index, cell_data, neighborNum, neighborList, w, dwdx, ghsmlx, cell_num) &
         !$OMP SCHEDULE(dynamic, chunkSize)
         !!! determine interaction parameters:
         do i = 1, ntotal - 1
@@ -194,8 +194,8 @@ contains
                                         ! write(*,*) "Too many neighbors"
                                     end if
 #endif
-                                    pair(i, neighborNum(i)) = j
-                                    pair(j, neighborNum(j)) = i
+                                    neighborList(i, neighborNum(i)) = j
+                                    neighborList(j, neighborNum(j)) = i
                                     !!! Kernel and derivations of kernel
                                     call kernel(r, dx, mhsml, this_w, this_dwdx)
                                     w(i, neighborNum(i)) = this_w
@@ -292,14 +292,14 @@ contains
 
     end subroutine grid_geometry
 
-    subroutine tree_search(x, hsml, pair, neighborNum, w, dwdx)
+    subroutine tree_search(x, hsml, neighborNum, neighborList, w, dwdx)
         use tree_m
         use link_list_m
         use geometry_m
         real(8), intent(in)    :: x(:, :)
         real(8), intent(in)    :: hsml(:)
-        integer, intent(inout) :: pair(:, :)
         integer, intent(inout) :: neighborNum(:)
+        integer, intent(inout) :: neighborList(:, :)
         real(8), intent(inout) :: w(:, :)
         real(8), intent(inout) :: dwdx(:, :, :)
         integer :: ntotal, kpair
@@ -327,7 +327,7 @@ contains
         end select
 
         ntotal = size(x, 2)
-        kpair = size(pair, 2)
+        kpair = size(neighborList, 2)
 
         scale = 1.2
         min = minval(x(:, 1:ntotal), 2)
@@ -356,7 +356,7 @@ contains
         deallocate(domain)
 
         ! !$OMP PARALLEL DO PRIVATE(i, j, k, d, range, found, mhsml, dx, dr, r, this_w, this_dwdx) &
-        ! !$OMP SHARED(pair, neighborNum, w, dwdx) &
+        ! !$OMP SHARED(neighborNum, neighborList, w, dwdx) &
         ! !$OMP SCHEDULE(dynamic, chunkSize)
         do i = 1, ntotal - 1
             select case (dim)
@@ -390,8 +390,8 @@ contains
                             error stop "Too many neighbors"
                         end if
 #endif
-                        pair(i, neighborNum(i)) = j
-                        pair(j, neighborNum(j)) = i
+                        neighborList(i, neighborNum(i)) = j
+                        neighborList(j, neighborNum(j)) = i
                         !!! Kernel and derivations of kernel
                         call kernel(r, dx, mhsml, this_w, this_dwdx)
                         w(i, neighborNum(i)) = this_w
@@ -444,7 +444,7 @@ contains
                    " has maximal interactions: "//to_string(maxiac)
         write(*,*) "   Particle "//to_string(minp(1))// &
                    " has minimal interactions: "//to_string(miniac)
-        write(*, "(A,G0)") "    Average pair per particle: ", &
+        write(*, "(A,G0)") "    Average neighborList per particle: ", &
                            real(sumiac)/(ntotal)
         write(*,*) "   Particle with no interacitons: "//to_string(noiac)
 

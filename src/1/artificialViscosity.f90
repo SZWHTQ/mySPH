@@ -4,7 +4,7 @@ module arti_visc_m
     implicit none
 
 contains
-    subroutine arti_visc(ntotal, x, v, mass, rho, c, hsml, pair, dwdx, neighborNum, dvdt, dedt)
+    subroutine arti_visc(ntotal, x, v, mass, rho, c, hsml, neighborNum, neighborList, dwdx, dvdt, dedt)
         integer, intent(in)  :: ntotal
         real(8), intent(in) :: x(:, :)
         real(8), intent(in) :: v(:, :)
@@ -12,9 +12,9 @@ contains
         real(8), intent(in) :: rho(:)
         real(8), intent(in) :: c(:)
         real(8), intent(in) :: hsml(:)
-        integer, intent(in) :: pair(:, :)
-        real(8), intent(in) :: dwdx(:, :, :)
         integer, intent(in) :: neighborNum(:)
+        integer, intent(in) :: neighborList(:, :)
+        real(8), intent(in) :: dwdx(:, :, :)
         real(8), intent(inout) :: dvdt(:,:)
         real(8), intent(inout) :: dedt(:)
         real(8) :: alpha !! Bulk viscosity
@@ -56,7 +56,7 @@ contains
         !$OMP PARALLEL DO PRIVATE(i, j, k, dx, dv, xv, hsml_ij, rho_ij, c_ij, phi_ij, PI_ij)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
-                j = pair(i, k)
+                j = neighborList(i, k)
                 
                 dx = x(:, i) - x(:, j)
                 dv = v(:, i) - v(:, j)

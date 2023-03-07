@@ -11,7 +11,7 @@ module initial_m
     real(8), allocatable, public :: c(:)      !! Speed of sound
     real(8), allocatable, public :: hsml(:)   !! Particle smooth length
     real(8), allocatable, public :: eta(:)    !! Shear viscosity coefficient
-    integer, allocatable, public :: pair(:, :)   !! List of the Part of Interaction Pair
+    integer, allocatable, public :: neighborList(:, :)   !! List of the Part of Interaction Pair
     real(8), allocatable, public :: w(:, :)         !! Smooth Kernel Function for a Given Interaction Pair
     real(8), allocatable, public :: dwdx(:, :, :)    !! The First Derivative of the Smooth Kernel Function for a Given Interaction Pair
     integer, allocatable, public :: neighborNum(:)
@@ -33,11 +33,11 @@ contains
         allocate(rho(maxn), p(maxn), e(maxn), c(maxn), source=0._8)
         allocate(hsml(maxn), eta(maxn), source=0._8)
 
-        ! allocate(pair(max_interaction, 2), source=0)
+        ! allocate(neighborList(max_interaction, 2), source=0)
         ! allocate(w(max_interaction), source=0._8)
         ! allocate(dwdx(dim, max_interaction), source=0._8)
 
-        allocate(pair(maxn, kpair), source=0)
+        allocate(neighborList(maxn, kpair), source=0)
         allocate(w(maxn, kpair), source=0._8)
         allocate(dwdx(dim, maxn, kpair), source=0._8)
         allocate(neighborNum(maxn), source=0)

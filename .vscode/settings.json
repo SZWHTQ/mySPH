@@ -1,0 +1,166 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "fortran.linter.includePaths": [
+        "~/Repository/include",
+        "${workspaceFolder}/module",
+        "${workspaceFolder}/build/**"
+    ],
+    "fortran.linter.modOutput": "${workspaceFolder}/module/",
+    "cmake.configureOnOpen": false,
+    "cmake.configureArgs": [
+        "-DOMP=on",
+        "-Wno-dev",
+        "-DCMAKE_Fortran_COMPILER=gfortran",
+    ],
+    "cmake.configureOnEdit": false,
+    "cmake.ctest.parallelJobs": 12,
+    "cmake.defaultVariants": {
+    
+        "buildType": {
+            "default": "debug",
+            "description": "The build type.",
+            "choices": {
+                "debug": {
+                    "short": "Debug",
+                    "long": "Disable optimizations - include debug information.",
+                    "buildType": "Debug"
+                },
+                "release": {
+                    "short": "Release",
+                    "long": "Optimize for speed - exclude debug information.",
+                    "buildType": "Release"
+                },
+                "minsize": {
+                    "short": "MinSizeRel",
+                    "long": "Optimize for smallest binary size - exclude debug information.",
+                    "buildType": "MinSizeRel"
+                },
+                "reldeb": {
+                    "short": "RelWithDebInfo",
+                    "long": "Optimize for speed - include debug information.",
+                    "buildType": "RelWithDebInfo"
+                }
+            }
+        }
+    },
+    "cmake.debugConfig": {
+        "args": ["../data/armcoIronCollide"],
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "latex-workshop.latex.autoBuild.run": "onSave",
+    "latex-workshop.showContextMenu": true,
+    "latex-workshop.intellisense.package.enabled": true,
+    "latex-workshop.message.error.show": false,
+    "latex-workshop.message.warning.show": false,
+    "latex-workshop.latex.tools": [
+        {
+            "name": "xelatex",
+            "command": "xelatex",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOCFILE%"
+            ]
+        },
+        {
+            "name": "pdflatex",
+            "command": "pdflatex",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOCFILE%"
+            ]
+        },
+        {
+            "name": "latexmk",
+            "command": "latexmk",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-pdf",
+                "-outdir=%OUTDIR%",
+                "%DOCFILE%"
+            ]
+        },
+        {
+            "name": "bibtex",
+            "command": "bibtex",
+            "args": [
+                "%DOCFILE%"
+            ]
+        }
+    ],
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "XeLaTeX",
+            "tools": [
+                "xelatex"
+            ]
+        },
+        {
+            "name": "PDFLaTeX",
+            "tools": [
+                "pdflatex"
+            ]
+        },
+        {
+            "name": "BibTeX",
+            "tools": [
+                "bibtex"
+            ]
+        },
+        {
+            "name": "LaTeXmk",
+            "tools": [
+                "latexmk"
+            ]
+        },
+        {
+            "name": "xelatex -> bibtex -> xelatex*2",
+            "tools": [
+                "xelatex",
+                "bibtex",
+                "xelatex",
+                "xelatex"
+            ]
+        },
+        {
+            "name": "pdflatex -> bibtex -> pdflatex*2",
+            "tools": [
+                "pdflatex",
+                "bibtex",
+                "pdflatex",
+                "pdflatex"
+            ]
+        },
+    ],
+    "latex-workshop.latex.clean.fileTypes": [
+        "*.aux",
+        "*.bbl",
+        "*.blg",
+        "*.idx",
+        "*.ind",
+        "*.lof",
+        "*.lot",
+        "*.out",
+        "*.toc",
+        "*.acn",
+        "*.acr",
+        "*.alg",
+        "*.glg",
+        "*.glo",
+        "*.gls",
+        "*.ist",
+        "*.fls",
+        "*.log",
+        "*.fdb_latexmk",
+        "*.synctex.gz"
+    ],
+    "latex-workshop.latex.autoClean.run": "onFailed",
+    "latex-workshop.latex.recipe.default": "lastUsed",
+    "latex-workshop.view.pdf.internal.synctex.keybinding": "double-click",
+    "C_Cpp.inlayHints.referenceOperator.enabled": true
+}

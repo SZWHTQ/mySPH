@@ -1,0 +1,22 @@
+## Project Name
+name = "Underwater explosion in free space"
+nick = "undex_cylinder"
+
+[Parameter]
+DIM = 2
+maxN   = 3000
+kPair  = 80
+NNPS   = 1
+SLE    = 2
+SKF    = 2
+deltaT = 1e-7
+printInterval = 100
+saveInterval  = 10
+maxTimeStep   = 1200
+artificialViscosity = true
+
+[Parallel]
+OMP_NUM_THREADS = 4
+
+[postProcess]
+writeDummyParticle  = false

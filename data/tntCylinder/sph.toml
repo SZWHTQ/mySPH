@@ -1,0 +1,22 @@
+## Project Name
+name = "Two-dimensional TNT Cylinder"
+nick = "tnt_cylinder"
+
+[Parameter]
+DIM = 2
+maxN   = 2000
+kPair  = 160
+NNPS   = 1
+SLE    = 2
+SKF    = 2
+deltaT = 1e-7
+printInterval = 100
+saveInterval  = 10
+maxTimeStep   = 1000
+artificialViscosity = true
+
+[Parallel]
+OMP_NUM_THREADS = 4
+
+[postProcess]
+writeDummyParticle  = false

@@ -1,0 +1,40 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Project",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/mySPH",
+            "args": ["./data/demo/shearCavity"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "CMake: build",
+        },
+        {
+            "name": "DSPH Test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/test/${fileBasenameNoExtension}.out",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build DSPH Test",
+        },
+        /*
+        {
+            "name": "LLDB Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/mySPH",
+            "args": ["./data/demo/shearCavity"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build",
+        }
+        */
+    ]
+}

@@ -1,0 +1,90 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{ctex}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{caption}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\renewcommand {\thetable} {6.\arabic{table}}
+
+\begin{document}
+\captionsetup{labelformat=default,labelsep=space}
+\begin{center}\Huge\bfseries
+    HE
+\end{center}
+\begin{enumerate}[label=(\arabic*)]
+    \item 质量方程（Rayleigh equation）
+    \begin{equation}
+        \label{eq6.1}
+        \tag{6.1}
+        D-U_0 = V_0 \sqrt{\frac{p-p_0}{V_0-V}}
+    \end{equation}
+    \item 动量方程
+    \begin{equation}
+        \label{eq6.2}
+        \tag{6.2}
+        U-U_0=(V_0-V)\sqrt{\frac{p-p_0}{V_0-V}}
+    \end{equation}
+    \item 能量方程（Rankine-Hugoniot equation）
+    \begin{equation}
+        \label{eq6.3}
+        \tag{6.3}
+        e-e_0 = \frac{1}{2} (p+p_0) (V_0-V)
+    \end{equation}
+    \item 用压力和比容表示的爆炸气体状态方程\par
+    \begin{center}
+        C-J假设（Chapman-Jouguet Hypothesis）
+    \end{center}
+    对于稳定传播的爆炸波，Rayleigh曲线必须与气态反应生成物的Hugoniot曲线相于C-J点。
+    (Mader, 1979; 1998) \par
+    对C-J点处的压力（C-J压力）而言，HE的初始压力$P_0$非常小，而且可以被忽略。
+    (Zhang, 1976; Mader, 1998)
+\end{enumerate}
+
+控制方程
+\begin{equation}
+    \label{eq6.4}
+    \tag{6.4}
+    \left\{
+    \begin{aligned}
+        \frac{\texttt{d} \rho}{\texttt{d} t} &= -\rho \bm{\nabla} \cdot \bm{v} \\
+        \frac{\texttt{d} \bm{v}}{\texttt{d} t} &= -\frac{1}{\rho} \bm{\nabla} \cdot p \\
+        \frac{\texttt{d} e}{\texttt{d} t} &= -\frac{p}{\rho} \bm{\nabla} \cdot \bm{v} \\
+        p &= p(\rho, e)
+    \end{aligned}
+    \right.
+\end{equation}
+
+状态方程（State equation）
+
+TNT爆轰速度为$6930m/s$
+对于爆炸气体，可使用标准的Jones-Wilkins-Lee状态方程（Dobratz, 1981）。
+爆炸气体的压力可由下式得出
+\begin{equation}
+    \label{eq6.5}
+    \tag{6.5}
+    p = A \left(1-\frac{\omega \eta}{R_1}\right) e^{-\frac{R_1}{\eta}}
+      + B \left(1-\frac{\omega \eta}{R_2}\right) e^{-\frac{R_2}{\eta}}
+      + \omega \eta \rho_0 e
+\end{equation}
+\begin{table}[htbp]
+    \centering
+    \caption{TNT材料参数和由实验所获得的状态方程中的相应系数}\label{tab:table1}
+    \begin{tabular}{P{2cm} P{5cm} P{5cm}}
+        \hline
+        符号 & 意义 & 值 \\ \hline
+        $\rho_0$ & 初始密度 & 1630$kg/m^3$ \\
+        D & 爆轰速度 & 6930$m/s$ \\
+        $P_{CJ}$ & C-J压力 & $2.1\times10^10Pa$ \\
+        A & 拟合系数 & $3.712\times10^11Pa$ \\
+        A & 拟合系数 & $3.712\times10^11Pa$ \\
+        $R_1$ & 拟合系数 & 4.15 \\
+        $R_2$ & 拟合系数 & 0.95 \\
+        $\omega$ & 拟合系数 & 0.30 \\
+        $E_0$ & 单位质量的爆轰能量 & $4.29\times10^6J/kg$ \\ \hline
+    \end{tabular}
+\end{table}
+\end{document}

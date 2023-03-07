@@ -1,0 +1,65 @@
+## Project Name
+name = "One-dimensional shock tube"
+nick = "shock_tube"
+
+[Parameter]
+
+## Dimension
+DIM = 1
+
+ntotal = 1600
+
+## Maximum Number of Particles
+maxN = 1700
+
+## Number of average particle interaction pairs: max_interaction = kpair*maxn
+kPair = 50
+
+## Indicator Variables for Particle Approximation
+#     1&2. Classic
+#     3. Riemann Solver(PVRS)
+#     4. Discontinued SPH
+SPH = 2
+
+## Indicator Variables for the Nearest Neighbor Particle Search (NNPS):
+#     1. Direct Search Method
+#     2. Background-Grid Link List Search Method
+#     3. Tree Search Method
+NNPS = 2
+
+## Indicator Variables for Smooth Length Estimation
+SLE = 0
+
+## Smooth Kernel Function :
+#     1. cubic spline kernel by w4 - spline (monaghan 1985)
+#     2. gauss kernel   (gingold and monaghan 1981)
+#     3. quintic kernel (morris 1997)
+SKF = 1
+
+## Serial Number of the Monitored Particle
+monitorParticle = 1
+
+printInterval = 250
+
+saveInterval = 50
+
+maxTimeStep = 5000
+
+## Time Step
+deltaT = 2e-4
+
+summationDensity    = false
+dummyParticle       = true
+artificialViscosity = false
+artificialHeat      = false
+averageVelocity     = false
+DSPH                = false
+
+
+[Parallel]
+OMP_NUM_THREADS = 1  # Overwrite the environment variable OMP_NUM_THREADS
+
+
+[postProcess]
+writeDummyParticle     = false
+writeDummyParticle2VTK = true

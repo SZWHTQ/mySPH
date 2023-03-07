@@ -1,0 +1,1 @@
+#define CHECK_NEIGHBOR_NUM 1

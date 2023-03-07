@@ -1,0 +1,25 @@
+## Project Name
+name = "Underwater Explosion in a Confined Chamber"
+nick = "undex_chamber"
+
+[Parameter]
+DIM = 2
+maxN   = 50000
+kPair  = 100
+NNPS   = 3
+SKF    = 1
+SLE    = 2
+deltaT = 5e-7
+printInterval = 100
+saveInterval  = 20
+maxTimeStep   = 5000
+monitorParticle = 1
+dummyParticle       = true
+artificialViscosity = true
+# gravity = true
+
+[Parallel]
+OMP_NUM_THREADS = 4
+
+[postProcess]
+writeDummyParticle2VTK = true

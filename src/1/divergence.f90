@@ -1,0 +1,29 @@
+module divergence_m
+    implicit none
+
+contains
+    subroutine divergence(ntotal, F, mass, rho, pair, neighborNum, dwdx, div_F)
+        integer, intent(in)  :: ntotal
+        real(8), intent(in)  :: F(:, :)
+        real(8), intent(in)  :: mass(:)
+        real(8), intent(in)  :: rho(:)
+        integer, intent(in)  :: pair(:, :)
+        integer, intent(in)  :: neighborNum(:)
+        real(8), intent(in)  :: dwdx(:, :, :)
+        real(8), intent(inout) :: div_F(:)
+
+        integer :: i, j, k
+
+        forall (i=1:ntotal) div_F(i) = 0
+
+        do i = 1, ntotal
+            do k = 1, neighborNum(i)
+                j = pair(i, k)
+                div_F(i) = div_F(i) &
+                    + mass(j)/rho(j) * sum((F(:, j)-F(:, i)) * dwdx(:, i, k))
+            end do
+        end do
+
+    end subroutine divergence
+
+end module divergence_m

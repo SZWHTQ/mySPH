@@ -1,0 +1,33 @@
+\documentclass{article}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{ctex}
+\usetikzlibrary{positioning, shapes.geometric}
+
+\begin{document}
+\begin{tikzpicture}[node distance=10pt]
+  \node[draw, rounded corners]                        (start)   {初始化};
+  \node[draw, below=of start]                         (step 1)  {产生边界虚粒子(src/1/dummyParticles.f90)};
+  \node[draw, below=of step 1]                        (step 2)  {NNPS(src/2/nnps.f90)};
+  \node[draw, below=of step 2]                        (step 3)  {计算光滑函数(src/2/nnps.f90)};
+  \node[draw, below=of step 3]                        (step 4)  {基于近似Riemann解计算密度变化(src/2/density.f90:100)};
+  \node[right=0pt of step 4]                          (form 1)  {$\frac{\mathrm{d} \rho_{i}}{\mathrm{d} t}=2 \rho_{i} \sum_{j}\left(\boldsymbol{u}_{i}-\boldsymbol{u}^{*}\right) \cdot \nabla_{i} W_{i j} \frac{m_j}{\rho_j}$};
+  \node[draw, below=25pt of step 4]                   (step 5)  {基于近似Riemann解计算内力(src/2/internalForce.f90:250)};
+  \node[below=of form 1]                              (form 2)  {$\frac{\mathrm{d} \boldsymbol{u}_{i}}{\mathrm{~d} t}=-2 \sum_{j} \frac{p^{*}}{\rho_{i}} \nabla_{i} W_{i j} \frac{m_j}{\rho_j}$};
+  \node[below=of form 2]                              (form 3)  {$\frac{\mathrm{d} e_{i}}{\mathrm{~d} t}=2 \sum_j \frac{p^{*}}{\rho_{i}}\left(\boldsymbol{u}_{i}-\boldsymbol{u}^{*}\right) \cdot \nabla_{i} W_{i j} \frac{m_j}{\rho_j}$};
+  \node[below=20pt of form 3]                              (form 4)  {$p^{*}=\frac{1}{Z_{l}+Z_{r}}\left[Z_{r} p_{l}+Z_{l} p_{r}+Z_{l} Z_{r}\left(u_{l}-u_{r}\right)\right]$};
+  \node[below=of form 4]                              (form 5)  {$u^{*}=\frac{1}{Z_{l}+Z_{r}}\left[Z_{l} u_{l}+Z_{r} u_{r}+\left(p_{l}-p_{r}\right)\right]$};
+  \node[draw, below=of step 5]                        (step 6)  {计算外力(src/1/externalForce.f90)};
+  \node[draw, below=of step 6]                        (step 7)  {更新粒子参数(src/3/timeIntegration.f90)};
+  \node[draw, rounded corners, below=of step 7]       (end)     {输出};
+  
+  \draw[->] (start)  -- (step 1);
+  \draw[->] (step 1) -- (step 2);
+  \draw[->] (step 2) -- (step 3);
+  \draw[->] (step 3) -- (step 4);
+  \draw[->] (step 4) -- (step 5);
+  \draw[->] (step 5) -- (step 6);
+  \draw[->] (step 6) -- (step 7);
+  \draw[->] (step 7) -- (end);
+\end{tikzpicture}
+\end{document}

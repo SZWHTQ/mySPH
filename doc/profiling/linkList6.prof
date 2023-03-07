@@ -1,0 +1,322 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 84.87     54.99    54.99    10000     0.01     0.01  __nnps_m_MOD_link_list_search
+  6.02     58.89     3.90    10040     0.00     0.00  __in_force_m_MOD_in_force
+  2.08     60.24     1.35 151813519     0.00     0.00  __kernel_m_MOD_cubic_spline_function
+  1.65     61.31     1.07        1     1.07    64.40  __time_integration_m_MOD_time_integration
+  1.40     62.22     0.91    10000     0.00     0.00  __corr_velo_m_MOD_aver_velo
+  0.99     62.86     0.64    10000     0.00     0.00  __density_m_MOD_sum_density
+  0.91     63.45     0.59 151813519     0.00     0.00  __kernel_m_MOD_kernel
+  0.82     63.98     0.53    10000     0.00     0.01  __nnps_m_MOD_search_particles
+  0.60     64.37     0.39                             _init
+  0.29     64.56     0.19 19200000     0.00     0.00  __nnps_m_MOD_grid_geometry
+  0.23     64.71     0.15    10000     0.00     0.00  __ex_force_m_MOD_ex_force
+  0.06     64.75     0.04 19200000     0.00     0.00  __eos_m_MOD_eos_arti_water
+  0.03     64.77     0.02    10000     0.00     0.00  __dummy_part_m_MOD_shear_cavity_dp
+  0.03     64.79     0.02    10000     0.00     0.00  __visc_m_MOD_viscosity
+  0.00     64.79     0.00    10000     0.00     0.00  __dummy_part_m_MOD_gen_dummy_particle
+  0.00     64.79     0.00      562     0.00     0.00  __tools_m_MOD_to_string
+  0.00     64.79     0.00      101     0.00     0.00  __output_m_MOD_write_file
+  0.00     64.79     0.00      100     0.00     0.00  __output_m_MOD_output
+  0.00     64.79     0.00      100     0.00     0.00  __output_m_MOD_write_vtk
+  0.00     64.79     0.00      100     0.00     0.00  __tools_m_MOD_now
+  0.00     64.79     0.00       40     0.00     0.00  __tools_m_MOD_pbflush
+  0.00     64.79     0.00       40     0.00     0.00  __tools_m_MOD_pbout
+  0.00     64.79     0.00       40     0.00     0.00  __tools_m_MOD_round
+  0.00     64.79     0.00        1     0.00    64.40  MAIN__
+  0.00     64.79     0.00        1     0.00     0.00  __alloc_m_MOD_alloc_phys_prop
+  0.00     64.79     0.00        1     0.00     0.00  __input_m_MOD_input
+  0.00     64.79     0.00        1     0.00     0.00  __input_m_MOD_shear_cavity
+  0.00     64.79     0.00        1     0.00     0.00  __input_m_MOD_write_initial_file
+  0.00     64.79     0.00        1     0.00     0.00  __parse_toml_m_MOD_fetch_value
+  0.00     64.79     0.00        1     0.00     0.00  __parse_toml_m_MOD_from_access_file
+  0.00     64.79     0.00        1     0.00     0.00  __parse_toml_m_MOD_from_sph_file
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.02% of 64.79 seconds
+
+index % time    self  children    called     name
+                0.00   64.40       1/1           main [2]
+[1]     99.4    0.00   64.40       1         MAIN__ [1]
+                1.07   63.33       1/1           __time_integration_m_MOD_time_integration [3]
+                0.00    0.00       1/1           __alloc_m_MOD_alloc_phys_prop [32]
+                0.00    0.00       1/1           __parse_toml_m_MOD_from_sph_file [38]
+                0.00    0.00       1/1           __parse_toml_m_MOD_fetch_value [36]
+                0.00    0.00       1/1           __input_m_MOD_write_initial_file [35]
+                0.00    0.00       1/1           __input_m_MOD_input [33]
+                0.00    0.00       1/562         __tools_m_MOD_to_string [24]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]     99.4    0.00   64.40                 main [2]
+                0.00   64.40       1/1           MAIN__ [1]
+-----------------------------------------------
+                1.07   63.33       1/1           MAIN__ [1]
+[3]     99.4    1.07   63.33       1         __time_integration_m_MOD_time_integration [3]
+                0.53   56.64   10000/10000       __nnps_m_MOD_search_particles [4]
+                3.88    0.04   10000/10040       __in_force_m_MOD_in_force [6]
+                0.64    0.49   10000/10000       __density_m_MOD_sum_density [9]
+                0.91    0.00   10000/10000       __corr_velo_m_MOD_aver_velo [10]
+                0.15    0.00   10000/10000       __ex_force_m_MOD_ex_force [13]
+                0.02    0.00   10000/10000       __visc_m_MOD_viscosity [17]
+                0.00    0.02   10000/10000       __dummy_part_m_MOD_gen_dummy_particle [15]
+                0.00    0.00     100/100         __output_m_MOD_write_vtk [27]
+                0.00    0.00     100/100         __output_m_MOD_output [26]
+                0.00    0.00      80/562         __tools_m_MOD_to_string [24]
+                0.00    0.00      40/40          __tools_m_MOD_pbflush [29]
+                0.00    0.00      40/40          __tools_m_MOD_pbout [30]
+-----------------------------------------------
+                0.53   56.64   10000/10000       __time_integration_m_MOD_time_integration [3]
+[4]     88.2    0.53   56.64   10000         __nnps_m_MOD_search_particles [4]
+               54.99    1.65   10000/10000       __nnps_m_MOD_link_list_search [5]
+-----------------------------------------------
+               54.99    1.65   10000/10000       __nnps_m_MOD_search_particles [4]
+[5]     87.4   54.99    1.65   10000         __nnps_m_MOD_link_list_search [5]
+                0.44    1.01 113413519/151813519     __kernel_m_MOD_kernel [7]
+                0.19    0.00 19200000/19200000     __nnps_m_MOD_grid_geometry [12]
+                0.02    0.00      40/10040       __in_force_m_MOD_in_force [6]
+-----------------------------------------------
+                0.02    0.00      40/10040       __nnps_m_MOD_link_list_search [5]
+                3.88    0.04   10000/10040       __time_integration_m_MOD_time_integration [3]
+[6]      6.1    3.90    0.04   10040         __in_force_m_MOD_in_force [6]
+                0.04    0.00 19200000/19200000     __eos_m_MOD_eos_arti_water [14]
+                0.00    0.00     240/562         __tools_m_MOD_to_string [24]
+                0.00    0.00      40/40          __tools_m_MOD_round [31]
+-----------------------------------------------
+                0.15    0.34 38400000/151813519     __density_m_MOD_sum_density [9]
+                0.44    1.01 113413519/151813519     __nnps_m_MOD_link_list_search [5]
+[7]      3.0    0.59    1.35 151813519         __kernel_m_MOD_kernel [7]
+                1.35    0.00 151813519/151813519     __kernel_m_MOD_cubic_spline_function [8]
+-----------------------------------------------
+                1.35    0.00 151813519/151813519     __kernel_m_MOD_kernel [7]
+[8]      2.1    1.35    0.00 151813519         __kernel_m_MOD_cubic_spline_function [8]
+-----------------------------------------------
+                0.64    0.49   10000/10000       __time_integration_m_MOD_time_integration [3]
+[9]      1.7    0.64    0.49   10000         __density_m_MOD_sum_density [9]
+                0.15    0.34 38400000/151813519     __kernel_m_MOD_kernel [7]
+-----------------------------------------------
+                0.91    0.00   10000/10000       __time_integration_m_MOD_time_integration [3]
+[10]     1.4    0.91    0.00   10000         __corr_velo_m_MOD_aver_velo [10]
+-----------------------------------------------
+                                                 <spontaneous>
+[11]     0.6    0.39    0.00                 _init [11]
+-----------------------------------------------
+                0.19    0.00 19200000/19200000     __nnps_m_MOD_link_list_search [5]
+[12]     0.3    0.19    0.00 19200000         __nnps_m_MOD_grid_geometry [12]
+-----------------------------------------------
+                0.15    0.00   10000/10000       __time_integration_m_MOD_time_integration [3]
+[13]     0.2    0.15    0.00   10000         __ex_force_m_MOD_ex_force [13]
+-----------------------------------------------
+                0.04    0.00 19200000/19200000     __in_force_m_MOD_in_force [6]
+[14]     0.1    0.04    0.00 19200000         __eos_m_MOD_eos_arti_water [14]
+-----------------------------------------------
+                0.00    0.02   10000/10000       __time_integration_m_MOD_time_integration [3]
+[15]     0.0    0.00    0.02   10000         __dummy_part_m_MOD_gen_dummy_particle [15]
+                0.02    0.00   10000/10000       __dummy_part_m_MOD_shear_cavity_dp [16]
+-----------------------------------------------
+                0.02    0.00   10000/10000       __dummy_part_m_MOD_gen_dummy_particle [15]
+[16]     0.0    0.02    0.00   10000         __dummy_part_m_MOD_shear_cavity_dp [16]
+                0.00    0.00      40/562         __tools_m_MOD_to_string [24]
+-----------------------------------------------
+                0.02    0.00   10000/10000       __time_integration_m_MOD_time_integration [3]
+[17]     0.0    0.02    0.00   10000         __visc_m_MOD_viscosity [17]
+-----------------------------------------------
+                0.00    0.00       1/562         __input_m_MOD_write_initial_file [35]
+                0.00    0.00       1/562         MAIN__ [1]
+                0.00    0.00      40/562         __dummy_part_m_MOD_shear_cavity_dp [16]
+                0.00    0.00      80/562         __time_integration_m_MOD_time_integration [3]
+                0.00    0.00     100/562         __output_m_MOD_write_vtk [27]
+                0.00    0.00     100/562         __output_m_MOD_output [26]
+                0.00    0.00     240/562         __in_force_m_MOD_in_force [6]
+[24]     0.0    0.00    0.00     562         __tools_m_MOD_to_string [24]
+-----------------------------------------------
+                0.00    0.00       1/101         __input_m_MOD_write_initial_file [35]
+                0.00    0.00     100/101         __output_m_MOD_output [26]
+[25]     0.0    0.00    0.00     101         __output_m_MOD_write_file [25]
+-----------------------------------------------
+                0.00    0.00     100/100         __time_integration_m_MOD_time_integration [3]
+[26]     0.0    0.00    0.00     100         __output_m_MOD_output [26]
+                0.00    0.00     100/562         __tools_m_MOD_to_string [24]
+                0.00    0.00     100/101         __output_m_MOD_write_file [25]
+-----------------------------------------------
+                0.00    0.00     100/100         __time_integration_m_MOD_time_integration [3]
+[27]     0.0    0.00    0.00     100         __output_m_MOD_write_vtk [27]
+                0.00    0.00     100/562         __tools_m_MOD_to_string [24]
+                0.00    0.00     100/100         __tools_m_MOD_now [28]
+-----------------------------------------------
+                0.00    0.00     100/100         __output_m_MOD_write_vtk [27]
+[28]     0.0    0.00    0.00     100         __tools_m_MOD_now [28]
+-----------------------------------------------
+                0.00    0.00      40/40          __time_integration_m_MOD_time_integration [3]
+[29]     0.0    0.00    0.00      40         __tools_m_MOD_pbflush [29]
+-----------------------------------------------
+                0.00    0.00      40/40          __time_integration_m_MOD_time_integration [3]
+[30]     0.0    0.00    0.00      40         __tools_m_MOD_pbout [30]
+-----------------------------------------------
+                0.00    0.00      40/40          __in_force_m_MOD_in_force [6]
+[31]     0.0    0.00    0.00      40         __tools_m_MOD_round [31]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [1]
+[32]     0.0    0.00    0.00       1         __alloc_m_MOD_alloc_phys_prop [32]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [1]
+[33]     0.0    0.00    0.00       1         __input_m_MOD_input [33]
+-----------------------------------------------
+                0.00    0.00       1/1           __input_m_MOD_write_initial_file [35]
+[34]     0.0    0.00    0.00       1         __input_m_MOD_shear_cavity [34]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [1]
+[35]     0.0    0.00    0.00       1         __input_m_MOD_write_initial_file [35]
+                0.00    0.00       1/101         __output_m_MOD_write_file [25]
+                0.00    0.00       1/562         __tools_m_MOD_to_string [24]
+                0.00    0.00       1/1           __input_m_MOD_shear_cavity [34]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [1]
+[36]     0.0    0.00    0.00       1         __parse_toml_m_MOD_fetch_value [36]
+                0.00    0.00       1/1           __parse_toml_m_MOD_from_access_file [37]
+-----------------------------------------------
+                0.00    0.00       1/1           __parse_toml_m_MOD_fetch_value [36]
+[37]     0.0    0.00    0.00       1         __parse_toml_m_MOD_from_access_file [37]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [1]
+[38]     0.0    0.00    0.00       1         __parse_toml_m_MOD_from_sph_file [38]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+   [1] MAIN__                 [35] __input_m_MOD_write_initial_file [38] __parse_toml_m_MOD_from_sph_file
+  [32] __alloc_m_MOD_alloc_phys_prop [8] __kernel_m_MOD_cubic_spline_function [3] __time_integration_m_MOD_time_integration
+  [10] __corr_velo_m_MOD_aver_velo [7] __kernel_m_MOD_kernel [28] __tools_m_MOD_now
+   [9] __density_m_MOD_sum_density [12] __nnps_m_MOD_grid_geometry [29] __tools_m_MOD_pbflush
+  [15] __dummy_part_m_MOD_gen_dummy_particle [5] __nnps_m_MOD_link_list_search [30] __tools_m_MOD_pbout
+  [16] __dummy_part_m_MOD_shear_cavity_dp [4] __nnps_m_MOD_search_particles [31] __tools_m_MOD_round
+  [14] __eos_m_MOD_eos_arti_water [26] __output_m_MOD_output [24] __tools_m_MOD_to_string
+  [13] __ex_force_m_MOD_ex_force [25] __output_m_MOD_write_file [17] __visc_m_MOD_viscosity
+   [6] __in_force_m_MOD_in_force [27] __output_m_MOD_write_vtk [11] _init
+  [33] __input_m_MOD_input    [36] __parse_toml_m_MOD_fetch_value
+  [34] __input_m_MOD_shear_cavity [37] __parse_toml_m_MOD_from_access_file

@@ -1,3 +1,4 @@
+#include "../macro.h"
 module time_integration_m
     use tools_m
 
@@ -5,19 +6,12 @@ module time_integration_m
 
 contains
     subroutine single_step(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml, c, &
-                           tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r)
+                           tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r, Stress, dSdt)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         !$ use omp_lib
-#ifndef _OPENMP
         use ctrl_dict, only: dim, maxn, i_time_step, delta_t,nnps,sle, print_interval, &
                              monitor_particle, sum_density_w, arti_visc_w, ex_force_w, &
                              arti_heat_w, aver_velocity_w, print_statistics_w, dummy_parti_w
-#else
-        use ctrl_dict, only: dim, maxn, i_time_step,delta_t,nnps,skf,sle, print_interval,     &
-                             monitor_particle, sum_density_w, arti_visc_w, ex_force_w,        &
-                             arti_heat_w, aver_velocity_w, print_statistics_w, dummy_parti_w, &
-                             nthreads, chunkSize
-#endif          
         use initial_m, only: neighborList, neighborNum, w, dwdx
         use nnps_m
         use density_m
@@ -52,6 +46,10 @@ contains
                    avdvdt(dim, maxn), avdedt(maxn), ahdedt(maxn)
         real(8) :: area
         integer :: number, index(maxn)
+#if SOLID
+        real(8), intent(in),    optional :: Stress(:, :, :)
+        real(8), intent(inout), optional :: dSdt(:, :, :)
+#endif
 
         integer i
 
@@ -71,11 +69,6 @@ contains
         !!! Positions of dummy (boundary) particles
         if ( dummy_parti_w ) call gen_dummy_particle(ntotal, ndummy, &
                                                      itype, x, v, mass, rho, p, e, c, hsml)
-
-#ifdef _OPENMP
-        call omp_set_num_threads(nthreads)
-        chunkSize = (ntotal+ndummy) / nthreads
-#endif
 
         !!! Interactions parameters, calculating neighboring particles
         !!! and optimizing smoothing length
@@ -113,8 +106,13 @@ contains
         call divergence(ntotal+ndummy, v, mass, rho, neighborNum, neighborList, dwdx, div_v)
 
         !!! Internal forces
+#if SOLID
+        call in_force(ntotal+ndummy, itype, x, v, mass, rho, p, e, c, &
+                      neighborNum, neighborList, dwdx, indvdt, tdsdt, indedt, Stress, dSdt)
+#else
         call in_force(ntotal+ndummy, itype, x, v, mass, rho, p, e, c, &
                       neighborNum, neighborList, dwdx, indvdt, tdsdt, indedt)
+#endif
 
         !!! Artificial viscosity
         if ( arti_visc_w ) call arti_visc(ntotal+ndummy, x, v, mass, rho, c, hsml, &
@@ -174,21 +172,32 @@ contains
     end subroutine single_step
 
     subroutine time_integration()
-        use ctrl_dict, only: dim, maxn, &
-                             i_time_step, max_time_step, &
-                             ntotal, ndummy, &
+#ifndef _OPENMP
+        use ctrl_dict, only: dim, maxn, i_time_step, max_time_step, ntotal,   &
                              save_interval, print_interval, monitor_particle, &
                              sum_density_w, nsym
+#else
+        use ctrl_dict, only: dim, maxn, i_time_step, max_time_step, ntotal,   &
+                             save_interval, print_interval, monitor_particle, &
+                             sum_density_w, nsym, nthreads, chunkSize
+#endif
         use initial_m
         use cour_num_m
         use output_m
         implicit none
+        integer :: ndummy
         real(8) :: v_prev(dim, maxn), e_prev(maxn), rho_prev(maxn)
         real(8) :: tdsdt(maxn), dvdt(dim, maxn), dedt(maxn), &
                    drhodt(maxn), aver_v(dim, maxn), &
                    div_v(maxn), div_r(maxn)
         real(8) :: time = 0, temp_rho, temp_e
         real(8) :: aver_courant = 0, max_courant = 0, cntemp
+#if SOLID
+        integer :: solid_num
+        real(8) :: Stress_prev(dim, dim, maxn)
+        real(8), allocatable :: Stress(:, :, :), dSdt(:, :, :)
+        real(8) :: J2, SigmaY
+#endif
 
         integer i
 
@@ -202,6 +211,21 @@ contains
             drhodt(i)    = 0
             aver_v(:, i) = 0
         end forall
+
+#if SOLID
+        solid_num = 0
+        do i = 1, ntotal
+            if ( itype(i) == 8 ) solid_num = solid_num + 1
+        end do
+
+        allocate(Stress(dim, dim, solid_num), dSdt(dim, dim, solid_num), source=0._8)
+        SigmaY = 5e8
+#endif
+    
+#ifdef _OPENMP
+        call omp_set_num_threads(nthreads)
+        chunkSize = maxn / nthreads
+#endif
 
         do i_time_step = 1, max_time_step
 
@@ -220,7 +244,7 @@ contains
             !!! If not first time step, then update thermal energy, density
             !!! and velocity half a time step
             if ( i_time_step /= 1 ) then
-                ! !$OMP PARALLEL DO PRIVATE(i)
+                !$OMP PARALLEL DO PRIVATE(i)
                 do i = 1, ntotal
                     e_prev(i) = e(i)
                     temp_e = 0
@@ -235,8 +259,12 @@ contains
                     end if
                     v_prev(:, i) = v(:, i)
                     v(:, i) = v(:, i) + (delta_t/2)*dvdt(:, i)
+                    Stress_prev(:, :, i) = Stress(:, :, i)
+                    Stress(:, :, i) = Stress(:, :, i) + (delta_t/2)*dSdt(:, :, i)
+                    J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
+                    if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
                 end do
-                ! !$OMP END PARALLEL DO
+                !$OMP END PARALLEL DO
             end if
 
             !!! Definition of variables out of the function vector:
@@ -244,7 +272,7 @@ contains
                              tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r)
 
             if ( i_time_step == 1 ) then
-                ! !$OMP PARALLEL DO PRIVATE(i)
+                !$OMP PARALLEL DO PRIVATE(i)
                 do i = 1, ntotal
                     temp_e = 0
                     if ( dim == 1 ) temp_e = -nsym*p(i)*v(1, i)/x(1, i)/rho(i)
@@ -261,11 +289,15 @@ contains
 
                     v(:, i) = v(:, i) + (delta_t/2) * dvdt(:, i) + aver_v(:, i)
                     x(:, i) = x(:, i) + delta_t * v(:, i)
+
+                    Stress(:, :, i) = Stress(:, :, i) + (delta_t/2) * dSdt(:, :, i)
+                    J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
+                    if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
                 end do
-                ! !$OMP END PARALLEL DO
+                !$OMP END PARALLEL DO
             else
                 max_courant = 0
-                ! !$OMP PARALLEL DO PRIVATE(i)
+                !$OMP PARALLEL DO PRIVATE(i) REDUCTION(max:max_courant) REDUCTION(+:aver_courant)
                 do i = 1, ntotal
                     temp_e = 0._8
                     if ( dim == 1 ) temp_e = -nsym*p(i)*v(1, i)/x(1, i)/rho(i)
@@ -282,11 +314,16 @@ contains
 
                     v(:, i) = v_prev(:, i) + delta_t * dvdt(:, i) + aver_v(:, i)
                     x(:, i) = x(:, i) + delta_t * v(:, i)
+
+                    Stress(:, :, i) = Stress_prev(:, :, i) + delta_t * dSdt(:, :, i)
+                    J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
+                    if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
+                    
                     cntemp = courant_num(hsml(i), div_v(i), c(i))
                     aver_courant = aver_courant + cntemp
                     if ( cntemp > max_courant ) max_courant = cntemp
                 end do
-                ! !$OMP END PARALLEL DO
+                !$OMP END PARALLEL DO
 
                 ! do i = 1, ntotal
                 !     cntemp = courant_num(hsml(i), div_v(i), c(i))

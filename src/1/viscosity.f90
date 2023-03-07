@@ -11,16 +11,21 @@ contains
 
         ntotal = size(itype)
 
+        !$OMP PARALLEL DO PRIVATE(i)
         do i = 1, ntotal
-            if ( abs(itype(i)) == 1 ) then
+            select case(abs(itype(i)))
+            case (1)
                 eta(i) = 0
-            else if ( abs(itype(i)) == 2 ) then
+            case (2)
                 eta(i) = 1e-3
-            else if ( abs(itype(i)) == 3 ) then
+            case (3)
                 eta(i) = 0
-            end if
+            case (8)
+                eta(i) = 8e10
+            end select
         end do
-        
+        !$OMP END PARALLEL DO
+
     end subroutine viscosity
     
 end module visc_m

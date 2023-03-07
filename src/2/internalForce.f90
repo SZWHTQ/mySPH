@@ -1,3 +1,4 @@
+#include "../macro.h"
 module in_force_m
     use ctrl_dict, only: dim, maxn, &
                          viscosity_w, pa_sph
@@ -8,7 +9,7 @@ module in_force_m
 
 contains
     subroutine in_force(ntotal, itype, x, v, mass, rho, p, e, c, &
-                        neighborNum, neighborList, dwdx, dvdt, tdsdt, dedt)
+                        neighborNum, neighborList, dwdx, dvdt, tdsdt, dedt, Stress, dSdt)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         use visc_m
         use eos_m
@@ -31,23 +32,37 @@ contains
         real(8) :: dv(dim)
         real(8) :: rhoij, aux
         real(8) :: Z_l, Z_r, v_l, v_r, v_ij, e_ij(dim), v_star(dim), p_star
-
+#if SOLID
+        integer :: solid_num
+        real(8), intent(in),    optional :: Stress(:, :, :)
+        real(8), intent(inout), optional :: dSdt(:, :, :)
+        real(8), allocatable :: rdot(:, :, :)
+#endif
         integer i, j, k, d, dd, ddd
 
-        !!! Initialization of shear tensor, velocity divergence,
+        !!! Initialization of Strain Rate Tensor, velocity divergence,
         !!! viscous energy, internal energy, acceleration
         allocate(edot(dim, dim, ntotal), source=0._8)
 
+#if SOLID
+        if ( present(Stress) ) then
+            solid_num = size(Stress, 3)
+            allocate(rdot(dim, dim, solid_num), source=0._8)
+        end if
+#endif
+
         !!! Dynamic viscosity
-        if ( viscosity_w ) call viscosity(itype, eta)
+        if ( viscosity_w ) call viscosity(itype(1:ntotal), eta)
 
 
-        !!! Calculate SPH sum for shear tensor
-        !!! = va,b + vb,a - 2/3*delta_ab*vc,c
         if ( viscosity_w ) then
                 !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux)
                 do i = 1, ntotal !! All particles
-                    if ( abs(itype(i)) < 8 ) then !! Fluid
+                !!! Calculate SPH sum for Strain Rate Tensor of Fluid
+                !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
+#if SOLID
+                if ( abs(itype(i)) < 8 ) then !! Fluid
+#endif
                     do k = 1, neighborNum(i) !! All neighbors of each particle
                         j = neighborList(i, k)
                         dv = v(:, j) - v(:, i)
@@ -55,26 +70,48 @@ contains
                             do dd = 1, dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
                                 edot(d, dd, i) = edot(d, dd, i) &
                                     + mass(j)/rho(j)            &
-                                    * dv(d)                     &
-                                    * dwdx(dd, i, k)
+                                    * dv(d) * dwdx(dd, i, k)
                                 edot(dd, d, i) = edot(dd, d, i) &
                                     + mass(j)/rho(j)            &
-                                    * dv(dd)                    &
-                                    * dwdx(d, i, k)
+                                    * dv(dd) * dwdx(d, i, k)
                                 if ( d == dd ) then !! δii = 1, δij = 0
                                     do ddd = 1, dim
                                         edot(d, d, i) = edot(d, d, i) &
                                             - 2._8 / 3                &
                                             * mass(j)/rho(j)          &
-                                            * dv(ddd)                 &
-                                            * dwdx(ddd, i, k)
+                                            * dv(ddd) * dwdx(ddd, i, k)
                                     end do
                                 end if !! d == dd
                             end do !! dd
                         end do !! d
                     end do !! k
-                else !! Solid
-                end if !! Fluid of Solid
+#if SOLID
+                !!! Calculate SPH sum for Strain Rate Tensor and Rotation Rate Tensor of Fluid
+                !!! εab = 1/2 * (va,b + vb,a)
+                !!! Rab = 1/2 * (va,b + vb,a)
+                else if ( present(Stress) ) then !! Solid
+                    do k = 1, neighborNum(i) !! All neighbors of each particle
+                        j = neighborList(i, k)
+                            dv = v(:, j) - v(:, i)
+                            do d = 1, dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
+                                do dd = d, dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
+                                    associate (vab => mass(j)/rho(j) * dv(d) * dwdx(dd, i, k))
+                                    associate (vba => mass(j)/rho(j) * dv(dd) * dwdx(d, i, k))
+                                        edot(d, dd, i) = edot(d, dd, i) &
+                                            + 0.5_8 * (vab + vba)
+                                        edot(dd, d, i) = edot(dd, d, i) &
+                                            + 0.5_8 * (vba + vab)
+                                        rdot(d, dd, i) = rdot(d, dd, i) &
+                                            + 0.5_8 * (vab - vba)
+                                        rdot(dd, d, i) = rdot(dd, d, i) &
+                                            + 0.5_8 * (vba - vab)
+                                    end associate
+                                    end associate
+                                end do !! dd
+                            end do !! d
+                    end do !! k
+            end if !! Fluid or Solid
+#endif
             end do !! i
             !$OMP END PARALLEL DO
         end if !! Viscoisty
@@ -82,11 +119,12 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i)
         do i = 1, ntotal !! All particles
-            !!! Viscous entropy Tds/dt = 1/2 eta/rho
+#if SOLID
+        if ( abs(itype(i)) < 8 ) then !! Fluid
+#endif
+            !!! Viscous entropy Tds/dt = 1/2 eta/rho εab•εab
             if ( viscosity_w ) then
-                tdsdt(i) = 0.5_8 &
-                         * eta(i) & !! Dynamic viscosity
-                         / rho(i) & !! Density
+                tdsdt(i) = 0.5_8 * eta(i) / rho(i) &
                          * sum(edot(:, :, i)**2)
             end if
 
@@ -106,9 +144,20 @@ contains
                 call mie_gruneisen_eos_of_water(rho(i), e(i), p(i))
             case (7)
                 call water_polynomial_eos(rho(i), e(i), p(i))
-            case (8)
-                call mie_gruneisen_eos_of_solid(rho(i), e(i), p(i))
             end select !! abs(itype(i))
+
+#if SOLID
+        else if ( present(Stress) ) then !! Solid
+
+            tdsdt(i) = 1 / rho(i) * sum(Stress(:, :, i)*edot(:, :, i))
+
+            ! select case ( abs(itype(i)) )
+            ! case (8)
+                call mie_gruneisen_eos_of_solid(rho(i), e(i), p(i))
+            ! end select
+
+        end if !! Fluid or Solid
+#endif
         end do !! i
         !$OMP END PARALLEL DO
 
@@ -146,7 +195,7 @@ contains
 
                     end do !! k
                 else !! Solid
-                end if !! Fluid of Solid
+                end if !! Fluid or Solid
             end do !! i
             !$OMP END PARALLEL DO
 
@@ -172,11 +221,45 @@ contains
                         !!! Conservation of Energy
                         dedt(i) = dedt(i)   &
                             + mass(j) * aux &
-                            * dot_product(v(:, i)-v(:, j), dwdx(:, i, k))
+                            * dot_product( v(:, i)-v(:, j), dwdx(:, i, k) )
 
                     end do !! k
-                else !! Solid
-                end if !! Fluid of Solid
+                else if ( present(Stress) ) then!! Solid
+                    do k = 1, neighborNum(i)
+                        j = neighborList(i, k)
+
+                        !!! Deviatoric Stress Rate Tensor
+                        dSdt(:, :, i) = 2 * eta(i) * edot(:, :, i)
+                        do d = 1, dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
+                            do dd = d, dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
+                                dSdt(d, dd, i) = 2 * eta(i) * edot(d, dd, i)
+                                dSdt(dd, d, i) = 2 * eta(i) * edot(dd, d, i)
+                                do ddd = 1, dim
+                                    if ( d == dd ) then
+                                        dSdt(d, d, i) = dSdt(d, d, i) &
+                                            - 2 * eta(i) * edot(d, d, i) / 3
+                                    end if !! d == dd
+                                    aux = Stress(d, ddd, i) * rdot(dd, ddd, i) &
+                                        + Stress(dd, ddd, i) * rdot(d, ddd, i)
+                                    dSdt(d, dd, i) = dSdt(d, dd, i) + aux
+                                    dSdt(dd, d, i) = dSdt(dd, d, i) + aux
+                                end do !!! ddd
+                            end do !! dd
+                        end do !! d
+
+                        !!! Conservation of Momentum
+                        dvdt(:, i) = dvdt(:, i)                             &
+                            + mass(j) * matmul(  Stress(:, :, i)/rho(i)**2  &
+                                               + Stress(:, :, j)/rho(j)**2, &
+                                               dwdx(:, i, k) )
+                        
+                        !!! Conservation of Energy
+                        dedt(i) = dedt(i)                                   &
+                            + mass(j) * ( p(i)/rho(i)**2 + p(j)/rho(j)**2 ) &
+                            * dot_product( v(:, i)-v(:, j), dwdx(:, i, k) )
+
+                    end do !! k
+                end if !! Fluid or Solid
             end do !! i
             !$OMP END PARALLEL DO
 
@@ -184,9 +267,9 @@ contains
         case (3)
             !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux) &
             !$OMP PRIVATE(Z_l, Z_r, v_l, v_r, v_ij, v_star, p_star, e_ij)
-            do i = 1, ntotal
-                if ( abs(itype(i)) < 8 ) then
-                    do k = 1, neighborNum(i)
+            do i = 1, ntotal !! All particles
+                if ( abs(itype(i)) < 8 ) then !! Fluid
+                    do k = 1, neighborNum(i) !! All neighbors of each particle
                         j = neighborList(i, k)
 
                         !!! Auxiliary variables
@@ -226,8 +309,8 @@ contains
                             * dot_product(2 * (v(:, i)-v_star), dwdx(:, i, k))
 
                     end do
-                else
-                end if
+                else !! Solid
+                end if !! Fluid or Solid
             end do
             !$OMP END PARALLEL DO
         case default

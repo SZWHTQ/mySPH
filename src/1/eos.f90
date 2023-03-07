@@ -132,9 +132,7 @@ contains
         real(8) :: mu
         real(8) :: p_H
         real(8), parameter :: rho0 = 7850
-        ! real(8), parameter :: mu = 0.8  !! ?
         real(8), parameter :: Gamma = 1.81
-        ! real(8), parameter :: J0 = 5  !! ?
 
         mu = rho / rho0 - 1
         p_H = hugoniot_curve(mu)

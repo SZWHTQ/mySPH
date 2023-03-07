@@ -157,7 +157,11 @@ contains
             call get_value(subtable, 'OMP_NUM_THREADS', nthreads, 1)
         end if
         if ( nthreads == 0 ) then
-            nthreads = omp_get_num_procs()
+            if ( trim(buffer)/="" ) then
+                nthreads = omp_get_num_procs()
+            else
+                read(buffer, *) nthreads
+            end if
         end if
 #endif
 

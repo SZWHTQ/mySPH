@@ -59,7 +59,7 @@ symmetry = 0
 
 [Parallel]
 
-OMP_NUM_THREADS = 10  # Overwrite the environment variable OMP_NUM_THREADS
+OMP_NUM_THREADS = 0  # Overwrite the environment variable OMP_NUM_THREADS
 
 
 [postProcess]

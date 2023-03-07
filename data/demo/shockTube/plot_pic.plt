@@ -11,7 +11,7 @@ set size 0.5, 0.49
 set ylabel "Pressure"
 set xrange [-0.4:0.4]
 set grid
-plot './exact/Riemann_0.2s.dat' u 1:4 with lines lw 4 lt rgb "black" title "Exact", \
+plot './exact/Riemann_0.2s.txt' u 1:4 with lines lw 4 lt rgb "black" title "Exact", \
      '~/OneDrive/Essay/Data/shockTube/SPH/1600/output/500.dat' u 2:6 with lines lw 2 lt rgb "green" title "SPH 1600", \
      '~/OneDrive/Essay/Data/shockTube/SPH/800/output/1000.dat' u 2:6 with lines lw 2 dashtype "-" lt rgb "cyan" title "SPH 800", \
      '~/OneDrive/Essay/Data/shockTube/SPH/400/output/1000.dat' u 2:6 with lines lw 2 dashtype "." lt rgb "blue" title "SPH 400", \
@@ -24,7 +24,7 @@ set ylabel "Density"
 set xrange [-0.4:0.4]
 unset yrange
 set grid
-plot './exact/Riemann_0.2s.dat' u 1:2 with lines lw 4 lt rgb "black" title "Exact", \
+plot './exact/Riemann_0.2s.txt' u 1:2 with lines lw 4 lt rgb "black" title "Exact", \
      '~/OneDrive/Essay/Data/shockTube/SPH/1600/output/500.dat' u 2:5 with lines lw 2 lt rgb "green" title "SPH 1600", \
      '~/OneDrive/Essay/Data/shockTube/SPH/800/output/1000.dat' u 2:5 with lines lw 2 dashtype "-" lt rgb "cyan" title "SPH 800", \
      '~/OneDrive/Essay/Data/shockTube/SPH/400/output/1000.dat' u 2:5 with lines lw 2 dashtype "." lt rgb "blue" title "SPH 400", \
@@ -35,7 +35,7 @@ set size 0.5, 0.49
 set ylabel "Velocity"
 set xrange [-0.4:0.4]
 set grid
-plot './exact/Riemann_0.2s.dat' u 1:3 with lines lw 4 lt rgb "black" title "Exact", \
+plot './exact/Riemann_0.2s.txt' u 1:3 with lines lw 4 lt rgb "black" title "Exact", \
      '~/OneDrive/Essay/Data/shockTube/SPH/1600/output/500.dat' u 2:3 with lines lw 2 lt rgb "green" title "SPH 1600", \
      '~/OneDrive/Essay/Data/shockTube/SPH/800/output/1000.dat' u 2:3 with lines lw 2 dashtype "-" lt rgb "cyan" title "SPH 800", \
      '~/OneDrive/Essay/Data/shockTube/SPH/400/output/1000.dat' u 2:3 with lines lw 2 dashtype "." lt rgb "blue" title "SPH 400", \

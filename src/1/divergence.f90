@@ -16,6 +16,7 @@ contains
 
         forall (i=1:ntotal) div_F(i) = 0
 
+        !$OMP PARALLEL DO PRIVATE(i, j, k)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
                 j = pair(i, k)
@@ -23,6 +24,7 @@ contains
                     + mass(j)/rho(j) * sum((F(:, j)-F(:, i)) * dwdx(:, i, k))
             end do
         end do
+        !$OMP END PARALLEL DO
 
     end subroutine divergence
 

@@ -11,7 +11,7 @@ DIM = 2
 maxN = 1920
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 200
+kPair = 40
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -60,7 +60,7 @@ normalizeDensity    = false
 
 [Parallel]
 
-OMP_NUM_THREADS = 10  # Overwrite the environment variable OMP_NUM_THREADS
+OMP_NUM_THREADS = 6  # Overwrite the environment variable OMP_NUM_THREADS
 
 [postProcess]
 writeDummyParticle2VTK = true

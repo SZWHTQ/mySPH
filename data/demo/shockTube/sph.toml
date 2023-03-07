@@ -37,7 +37,7 @@ SLE = 0
 SKF = 1
 
 ## Serial Number of the Monitored Particle
-monitorParticle = 1
+monitorParticle = 70
 
 printInterval = 250
 
@@ -48,9 +48,9 @@ maxTimeStep = 5000
 ## Time Step
 deltaT = 2e-4
 
-summationDensity    = false
+summationDensity    = true
 dummyParticle       = true
-artificialViscosity = false
+artificialViscosity = true
 artificialHeat      = false
 averageVelocity     = false
 DSPH                = false

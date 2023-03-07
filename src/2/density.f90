@@ -28,40 +28,50 @@ contains
 
         !!! Firstly, calculate the integration of the kernel over the space
         if ( norm_dens_w ) then
+            !$OMP PARALLEL DO PRIVATE(i, self, hv)
             do i = 1, ntotal
                 call kernel(dble(0), 1*hv, hsml(i), self, hv)
                 wi(i) = mass(i)/rho(i) * self
             end do
+            !$OMP END PARALLEL DO
         end if
 
         if ( norm_dens_w ) then
+            !$OMP PARALLEL DO PRIVATE(i, j, k)
             do i = 1, ntotal
                 do k = 1, neighborNum(i)
                     j = pair(i, k)
                     wi(i) = wi(i) + mass(j)/rho(j) * w(i, k)
                 end do
             end do
+            !$OMP END PARALLEL DO
         end if
 
         !!! Secondly, calculate the rho integration over the space
+        !$OMP PARALLEL DO PRIVATE(i, self, hv)
         do i = 1, ntotal
             call kernel(dble(0), 1*hv, hsml(i), self, hv)
             rho(i) = mass(i) * self
         end do
+        !$OMP END PARALLEL DO
 
         !!! Calculate SPH sum for rho:
+        !$OMP PARALLEL DO PRIVATE(i, j, k)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
                 j = pair(i, k)
                 rho(i) = rho(i) + mass(j) * w(i, k)
             end do
         end do
+        !$OMP END PARALLEL DO
 
         !!! Thirdly, calculate the normalized rho, rho = Σrho / Σw
         if ( norm_dens_w ) then
+            !$OMP PARALLEL DO PRIVATE(i)
             do i = 1, ntotal
                 rho(i) = rho(i) / wi(i)
             end do
+            !$OMP END PARALLEL DO
         end if
 
         deallocate(wi)

@@ -1,7 +1,7 @@
 #include "../macro.h"
 module nnps_m
     use, intrinsic :: iso_fortran_env, only: err => error_unit
-    use ctrl_dict, only: dim, skf
+    use ctrl_dict, only: dim, skf, chunkSize
     use kernel_m,  only: kernel
     use tools_m,   only: to_string, round, print_error, print_warning
     implicit none
@@ -13,7 +13,6 @@ module nnps_m
 contains
     subroutine search_particles(nnps, x, hsml, pair, neighborNum, w, dwdx)
         integer, intent(in)  :: nnps
-        ! integer, intent(in)  :: ntotal
         real(8), intent(in)  :: x(:, :)
         real(8), intent(in)  :: hsml(:)
         integer, intent(inout) :: pair(:, :)
@@ -62,7 +61,6 @@ contains
 
         ntotal = size(x, 2)
         kpair = size(pair, 2)
-
 
         do i = 1, ntotal - 1
             do j = i + 1, ntotal
@@ -159,7 +157,8 @@ contains
         end do
 
         !$OMP PARALLEL DO PRIVATE(i, j, d, cell, xcell, ycell, zcell, minxcell, maxxcell, dx, dr, r, mhsml, this_w, this_dwdx) &
-        !$OMP SHARED(grid, cell_index, cell_data, pair, neighborNum, w, dwdx, ghsmlx, cell_num)
+        !$OMP SHARED(grid, cell_index, cell_data, pair, neighborNum, w, dwdx, ghsmlx, cell_num) &
+        !$OMP SCHEDULE(dynamic, chunkSize)
         !!! determine interaction parameters:
         do i = 1, ntotal - 1
             !!! determine range of grid to go through:
@@ -190,7 +189,9 @@ contains
                                     neighborNum(j) = neighborNum(j) + 1           
 #if CHECK_NEIGHBOR_NUM
                                     if ( neighborNum(i) > kpair .or. neighborNum(j) > kpair ) then
+                                        write(*,*) i, j, neighborNum([i,j]), kpair
                                         error stop "Too many neighbors"
+                                        ! write(*,*) "Too many neighbors"
                                     end if
 #endif
                                     pair(i, neighborNum(i)) = j
@@ -295,7 +296,6 @@ contains
         use tree_m
         use link_list_m
         use geometry_m
-        ! integer, intent(in)    :: ntotal
         real(8), intent(in)    :: x(:, :)
         real(8), intent(in)    :: hsml(:)
         integer, intent(inout) :: pair(:, :)
@@ -355,8 +355,9 @@ contains
 
         deallocate(domain)
 
-        !$OMP PARALLEL DO PRIVATE(i, j, k, d, range, found, mhsml, dx, dr, r, this_w, this_dwdx) &
-        !$OMP SHARED(pair, neighborNum, w, dwdx)
+        ! !$OMP PARALLEL DO PRIVATE(i, j, k, d, range, found, mhsml, dx, dr, r, this_w, this_dwdx) &
+        ! !$OMP SHARED(pair, neighborNum, w, dwdx) &
+        ! !$OMP SCHEDULE(dynamic, chunkSize)
         do i = 1, ntotal - 1
             select case (dim)
             case (1)
@@ -385,7 +386,7 @@ contains
                         neighborNum(j) = neighborNum(j) + 1                        
 #if CHECK_NEIGHBOR_NUM
                         if ( neighborNum(i) > kpair .or. neighborNum(j) > kpair ) then
-                            write(*,*) i, j, neighborNum([i,j]), kpair
+                            write(*,*) i, j, neighborNum([i,j])
                             error stop "Too many neighbors"
                         end if
 #endif
@@ -405,7 +406,7 @@ contains
             end do
             ! deallocate(range)
         end do
-        !$OMP END PARALLEL DO
+        ! !$OMP END PARALLEL DO
 
         call tree%clean()
 

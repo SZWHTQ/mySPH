@@ -59,6 +59,7 @@ contains
             first_entry = .false.
         end if
 
+        !$OMP PARALLEL DO PRIVATE(i, j, k, d, dx, dr, r, f, pe)
         do i = 1, ntotal !! All particles
             do k = 1, neighborNum(i) !! All neighbors
                 j = pair(i, k)
@@ -99,6 +100,7 @@ contains
                 end if
             end do !! k
         end do !! i
+        !$OMP END PARALLEL DO
 
 
     end subroutine ex_force

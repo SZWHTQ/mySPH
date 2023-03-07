@@ -29,7 +29,7 @@ contains
         real(8), allocatable :: edot(:, :, :)
         real(8) :: dv(dim)
         real(8) :: Z_l, Z_r, v_l, v_r, v_ij, v_star(dim), e_ij(dim)
-        real(8) :: v_aux(dim, dim), e_aux, rhoij, aux
+        real(8) :: rhoij, aux
         real(8) :: p_star
 
         integer i, j, k, d, dd, ddd
@@ -45,6 +45,7 @@ contains
         !!! Calculate SPH sum for shear tensor
         !!! = va,b + vb,a - 2/3*delta_ab*vc,c
         if ( viscosity_w ) then
+                !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux)
                 do i = 1, ntotal !! All particles
                     if ( abs(itype(i)) < 8 ) then !! Fluid
                     do k = 1, neighborNum(i) !! All neighbors of each particle
@@ -75,8 +76,11 @@ contains
                 else !! Solid
                 end if !! Fluid of Solid
             end do !! i
+            !$OMP END PARALLEL DO
         end if !! Viscoisty
+        
 
+        !$OMP PARALLEL DO PRIVATE(i)
         do i = 1, ntotal !! All particles
             !!! Viscous entropy Tds/dt = 1/2 eta/rho
             if ( viscosity_w ) then
@@ -106,196 +110,14 @@ contains
                 call mie_gruneisen_eos_of_solid(rho(i), e(i), p(i))
             end select !! abs(itype(i))
         end do !! i
+        !$OMP END PARALLEL DO
 
         ! if ( nick == "undex_cylinder" ) call free_surface()
 
         !!! Calculate SPH sum for pressure force -p_a/rho
         !!! and viscous force eta_b/rho
         !!! and the internal energy change de/dt due to -p/rho*div_v
-        ! do k = 1, niac
-        !     i = pair(k, 1)
-        !     j = pair(k, 2)
-        !     e_aux = 0
-
-        !     !!! For SPH algorithm 1
-        !     select case (pa_sph)
-        !     case (1)
-        !         rhoij = 1._8 / (rho(i)*rho(j))
-        !         do d = 1, dim
-        !             !!! Pressure part
-        !             v_aux = -(p(i) + p(j)) * dwdx(d, k)
-        !             e_aux = e_aux + (v(d, j) - v(d, i)) * v_aux
-        !             !!! Viscous force
-        !             if ( viscosity_w ) then
-        !                 select case (d)
-        !                 case (1)
-        !                     !!! x-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txx(i) + eta(j)*txx(j))*dwdx(1, k)
-        !                     if ( dim >= 2 ) then
-        !                         v_aux = v_aux &
-        !                         + (eta(i)*txy(i) + eta(j)*txy(j))*dwdx(2, k)
-        !                         if ( dim == 3 ) then
-        !                             v_aux = v_aux &
-        !                             + (eta(i)*txz(i) + eta(j)*txz(j))*dwdx(3, k)
-        !                         end if
-        !                     end if
-
-        !                 case (2)
-        !                     !!! y-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txx(i) + eta(j)*txy(j))*dwdx(1, k) &
-        !                     + (eta(i)*tyy(i) + eta(j)*tyy(j))*dwdx(2, k)
-        !                     if ( dim == 3 ) then
-        !                         v_aux = v_aux &
-        !                         + (eta(i)*tyz(i) + eta(j)*tyz(j))*dwdx(3, k)
-        !                     end if
-
-        !                 case (3)
-        !                     !!! z-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txz(i) + eta(j)*txz(j))*dwdx(1, k) &
-        !                     + (eta(i)*tyz(i) + eta(j)*tyz(j))*dwdx(2, k) &
-        !                     + (eta(i)*tzz(i) + eta(j)*tzz(j))*dwdx(3, k)
-        !                 end select
-        !             end if
-
-        !             v_aux = v_aux * rhoij
-        !             dvdt(d, i) = dvdt(d, i) + mass(j) * v_aux
-        !             dvdt(d, j) = dvdt(d, j) - mass(i) * v_aux
-        !         end do
-
-        !         e_aux = e_aux * rhoij
-        !         dedt(i) = dedt(i) + mass(j) * e_aux
-        !         dedt(j) = dedt(j) + mass(i) * e_aux
-
-        !     !!!  For SPH algorithm 2
-        !     case (2)
-        !         do d = 1, dim
-        !             !!! Pressure part
-        !             v_aux = -(p(i)/rho(i)**2 + p(j)/rho(j)**2) * dwdx(d, k)
-        !             e_aux = e_aux + (v(d, j) - v(d, i)) * v_aux
-
-        !             !!! Viscous force
-        !             if ( viscosity_w ) then
-        !                 select case (d)
-        !                 case (1)
-        !                     !!! x-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txx(i)/rho(i)**2 + eta(j)*txx(j)/rho(j)**2)*dwdx(1, k)
-        !                     if ( dim >= 2 ) then
-        !                         v_aux = v_aux &
-        !                         + (eta(i)*txy(i)/rho(i)**2 + eta(j)*txy(j)/rho(j)**2)*dwdx(2, k)
-        !                         if ( dim == 3 ) then
-        !                             v_aux = v_aux &
-        !                             + (eta(i)*txz(i)/rho(i)**2 + eta(j)*txz(j)/rho(j)**2)*dwdx(3, k)
-        !                         end if
-        !                     end if
-
-        !                 case (2)
-        !                     !!! y-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txy(i)/rho(i)**2 + eta(j)*txy(j)/rho(j)**2)*dwdx(1, k) &
-        !                     + (eta(i)*tyy(i)/rho(i)**2 + eta(j)*tyy(j)/rho(j)**2)*dwdx(2, k)
-        !                     if ( dim == 3 ) then
-        !                         v_aux = v_aux &
-        !                         + (eta(i)*tyz(i)/rho(i)**2 + eta(j)*tyz(j)/rho(j)**2)*dwdx(3, k)
-        !                     end if
-
-        !                 case (3)
-        !                     !!! z-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txz(i)/rho(i)**2 + eta(j)*txz(j)/rho(j)**2)*dwdx(1, k) &
-        !                     + (eta(i)*tyz(i)/rho(i)**2 + eta(j)*tyz(j)/rho(j)**2)*dwdx(2, k) &
-        !                     + (eta(i)*tzz(i)/rho(i)**2 + eta(j)*tzz(j)/rho(j)**2)*dwdx(3, k)
-
-        !                 end select
-        !             end if
-
-        !             dvdt(d, i) = dvdt(d, i) + mass(j) * v_aux
-        !             dvdt(d, j) = dvdt(d, j) - mass(i) * v_aux
-        !         end do
-
-        !         dedt(i) = dedt(i) + mass(j) * e_aux
-        !         dedt(j) = dedt(j) + mass(i) * e_aux
-
-        !     !!! Riemann solver
-        !     case (3)
-        !         rhoij = 1._8 / (rho(i)*rho(j))
-
-        !         Z_l = rho(i) * c(i)
-        !         Z_r = rho(j) * c(j)
-
-        !         e_ij = (x(:, j) - x(:, i)) / norm2(x(:, j) - x(:, i))
-        !         v_l = dot_product(v(:, i), e_ij)
-        !         v_r = dot_product(v(:, j), e_ij)
-
-        !         v_ij = ( Z_l*v_l + Z_r*v_r + (p(i)-p(j)) ) &
-        !              / ( Z_l + Z_r )
-        !         p_star = ( Z_l*p(j) + Z_r*p(i)   &
-        !                +   Z_l*Z_r*(v_l - v_r) ) &
-        !                / ( Z_l + Z_r )
-        !         v_star = v_ij*e_ij + ((v(:, i)+v(:, j))/2 - ((v_l+v_r)/2)*e_ij)
-
-        !         !!! For particle i
-        !         do d = 1, dim
-        !             !!! Pressure part
-        !             v_aux = -2 * p_star * dwdx(d, k)
-        !             e_aux = e_aux - (v(d, i) - v_star(d)) * v_aux
-        !             !!! Viscous force
-        !             if ( viscosity_w ) then
-        !                 select case (d)
-        !                 case (1)
-        !                     !!! x-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txx(i) + eta(j)*txx(j))*dwdx(1, k)
-        !                     if ( dim >= 2 ) then
-        !                         v_aux = v_aux &
-        !                         + (eta(i)*txy(i) + eta(j)*txy(j))*dwdx(2, k)
-        !                         if ( dim == 3 ) then
-        !                             v_aux = v_aux &
-        !                             + (eta(i)*txz(i) + eta(j)*txz(j))*dwdx(3, k)
-        !                         end if
-        !                     end if
-
-        !                 case (2)
-        !                     !!! y-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txx(i) + eta(j)*txy(j))*dwdx(1, k) &
-        !                     + (eta(i)*tyy(i) + eta(j)*tyy(j))*dwdx(2, k)
-        !                     if ( dim == 3 ) then
-        !                         v_aux = v_aux &
-        !                         + (eta(i)*tyz(i) + eta(j)*tyz(j))*dwdx(3, k)
-        !                     end if
-
-        !                 case (3)
-        !                     !!! z-coordinate of acceleration
-        !                     v_aux = v_aux &
-        !                     + (eta(i)*txz(i) + eta(j)*txz(j))*dwdx(1, k) &
-        !                     + (eta(i)*tyz(i) + eta(j)*tyz(j))*dwdx(2, k) &
-        !                     + (eta(i)*tzz(i) + eta(j)*tzz(j))*dwdx(3, k)
-        !                 end select
-        !             end if
-
-        !             v_aux = v_aux * rhoij
-        !             dvdt(d, i) = dvdt(d, i) + mass(j) * v_aux
-        !             dvdt(d, j) = dvdt(d, j) - mass(i) * v_aux
-
-        !         end do
-
-        !         e_aux = e_aux * rhoij
-        !         dedt(i) = dedt(i) + mass(j) * e_aux
-
-        !         !!! For particle j
-        !         e_aux = sum(v(:, j) - v_star(:)) * v_aux
-        !         dedt(j) = dedt(j) + mass(i) * e_aux
-
-        !     case default
-        !         write(err, "(1X, A, I0)") "Error SPH scheme ", pa_sph
-        !         error stop
-        !     end select
-        ! end do
-
+        !$OMP PARALLEL DO PRIVATE(i, j, k, d, rhoij, aux, Z_l, Z_r, e_ij, v_l, v_r, v_ij, p_star, v_star)
         do i = 1, ntotal  !! All particles
             if ( abs(itype(i)) < 8 ) then !! Fluid
                 do k = 1, neighborNum(i) !! All neighbors of each particle
@@ -321,30 +143,33 @@ contains
                         dedt(i) = dedt(i) &
                             + mass(j)     &
                             * aux         &
-                            * dot_product(v(:, i), dwdx(:, i, k))
+                            * dot_product(v(:, i)-v(:, j), dwdx(:, i, k))
 
                     case (2)
                         !!! Auxiliary variables
                         aux = (p(i)/rho(i)**2 + p(j)/rho(j)**2)
 
                         !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(: ,i)                              &
-                            + mass(j)                                        &
-                            * ( - aux * dwdx(:, i, k)                        &
-                                + matmul(  eta(i)*edot(:, :, i) / rho(i)**2  &
-                                         + eta(j)*edot(:, :, j) / rho(j)**2, &
+                        dvdt(:, i) = dvdt(: ,i)                            &
+                            + mass(j)                                      &
+                            * ( - aux * dwdx(:, i, k)                      &
+                                + matmul(  eta(i)*edot(:, :, i)/rho(i)**2  &
+                                         + eta(j)*edot(:, :, j)/rho(j)**2, &
                                          dwdx(:, i, k)) )
 
                         !!! Conservation of Energy
                         dedt(i) = dedt(i) &
                             + mass(j)     &
                             * aux         &
-                            * dot_product(v(:, i), dwdx(:, i, k))
+                            * dot_product(v(:, i)-v(:, j), dwdx(:, i, k))
+                    case default
+                        write(err, "(1X, A, I0)") "Error SPH scheme ", pa_sph
+                        error stop
                     end select !! pa_sph
                 end do !! k
-
             end if
         end do !! i
+        !$OMP END PARALLEL DO
 
         !!! Change of specific internal energy de/dt = Tds/dt - p/rho*div_v ?
         do i = 1, ntotal

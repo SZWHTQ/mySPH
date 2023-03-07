@@ -29,8 +29,7 @@ contains
         class(*), intent(in) :: item
         type(link_node_t) :: node
 
-        if ( associated(this%tail) &
-       .and. allocated(node%item) ) then
+        if ( associated(this%tail) ) then
             allocate(node%item,      source=item)
             allocate(this%tail%next, source=node)
             this%tail => this%tail%next

@@ -53,6 +53,7 @@ contains
         end select
         
         !!! Calculate SPH sum for artificial viscous
+        !$OMP PARALLEL DO PRIVATE(i, j, k, dx, dv, xv, hsml_ij, rho_ij, c_ij, phi_ij, PI_ij)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
                 j = pair(i, k)
@@ -79,13 +80,14 @@ contains
                           / rho_ij
 
                     !!! Calculate SPH sum for artificial viscous force
-                    associate (aux => -PI_ij*dwdx(:, i, k))
-                        dvdt(:, i) = dvdt(:, i) + mass(j) * aux
-                        dedt(i)    = dedt(i) - 0.5_8 * mass(j) * sum(dv*aux)
+                    associate (aux => PI_ij*dwdx(:, i, k))
+                        dvdt(:, i) = dvdt(:, i) - mass(j) * aux
+                        dedt(i)    = dedt(i) + 0.5_8 * mass(j) * sum(dv*aux)
                     end associate
                 end if
             end do
         end do
+        !$OMP END PARALLEL DO
 
     end subroutine arti_visc
 

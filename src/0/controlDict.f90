@@ -69,6 +69,7 @@ module ctrl_dict
 
 
     integer :: nthreads
+    integer :: chunkSize
 
 contains
 

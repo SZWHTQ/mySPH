@@ -28,6 +28,7 @@ contains
             dedt(i)  = 0
         end forall
 
+        !$OMP PARALLEL DO PRIVATE(i, j, k, q_i, q_j, q_ij, hsml_ij, rho_ij, aux)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
                 j = pair(i, k)
@@ -51,6 +52,7 @@ contains
 
             end do
         end do
+        !$OMP END PARALLEL DO
 
     end subroutine arti_heat
 

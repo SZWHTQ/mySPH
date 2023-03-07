@@ -203,8 +203,8 @@ contains
             x(1, ntotal + ndummy) =  0 -  space_x * i
             v(1, ntotal + ndummy) =  0
             mass(ntotal + ndummy) =  rho0 * space_x
-            hsml(ntotal + ndummy) =  0.015
-            itype(ntotal+ ndummy) =  -3
+            hsml(ntotal + ndummy) =  space_x * 1.5
+            itype(ntotal+ ndummy) =  -itype(1)
             e(ntotal   +  ndummy) =  E0
             rho(ntotal +  ndummy) =  rho0
             p(ntotal   +  ndummy) =  0

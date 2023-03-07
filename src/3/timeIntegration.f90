@@ -11,7 +11,7 @@ contains
         use ctrl_dict, only: dim, maxn, max_interaction, i_time_step,delta_t,nnps,skf,sle, &
                              print_interval, monitor_particle, sum_density_w, arti_visc_w, &
                              ex_force_w, arti_heat_w, aver_velocity_w, print_statistics_w, &
-                             dummy_parti_w, nthreads
+                             dummy_parti_w, nthreads, chunkSize
         use initial_m, only: pair, neighborNum, w, dwdx
         use nnps_m
         use density_m
@@ -93,6 +93,7 @@ contains
 
 #if defined _OPENMP
         call omp_set_num_threads(nthreads)
+        chunkSize = (ntotal+ndummy)/nthreads
 #endif
 
 ! #if defined _OPENMP
@@ -332,7 +333,7 @@ contains
             if (print_statistics_w) then
                 write(*,*) ">> Statistics: Dummy particles:"
                 write(*,*) "   Number of dummy particles: ", to_string(ndummy)
-                call print_statistics(ntotal, neighborNum)
+                call print_statistics(ntotal+ndummy, neighborNum)
             end if
             index = 0
             number = 0

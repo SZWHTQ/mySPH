@@ -120,7 +120,7 @@ contains
         call get_value(subtable, 'deltaT',          delta_t,    dble(5e-4))
         call get_value(subtable, 'maxTimeStep',     max_time_step,    1000)
 
-        write(*,"(A, I0, /)") " >> Maximal time steps: ", max_time_step
+        write(*,"(A, I0)") " >> Maximal time steps: ", max_time_step
 
 
         call get_value(subtable, 'printStatistics',     print_statistics_w, .true. )
@@ -158,11 +158,12 @@ contains
         end if
         if ( nthreads == 0 ) then
             if ( trim(buffer)/="" ) then
-                nthreads = omp_get_num_procs()
-            else
                 read(buffer, *) nthreads
+            else
+                nthreads = omp_get_num_procs()
             end if
         end if
+        write(*, "(A, I0, /)") " >> Number of threads: ", nthreads
 #endif
 
 

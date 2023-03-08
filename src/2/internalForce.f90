@@ -33,7 +33,7 @@ contains
         real(8) :: rhoij, aux
         real(8) :: Z_l, Z_r, v_l, v_r, v_ij, e_ij(dim), v_star(dim), p_star
 #if SOLID
-        integer :: solid_num
+        ! integer :: solid_num
         real(8), intent(in),    optional :: Stress(:, :, :)
         real(8), intent(inout), optional :: dSdt(:, :, :)
         real(8), allocatable :: rdot(:, :, :)
@@ -226,7 +226,6 @@ contains
                         j = neighborList(i, k)
 
                         !!! Deviatoric Stress Rate Tensor
-                        dSdt(:, :, i) = 2 * eta(i) * edot(:, :, i)
                         do d = 1, dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
                             do dd = d, dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
                                 dSdt(d, dd, i) = 2 * eta(i) * edot(d, dd, i)

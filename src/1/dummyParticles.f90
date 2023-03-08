@@ -32,7 +32,8 @@ contains
         case("dam_break")
             call dam_break_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
         case("armco_iron_collide")
-            call armco_iron_collide_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            ! call armco_iron_collide_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            call armco_iron_collide_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
         end select
 
     end subroutine gen_dummy_particle
@@ -603,7 +604,7 @@ contains
 
     end subroutine dam_break_dp
 
-    subroutine armco_iron_collide_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine armco_iron_collide_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy, itype(:)
         real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
@@ -647,7 +648,39 @@ contains
             end do
         end do
 
+    end subroutine armco_iron_collide_dp_1
 
-    end subroutine armco_iron_collide_dp
+    subroutine armco_iron_collide_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+        integer, intent(in) :: ntotal
+        integer, intent(inout) :: ndummy, itype(:)
+        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)  
+        integer :: scale_k
+
+        integer i
+
+        select case (skf)
+        case (1)
+            scale_k = 2
+        case (2, 3)
+            scale_k = 3
+        end select
+
+        do i = 1, ntotal
+            if ( x(2, i) - 0 < hsml(i) * scale_k ) then
+                ndummy = ndummy + 1
+                x(1, ntotal+ndummy) =  x(1, i)
+                x(2, ntotal+ndummy) = -x(2, i)
+                v(1, ntotal+ndummy) =  v(1, i)
+                v(2, ntotal+ndummy) = -v(2, i)
+                mass(ntotal+ndummy) =  mass(i)
+                hsml(ntotal+ndummy) =  hsml(i)
+                itype(ntotal+ndummy)=  -itype(i)
+                e(ntotal+ndummy)    =  e(i)
+                rho(ntotal+ndummy)  =  rho(i)
+                p(ntotal+ndummy)    =  p(i)
+            end if
+        end do
+
+    end subroutine armco_iron_collide_dp_2
 
 end module dummy_part_m

@@ -346,7 +346,7 @@ contains
             time = time + delta_t
 
             if (mod(i_time_step, save_interval) == 0) then
-                call output(i_time_step, ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml, div_r)
+                call output((i_time_step/save_interval), ntotal+ndummy, itype, x, v, mass, rho, p, e, c, hsml, div_r)
             end if
 
             if ( mod(i_time_step, print_interval) == 0 ) then

@@ -3,7 +3,7 @@ module input_m
                          read_ini_file_W
     use initial_m, only: itype, x, v, mass, rho, p, e, c, hsml
     use parse_toml_m, only: in_path, out_path, vtk_path, nick
-    use output_m,  only: write_file, write_vtk
+    use output_m,  only: output
     use tools_m
     implicit none
 
@@ -45,6 +45,7 @@ contains
     subroutine write_initial_file()
         use ctrl_dict, only: maxn
         real(8) :: div_r(maxn)
+        integer :: ini = 0
 
         select case(nick)
         case("shear_cavity")
@@ -67,8 +68,7 @@ contains
             call armco_iron_collide()
         end select
 
-        call write_file(out_path // "/0.dat", ntotal, 0, itype, x, v, mass, rho, p, e, c, hsml, div_r)
-        call write_vtk(vtk_path // "/sph0.vtk", ntotal, 0, itype, x, v, mass, rho, p, e, c, hsml, div_r)
+        ! call output(ini, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r)
 
         write(*,*) "Initial particle configuration generated"
         write(*,*) ">> Total number of particles: ", to_string(ntotal)

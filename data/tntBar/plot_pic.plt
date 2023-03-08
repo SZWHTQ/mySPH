@@ -20,20 +20,20 @@ set xtics 0.01
 set ytics 2
 set arrow from 0.085, 22.5 to 0.08, 21 lt rgb "black"
 set label "P_{CJ}" at 0.085, 22.5
-plot './output/1000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/2000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/3000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/4000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/5000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/6000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/7000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/8000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/9000.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/10000.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/11000.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/12000.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/13000.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
-     './output/14000.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+plot './output/Reconstruct_10.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_20.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_30.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_40.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_50.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_60.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_70.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_80.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_90.dat'  u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_100.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_110.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_120.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_130.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
+     './output/Reconstruct_140.dat' u 2:($6*1e-9) with lines lw 2 lt rgb "black", \
      21 with lines dashtype ' -' lw 2 lt rgb "black"
 
 pause -1

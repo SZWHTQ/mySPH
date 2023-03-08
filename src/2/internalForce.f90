@@ -45,10 +45,7 @@ contains
         allocate(edot(dim, dim, ntotal), source=0._8)
 
 #if SOLID
-        if ( present(Stress) ) then
-            solid_num = size(Stress, 3)
-            allocate(rdot(dim, dim, solid_num), source=0._8)
-        end if
+        allocate(rdot(dim, dim, ntotal), source=0._8)
 #endif
 
         !!! Dynamic viscosity
@@ -151,10 +148,10 @@ contains
 
             tdsdt(i) = 1 / rho(i) * sum(Stress(:, :, i)*edot(:, :, i))
 
-            ! select case ( abs(itype(i)) )
-            ! case (8)
+            select case ( abs(itype(i)) )
+            case (8)
                 call mie_gruneisen_eos_of_solid(rho(i), e(i), p(i))
-            ! end select
+            end select
 
         end if !! Fluid or Solid
 #endif

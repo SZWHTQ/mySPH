@@ -134,10 +134,10 @@ contains
         real(8), parameter :: rho0 = 7850
         real(8), parameter :: Gamma = 1.81
 
-        mu = rho / rho0 - 1
+        mu = rho/rho0 - 1
         p_H = hugoniot_curve(mu)
 
-        p = (1 - 0.5 * Gamma * (rho/rho0 - 1)) * p_H &
+        p = (1 - 0.5 * Gamma * mu) * p_H &
           + Gamma * rho * e
 
         !   if ( p < 0 ) p = 0

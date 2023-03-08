@@ -3,7 +3,7 @@ program main
     implicit none
     real(8) :: rho, e, p
 
-    call mie_gruneisen_eos_of_solid(7851._8, 0._8, p)
+    call mie_gruneisen_eos_of_solid(3d4, 0._8, p)
     write(*,"(A, F0.3, 2A, F0.3, A)") ">> Pressure: ", p*1e-6, " MPa"
 
     write(*,"(A)", advance="no") "Input density (kg/m^3) and internal energy (J/kg): "

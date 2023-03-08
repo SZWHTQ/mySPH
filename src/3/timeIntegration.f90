@@ -81,18 +81,18 @@ contains
         select case (pa_sph)
         case (1, 2)
             if ( sum_density_w ) then
-                call sum_density(ntotal, mass, rho, hsml, &
+                call sum_density(ntotal+ndummy, mass, rho, hsml, &
                                  neighborNum, neighborList, w)
             else
-                call con_density(ntotal, v, mass, &
+                call con_density(ntotal+ndummy, v, mass, &
                                  neighborNum, neighborList, dwdx, drhodt)
             end if
         case (3)
-            call con_density_riemann(ntotal, &
+            call con_density_riemann(ntotal+ndummy, &
                                      x, v, mass, rho, p, c,  &
                                      neighborNum, neighborList, dwdx, drhodt)
         case (4)
-            call sum_density_dsph(ntotal, mass, rho, hsml, &
+            call sum_density_dsph(ntotal+ndummy, mass, rho, hsml, &
                                   neighborNum, neighborList, w)
         case default
             write(err, "(1X, A, I0)") "Error density scheme ", pa_sph
@@ -193,9 +193,9 @@ contains
         real(8) :: time = 0, temp_rho, temp_e
         real(8) :: aver_courant = 0, max_courant = 0, cntemp
 #if SOLID
-        integer :: solid_num
+        ! integer :: solid_num
         real(8) :: Stress_prev(dim, dim, maxn)
-        real(8), allocatable :: Stress(:, :, :), dSdt(:, :, :)
+        real(8) :: Stress(dim, dim, maxn), dSdt(dim, dim, maxn)
         real(8) :: J2, SigmaY
 #endif
 
@@ -210,17 +210,20 @@ contains
             dedt(i)      = 0
             drhodt(i)    = 0
             aver_v(:, i) = 0
+            Stress_prev(:, :, i) = 0
+            Stress(:, :, i)      = 0
+            dSdt(:, :, i)        = 0
         end forall
 
-#if SOLID
-        solid_num = 0
-        do i = 1, ntotal
-            if ( itype(i) == 8 ) solid_num = solid_num + 1
-        end do
+! #if SOLID
+!         ! solid_num = 0
+!         ! do i = 1, ntotal
+!         !     if ( itype(i) == 8 ) solid_num = solid_num + 1
+!         ! end do
 
-        allocate(Stress(dim, dim, solid_num), dSdt(dim, dim, solid_num), source=0._8)
-        SigmaY = 5e8
-#endif
+!         allocate(Stress(dim, dim, maxn), dSdt(dim, dim, maxn), source=0._8)
+!         SigmaY = 5e8
+! #endif
     
 #ifdef _OPENMP
         call omp_set_num_threads(nthreads)
@@ -259,17 +262,23 @@ contains
                     end if
                     v_prev(:, i) = v(:, i)
                     v(:, i) = v(:, i) + (delta_t/2)*dvdt(:, i)
+#if SOLID
                     Stress_prev(:, :, i) = Stress(:, :, i)
                     Stress(:, :, i) = Stress(:, :, i) + (delta_t/2)*dSdt(:, :, i)
                     J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
                     if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
+#endif
                 end do
                 !$OMP END PARALLEL DO
             end if
 
-            !!! Definition of variables out of the function vector:
+#if SOLID
+            call single_step(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml, c, &
+                             tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r, Stress, dSdt)
+#else
             call single_step(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml, c, &
                              tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r)
+#endif
 
             if ( i_time_step == 1 ) then
                 !$OMP PARALLEL DO PRIVATE(i)
@@ -282,17 +291,18 @@ contains
 
                     if ( .not. sum_density_w ) then
                         temp_rho = 0
-                        if ( dim == 1 ) temp_rho = -nsym*rho(i)*v(1, i)/x(1, i)
+                         if ( dim == 1 ) temp_rho = -nsym*rho(i)*v(1, i)/x(1, i)
 
                         rho(i) = rho(i) + (delta_t/2) * (drhodt(i)+temp_rho)
                     end if
 
                     v(:, i) = v(:, i) + (delta_t/2) * dvdt(:, i) + aver_v(:, i)
                     x(:, i) = x(:, i) + delta_t * v(:, i)
-
+#if SOLID
                     Stress(:, :, i) = Stress(:, :, i) + (delta_t/2) * dSdt(:, :, i)
                     J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
                     if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
+#endif
                 end do
                 !$OMP END PARALLEL DO
             else
@@ -314,11 +324,11 @@ contains
 
                     v(:, i) = v_prev(:, i) + delta_t * dvdt(:, i) + aver_v(:, i)
                     x(:, i) = x(:, i) + delta_t * v(:, i)
-
+#if SOLID
                     Stress(:, :, i) = Stress_prev(:, :, i) + delta_t * dSdt(:, :, i)
                     J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
                     if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
-                    
+#endif
                     cntemp = courant_num(hsml(i), div_v(i), c(i))
                     aver_courant = aver_courant + cntemp
                     if ( cntemp > max_courant ) max_courant = cntemp

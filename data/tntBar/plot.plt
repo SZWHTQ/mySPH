@@ -24,26 +24,26 @@ do for [i=0:maxStep/100:timeStep/100] {
     set title 'Pressure'
     set ylabel "P/GPa"
     set yrange [0:25]
-    plot sprintf('./output/Reconstruct%d.dat', i) u 2:($6*1e-9) with lines lw 2 lt rgb "black"
+    plot sprintf('./output/Type_5_%d.dat', i) u 2:($6*1e-9) with lines lw 2 lt rgb "black"
 
     set origin 0.5, 0.48
     set title 'Density'
     set ylabel "ρ/kg·m^{-3}"
     set yrange [1.2e3:2.4e3]
-    plot sprintf('./output/Reconstruct%d.dat', i) u 2:5 with lines lw 2 lt rgb "black"
+    plot sprintf('./output/Type_5_%d.dat', i) u 2:5 with lines lw 2 lt rgb "black"
 
     set origin 0, 0
     set title 'Velocity'
     set ylabel "v/m·s^{-1}"
     set yrange [0:2e3]
-    plot sprintf('./output/Reconstruct%d.dat', i) u 2:3 with lines  lw 2 lt rgb "black"#, \
-       # sprintf('./output/Reconstruct%d.dat', i) u 2:3 with points pt 1 ps 0.5 lt rgb "black"
+    plot sprintf('./output/Type_5_%d.dat', i) u 2:3 with lines  lw 2 lt rgb "black"#, \
+       # sprintf('./output/Type_5_%d.dat', i) u 2:3 with points pt 1 ps 0.5 lt rgb "black"
 
     set origin 0.5, 0
     set title 'Internal Energy'
     set ylabel "E/MJ"
     set yrange [3:7]
-    plot sprintf('./output/Reconstruct%d.dat', i) u 2:($7*1e-6) with lines lw 2 lt rgb "black"
+    plot sprintf('./output/Type_5_%d.dat', i) u 2:($7*1e-6) with lines lw 2 lt rgb "black"
 
     pause 0.2
     

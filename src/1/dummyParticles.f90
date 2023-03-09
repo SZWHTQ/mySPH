@@ -32,8 +32,8 @@ contains
         case("dam_break")
             call dam_break_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
         case("armco_iron_collide")
-            ! call armco_iron_collide_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
-            call armco_iron_collide_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            call armco_iron_collide_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            ! call armco_iron_collide_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
         end select
 
     end subroutine gen_dummy_particle
@@ -636,8 +636,8 @@ contains
             do j = 1, Ny
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                x(:, index)  = [wall_domain(1) + (i-0.5)*dx, &
-                                wall_domain(3) + (j-0.5)*dx]
+                x(:, index)  = [wall_domain(2) - (i-0.5)*dx, &
+                                wall_domain(4) - (j-0.5)*dx]
                 v(:, index)  = 0
                 rho(index)   = 7850
                 mass(index)  = rho(index) * dx * dx
@@ -666,18 +666,18 @@ contains
         end select
 
         do i = 1, ntotal
-            if ( x(2, i) - 0 < hsml(i) * scale_k ) then
+            if ( x(2, i) - 0 < hsml(i) * scale_k * 19 ) then
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) =  x(1, i)
-                x(2, ntotal+ndummy) = -x(2, i)
-                v(1, ntotal+ndummy) =  v(1, i)
-                v(2, ntotal+ndummy) = -v(2, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)=  -itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                x(1, ntotal+ndummy)  =  x(1, i)
+                x(2, ntotal+ndummy)  = -x(2, i)
+                v(1, ntotal+ndummy)  =  v(1, i)
+                v(2, ntotal+ndummy)  = -v(2, i)
+                mass(ntotal+ndummy)  =  mass(i)
+                hsml(ntotal+ndummy)  =  hsml(i)
+                itype(ntotal+ndummy) = -itype(i)
+                e(ntotal+ndummy)     =  e(i)
+                rho(ntotal+ndummy)   =  rho(i)
+                p(ntotal+ndummy)     =  p(i)
             end if
         end do
 

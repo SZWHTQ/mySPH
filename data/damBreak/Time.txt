@@ -1,0 +1,4 @@
+Serial: 1671.489s
+
+OpenMP  6 Threads: 1050.406s (Without Check Neighbor List: 911.073s)
+OpenMP 12 Threads: 1117.318s

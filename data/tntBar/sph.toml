@@ -59,10 +59,8 @@ symmetry = 0
 
 [Parallel]
 
-OMP_NUM_THREADS = 8  # Overwrite the environment variable OMP_NUM_THREADS
+OMP_NUM_THREADS = 6  # Overwrite the environment variable OMP_NUM_THREADS
 
 
 [postProcess]
-writeDummyParticle = false
-writeDummyParticle2VTK = true
 

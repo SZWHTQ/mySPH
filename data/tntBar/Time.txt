@@ -1,6 +1,7 @@
 Scheme 1:
 Serial: 44.502s
 
+Scheme 2:
 Serial: 55.246s
 OpenMP  1 Thread : 57.029s
 OpenMP  2 Threads: 39.559s

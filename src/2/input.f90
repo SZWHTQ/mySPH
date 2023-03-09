@@ -45,6 +45,7 @@ contains
     subroutine write_initial_file()
         use ctrl_dict, only: maxn
         real(8) :: div_r(maxn)
+        real(8) :: Stress(dim,dim,maxn)
         integer :: ini = 0
 
         select case(nick)
@@ -68,7 +69,7 @@ contains
             call armco_iron_collide()
         end select
 
-        ! call output(ini, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r)
+        call output(ini, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r, Stress)
 
         write(*,*) "Initial particle configuration generated"
         write(*,*) ">> Total number of particles: ", to_string(ntotal)

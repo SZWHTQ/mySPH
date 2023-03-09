@@ -56,7 +56,7 @@ artificialViscosity = true
 
 [Parallel]
 
-OMP_NUM_THREADS = 8  # Overwrite the environment variable OMP_NUM_THREADS
+OMP_NUM_THREADS = 6  # Overwrite the environment variable OMP_NUM_THREADS
 
 [postProcess]
 writeDummyParticle2VTK = true

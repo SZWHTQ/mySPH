@@ -9,7 +9,7 @@ module in_force_m
 
 contains
     subroutine in_force(ntotal, itype, x, v, mass, rho, p, e, c, &
-                        neighborNum, neighborList, dwdx, dvdt, tdsdt, dedt, Stress, dSdt)
+                        neighborNum, neighborList, dwdx, dvdt, tdsdt, dedt, Shear, dSdt, Stress)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         use visc_m
         use eos_m
@@ -34,8 +34,9 @@ contains
         real(8) :: Z_l, Z_r, v_l, v_r, v_ij, e_ij(dim), v_star(dim), p_star
 #if SOLID
         ! integer :: solid_num
-        real(8), intent(in),    optional :: Stress(:, :, :)
+        real(8), intent(in),    optional :: Shear(:, :, :)
         real(8), intent(inout), optional :: dSdt(:, :, :)
+        real(8), intent(inout), optional :: Stress(:, :, :)
         real(8), allocatable :: rdot(:, :, :)
 #endif
         integer i, j, k, d, dd, ddd
@@ -86,7 +87,7 @@ contains
                 !!! Calculate SPH sum for Strain Rate Tensor and Rotation Rate Tensor of Fluid
                 !!! εab = 1/2 * (va,b + vb,a)
                 !!! Rab = 1/2 * (va,b + vb,a)
-                else if ( present(Stress) ) then !! Solid
+                else if ( present(Shear) ) then !! Solid
                     do k = 1, neighborNum(i) !! All neighbors of each particle
                         j = neighborList(i, k)
                             dv = v(:, j) - v(:, i)
@@ -144,9 +145,9 @@ contains
             end select !! abs(itype(i))
 
 #if SOLID
-        else if ( present(Stress) ) then !! Solid
+        else if ( present(Shear) ) then !! Solid
 
-            tdsdt(i) = 1 / rho(i) * sum(Stress(:, :, i)*edot(:, :, i))
+            tdsdt(i) = 1 / rho(i) * sum(Shear(:, :, i)*edot(:, :, i))
 
             select case ( abs(itype(i)) )
             case (8)
@@ -221,7 +222,7 @@ contains
                             * dot_product( v(:, i)-v(:, j), dwdx(:, i, k) )
 
                     end do !! k
-                else if ( present(Stress) ) then!! Solid
+                else if ( present(Shear) ) then!! Solid
                     do k = 1, neighborNum(i)
                         j = neighborList(i, k)
 
@@ -233,26 +234,30 @@ contains
                                 do ddd = 1, dim
                                     if ( d == dd ) then
                                         dSdt(d, d, i) = dSdt(d, d, i) &
-                                            - 2 * eta(i) * edot(d, d, i) / 3
+                                            - 2._8 * eta(i) * edot(ddd, ddd, i) / 3
                                     end if !! d == dd
-                                    aux = Stress(d, ddd, i) * rdot(dd, ddd, i) &
-                                        + Stress(dd, ddd, i) * rdot(d, ddd, i)
+                                    aux = Shear(d, ddd, i) * rdot(dd, ddd, i) &
+                                        + Shear(dd, ddd, i) * rdot(d, ddd, i)
                                     dSdt(d, dd, i) = dSdt(d, dd, i) + aux
                                     dSdt(dd, d, i) = dSdt(dd, d, i) + aux
                                 end do !!! ddd
                             end do !! dd
                         end do !! d
 
-                        !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(:, i)                             &
-                            + mass(j) * matmul(  Stress(:, :, i)/rho(i)**2  &
-                                               + Stress(:, :, j)/rho(j)**2, &
-                                               dwdx(:, i, k) )
-                        
-                        !!! Conservation of Energy
-                        dedt(i) = dedt(i)                                   &
-                            + mass(j) * ( p(i)/rho(i)**2 + p(j)/rho(j)**2 ) &
-                            * dot_product( v(:, i)-v(:, j), dwdx(:, i, k) )
+                        do d = 1, dim
+                            Stress(d, d, i) = Shear(d, d, i) - p(i)
+                            do dd = 1, dim
+                                !!! Conservation of Momentum
+                                dvdt(d, i) = dvdt(d, i) &
+                                    + mass(j) * ( Stress(d, dd, i) / rho(i)**2   &
+                                                + Stress(d, dd, j) / rho(j)**2 ) &
+                                              * dwdx(d, i, k)
+                            end do
+                            !!! Conservation of Energy
+                            dedt(i) = dedt(i) &
+                                + mass(j) * ( p(i) / rho(i)**2 + p(j) / rho(j)**2 ) &
+                                * ( v(d, i)-v(d, j) ) * dwdx(d, i, k)
+                        end do
 
                     end do !! k
                 end if !! Fluid or Solid
@@ -316,7 +321,7 @@ contains
 
         !!! Change of specific internal energy de/dt = Tds/dt - p/rho*div_v ?
         do i = 1, ntotal
-            dedt(i) = tdsdt(i) + 0.5_8*dedt(i)
+            dedt(i) = tdsdt(i) + 0.5_8 * dedt(i)
         end do
 
     end subroutine in_force

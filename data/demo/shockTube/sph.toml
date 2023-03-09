@@ -19,7 +19,7 @@ kPair = 50
 #     1&2. Classic
 #     3. Riemann Solver(PVRS)
 #     4. Discontinued SPH
-SPH = 2
+SPH = 3
 
 ## Indicator Variables for the Nearest Neighbor Particle Search (NNPS):
 #     1. Direct Search Method
@@ -48,12 +48,12 @@ maxTimeStep = 5000
 ## Time Step
 deltaT = 2e-4
 
-summationDensity    = true
+# summationDensity    = true
 dummyParticle       = true
-artificialViscosity = true
-artificialHeat      = false
-averageVelocity     = false
-DSPH                = false
+# artificialViscosity = true
+# artificialHeat      = false
+# averageVelocity     = false
+# DSPH                = false
 
 
 [Parallel]

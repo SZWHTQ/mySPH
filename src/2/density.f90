@@ -7,13 +7,14 @@ module density_m
 
 contains
     !!! Subroutine to calculate the density with SPH summation algorithm
-    subroutine sum_density(ntotal, mass, rho, hsml, neighborNum, neighborList, w)
-        integer, intent(in)  :: ntotal
-        real(8), intent(in)  :: mass(:)        !! Mass of each particle
-        real(8), intent(in)  :: hsml(:)        !! Smoothing length of each particle
-        integer, intent(in)  :: neighborNum(:) !! Number of neighbors of each particle
-        integer, intent(in)  :: neighborList(:,:)      !! Pair of particles
-        real(8), intent(in)  :: w(:, :)        !! Kernel value of each neighborList
+    subroutine sum_density(ntotal, mass, rho, hsml, neighborNum, neighborList, w, div_r)
+        integer, intent(in)    :: ntotal
+        real(8), intent(in)    :: mass(:)        !! Mass of each particle
+        real(8), intent(in)    :: hsml(:)        !! Smoothing length of each particle
+        integer, intent(in)    :: neighborNum(:) !! Number of neighbors of each particle
+        integer, intent(in)    :: neighborList(:,:)      !! Pair of particles
+        real(8), intent(in)    :: w(:, :)        !! Kernel value of each neighborList
+        real(8), intent(in)    :: div_r(:)     !! Divergence of each particle
         real(8), intent(inout) :: rho(:)       !! Density of each particle
         real(8) :: self
         real(8) :: hv(dim)
@@ -30,19 +31,23 @@ contains
         if ( norm_dens_w ) then
             !$OMP PARALLEL DO PRIVATE(i, self, hv)
             do i = 1, ntotal
-                call kernel(dble(0), 1*hv, hsml(i), self, hv)
-                wi(i) = mass(i)/rho(i) * self
+                if ( div_r(i) < 1.5 ) then
+                    call kernel(dble(0), 1*hv, hsml(i), self, hv)
+                    wi(i) = mass(i)/rho(i) * self
+                end if
             end do
             !$OMP END PARALLEL DO
         end if
 
         if ( norm_dens_w ) then
-            !$OMP PARALLEL DO PRIVATE(i, j, k)
+            !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:wi)
             do i = 1, ntotal
-                do k = 1, neighborNum(i)
-                    j = neighborList(i, k)
-                    wi(i) = wi(i) + mass(j)/rho(j) * w(i, k)
-                end do
+                if ( div_r(i) < 1.5 ) then
+                    do k = 1, neighborNum(i)
+                        j = neighborList(i, k)
+                        wi(i) = wi(i) + mass(j)/rho(j) * w(i, k)
+                    end do
+                end if
             end do
             !$OMP END PARALLEL DO
         end if
@@ -56,20 +61,22 @@ contains
         !$OMP END PARALLEL DO
 
         !!! Calculate SPH sum for rho:
-        !$OMP PARALLEL DO PRIVATE(i, j, k)
+        ! !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:rho)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
                 j = neighborList(i, k)
                 rho(i) = rho(i) + mass(j) * w(i, k)
             end do
         end do
-        !$OMP END PARALLEL DO
+        ! !$OMP END PARALLEL DO
 
         !!! Thirdly, calculate the normalized rho, rho = Σrho / Σw
         if ( norm_dens_w ) then
             !$OMP PARALLEL DO PRIVATE(i)
             do i = 1, ntotal
-                rho(i) = rho(i) / wi(i)
+                if ( div_r(i) < 1.5 ) then
+                    rho(i) = rho(i) / wi(i)
+                end if
             end do
             !$OMP END PARALLEL DO
         end if

@@ -4,7 +4,7 @@ module output_m
     implicit none
 
 contains
-    subroutine output(index, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r)
+    subroutine output(index, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r, Stress)
         use parse_toml_m, only: out_path, vtk_path
         ! use ctrl_dict,    only: write_vtk_w
         use tools_m,      only: to_string
@@ -20,6 +20,7 @@ contains
         real(8), intent(in) :: c(:)
         real(8), intent(in) :: hsml(:)
         real(8), intent(in) :: div_r(:)
+        real(8), intent(in) :: Stress(:, :, :)
         character(:), allocatable :: fileName
         ! logical :: types(8)
         integer :: particleType, num(-8:8)
@@ -43,8 +44,8 @@ contains
                 type_indice(0, 1:num(0)) = 0
                 num(0) = 0
             else
-                num(5) = num(5) + num(0)
                 type_indice(5, num(5)+1:num(5)+num(0)) = type_indice(0, 1:num(0))
+                num(5) = num(5) + num(0)
                 type_indice(0, 1:num(0)) = 0
                 num(0) = 0
             end if
@@ -61,10 +62,12 @@ contains
             associate (slice => type_indice(particleType, 1:num(particleType)))
             call write_file(out_path//"/"//fileName//'.dat',                           &
                             num(particleType), itype(slice), x(:, slice), v(:, slice), &
-                            mass(slice), rho(slice), p(slice), e(slice), c(slice), hsml(slice), div_r(slice))
-            call write_vtk(vtk_path//"/"//fileName//'.vtk',                     &
+                            mass(slice), rho(slice), p(slice), e(slice), c(slice),     &
+                            hsml(slice), div_r(slice), Stress(:, :, slice))
+            call write_vtk(vtk_path//"/"//fileName//'.vtk',                           &
                            num(particleType), itype(slice), x(:, slice), v(:, slice), &
-                           mass(slice), rho(slice), p(slice), e(slice), c(slice), hsml(slice), div_r(slice))
+                           mass(slice), rho(slice), p(slice), e(slice), c(slice),     &
+                           hsml(slice), div_r(slice), Stress(:, :, slice))
             end associate
             deallocate(fileName)
         end do
@@ -76,7 +79,7 @@ contains
 
     end subroutine output
 
-    subroutine write_file(fileDir, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r)
+    subroutine write_file(fileDir, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r, Stress)
         ! use ctrl_dict, only: write_dp_w
         integer, intent(in) :: ntotal
         integer, intent(in) :: itype(:)
@@ -89,8 +92,9 @@ contains
         real(8), intent(in) :: c(:)
         real(8), intent(in) :: hsml(:)
         real(8), intent(in) :: div_r(:)
+        real(8), intent(in) :: Stress(:, :, :)
         character(len=*), intent(in) :: fileDir
-        integer i
+        integer i, d, dd
 
         open(11, file = fileDir)
 
@@ -99,43 +103,43 @@ contains
             write(11, 1001) "Index", &
                             "X", "V", &
                             "Mass"           , "Density",     "Pressure", &
-                            "Internal Energy", "Sound Speed", "Type",    "Smoothing Length", &
-                            "DivDistance"
+                            "InternalEnergy", "SoundSpeed", "Type",    "SmoothingLength", &
+                            "DivDistance", "Stress"
             do i = 1, ntotal
                 write(11, 1002) i       , x(:, i), v(:, i), &
                                 mass(i) , rho(i) , p(i)   , e(i), c(i), &
-                                itype(i), hsml(i), div_r(i)
+                                itype(i), hsml(i), div_r(i), ((Stress(d, dd, i), d = 1, dim), dd = 1, dim)
             end do
-            1001 format(A5, 7(A17), A6, 2(A17))
-            1002 format(I5, 7(2X, E15.8), 2X, I4, 2(2X, E15.8))
+            1001 format(A5, 7(A17), A6, 3(A17))
+            1002 format(I5, 7(2X, ES15.8), 2X, I4, 3(2X, ES15.8))
 
         case (2)
             write(11, 1003) "Index", &
                             "X", "Y", "U", "V", &
                             "Mass"           , "Density",     "Pressure", &
-                            "Internal Energy", "Sound Speed", "Type",    "Smoothing Length", &
-                            "DivDistance"
+                            "InternalEnergy", "Sound Speed", "Type",    "SmoothingLength", &
+                            "DivDistance", "Stress"
             do i = 1, ntotal
                 write(11, 1004) i       , x(:, i), v(:, i), &
                                 mass(i) , rho(i) , p(i)   , e(i), c(i), &
-                                itype(i), hsml(i), div_r(i)
+                                itype(i), hsml(i), div_r(i), ((Stress(d, dd, i), d = 1, dim), dd = 1, dim)
             end do
-            1003 format(A5, 9(A17), A6, 2(A17))
-            1004 format(I5, 9(2X, E15.8), 2X, I4, 2(2X, E15.8))
+            1003 format(A5, 9(A17), A6, 3(A17))
+            1004 format(I5, 9(2X, ES15.8), 2X, I4, 6(2X, ES15.8))
 
         case (3)
             write(11, 1005) "Index", &
                             "X", "Y", "Z", "U", "V", "W", &
                             "Mass"           , "Density",     "Pressure", &
-                            "Internal Energy", "Sound Speed", "Type",    "Smoothing Length", &
-                            "DivDistance"
+                            "InternalEnergy",  "SoundSpeed",  "Type",    "SmoothingLength", &
+                            "DivDistance", "Stress"
             do i = 1, ntotal
                 write(11, 1006) i       , x(:, i), v(:, i), &
                                 mass(i) , rho(i) , p(i)   , e(i), c(i), &
-                                itype(i), hsml(i), div_r(i)
+                                itype(i), hsml(i), div_r(i), ((Stress(d, dd, i), d = 1, dim), dd = 1, dim)
             end do
-            1005 format(A5, 11(A17), A6, 2(A17))
-            1006 format(I5, 11(2X, E15.8), 2X, I4, 2(2X, E15.8))
+            1005 format(A5, 11(A17), A6, 3(A17))
+            1006 format(I5, 11(2X, ES15.8), 2X, I4, 11(2X, ES15.8))
 
         end select
 
@@ -143,7 +147,7 @@ contains
 
     end subroutine write_file
 
-    subroutine write_vtk(fileDir, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r)
+    subroutine write_vtk(fileDir, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r, Stress)
         ! use ctrl_dict, only: write_dp_vtk_w
         use tools_m,   only: now
         integer, intent(in) :: ntotal
@@ -157,8 +161,9 @@ contains
         real(8), intent(in) :: c(:)
         real(8), intent(in) :: hsml(:)
         real(8), intent(in) :: div_r(:)
+        real(8), intent(in) :: Stress(:, :, :)
         character(len=*), intent(in) :: fileDir
-        integer i
+        integer i, d, dd
 
         open(11, file = fileDir)
         1001 format(*(ES12.5, 3X))
@@ -168,79 +173,94 @@ contains
         write (11, "(A)") "paraview_vtk_output"
         write (11, "(A)") "ASCII"
         write (11, "(A)") "DATASET UNSTRUCTURED_GRID"
-        write (11, '(A, I0, A)') "POINTS ", ntotal, " float"
+        write (11, '(A, I0, A)') "POINTS ", ntotal, " double"
         do i = 1, ntotal
-            select case(dim)
-            case (1)
-                write(11, 1001) x(:, i), 0.0, 0.0
-            case (2)
-                write(11, 1001) x(:, i), 0.0
-            case (3)
-                write(11, 1001) x(:, i)
-            end select
+            ! select case(dim)
+            ! case (1)
+                write(11, 1001) x(:, i), (0.0, d = 1, 3-dim)
+            ! case (2)
+            !     write(11, 1001) x(:, i), 0.0
+            ! case (3)
+            !     write(11, 1001) x(:, i)
+            ! end select
         end do
         write (11, "(A, I0)") "POINT_DATA ", ntotal
 
         !!! Write particle mass
-        write (11, "(A)") "SCALARS Mass float 1"
+        write (11, "(A)") "SCALARS Mass double 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
             write (11, 1001) mass(i)
         end do
 
         !!! Write particle density
-        write (11, "(A)") "SCALARS Density float 1"
+        write (11, "(A)") "SCALARS Density double 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
             write (11, 1001) rho(i)
         end do
 
         !!! Write particle pressure
-        write (11, "(A)") "SCALARS Pressure float 1"
+        write (11, "(A)") "SCALARS Pressure double 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
             write (11, 1001) p(i)
         end do
 
         !!! Write particle Internal Energy
-        write (11, "(A)") "SCALARS Internal_Energy float 1"
+        write (11, "(A)") "SCALARS InternalEnergy double 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
             write (11, 1001) e(i)
         end do
 
         !!! Write particle type
-        write (11, "(A)") "SCALARS Particle_Type int 1"
+        write (11, "(A)") "SCALARS ParticleType int 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
             write (11, "(I0)") itype(i)
         end do
 
         !!! Write particle smoothed length
-        write (11, "(A)") "SCALARS Smoothing_Length float 1"
+        write (11, "(A)") "SCALARS SmoothingLength double 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
             write (11, 1001) hsml(i)
         end do
 
         !!! Write particle distance divergence
-        write (11, "(A)") "SCALARS DivDistance float 1"
+        write (11, "(A)") "SCALARS DivDistance double 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
             write (11, 1001) div_r(i)
         end do
 
         !!! Write particle velocity
-        write (11, "(A)") "VECTORS U float"
+        write (11, "(A)") "VECTORS U double"
         do i = 1, ntotal
-            select case(dim)
-            case (1)
-                write(11, 1001) v(:, i), 0.0, 0.0
-            case (2)
-                write(11, 1001) v(:, i), 0.0
-            case (3)
-                write(11, 1001) v(:, i)
-            end select
+            ! select case (dim)
+            ! case (1)
+            write(11, 1001) v(:, i), (0.0, d = 1, 3-dim)
+            ! case (2)
+            !     write(11, 1001) v(:, i), 0.0
+            ! case (3)
+            !     write(11, 1001) v(:, i)
+            ! end select
+        end do
+
+        !!! Write particle stress
+        write (11, "(A)") "TENSORS Stress double"
+        do i = 1, ntotal
+            ! select case (dim)
+            ! case (1)
+            !     write(11, 1001) Stress(1, 1, i)
+            ! case (2)
+            write(11, 1001) ((Stress(d, dd, i), d = 1, dim), dd = 1, dim), (0.0, d = 1, 9-dim**2)
+            ! case (3)
+            !     write(11, 1001) Stress(1, 1, i), Stress(1, 2, i), Stress(1, 3, i), &
+            !                     Stress(2, 1, i), Stress(2, 2, i), Stress(2, 3, i), &
+            !                     Stress(3, 1, i), Stress(3, 2, i), Stress(3, 3, i)
+            ! end select
         end do
 
     end subroutine write_vtk
@@ -273,9 +293,9 @@ contains
             write(13, 1003) i, itype(i), hsml(i)
         end do
 
-        1001 format(I6, 6(2X, E15.8))
-        1002 format(I6, 4(2X, E15.8))
-        1003 format(I6, 2X, I4, 2X, E15.8)
+        1001 format(I6, 6(2X, ES15.8))
+        1002 format(I6, 4(2X, ES15.8))
+        1003 format(I6, 2X, I4, 2X, ES15.8)
 
         close(11)
         close(12)

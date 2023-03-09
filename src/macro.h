@@ -1,2 +1,3 @@
 #define CHECK_NEIGHBOR_NUM 1
+#define CHECK_NEIGHBOR_LIST 0
 #define SOLID 1

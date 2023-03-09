@@ -6,12 +6,19 @@ module time_integration_m
 
 contains
     subroutine single_step(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml, c, &
-                           tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r, Stress, dSdt)
+                           tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r, Shear, dSdt, Stress)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         !$ use omp_lib
+#ifndef _OPENMP
         use ctrl_dict, only: dim, maxn, i_time_step, delta_t,nnps,sle, print_interval, &
                              monitor_particle, sum_density_w, arti_visc_w, ex_force_w, &
                              arti_heat_w, aver_velocity_w, print_statistics_w, dummy_parti_w
+#else
+        use ctrl_dict, only: dim, maxn, i_time_step, delta_t,nnps,sle, print_interval,        &
+                             monitor_particle, sum_density_w, arti_visc_w, ex_force_w,        &
+                             arti_heat_w, aver_velocity_w, print_statistics_w, dummy_parti_w, &
+                             nthreads, chunkSize
+#endif
         use initial_m, only: neighborList, neighborNum, w, dwdx
         use nnps_m
         use density_m
@@ -47,8 +54,9 @@ contains
         real(8) :: area
         integer :: number, index(maxn)
 #if SOLID
-        real(8), intent(in),    optional :: Stress(:, :, :)
+        real(8), intent(in),    optional :: Shear(:, :, :)
         real(8), intent(inout), optional :: dSdt(:, :, :)
+        real(8), intent(inout), optional :: Stress(:, :, :)
 #endif
 
         integer i
@@ -70,6 +78,9 @@ contains
         if ( dummy_parti_w ) call gen_dummy_particle(ntotal, ndummy, &
                                                      itype, x, v, mass, rho, p, e, c, hsml)
 
+#ifdef _OPENMP
+        chunkSize = (ntotal+ndummy) / nthreads
+#endif
         !!! Interactions parameters, calculating neighboring particles
         !!! and optimizing smoothing length
         ! write(*,*) niac
@@ -82,7 +93,7 @@ contains
         case (1, 2)
             if ( sum_density_w ) then
                 call sum_density(ntotal+ndummy, mass, rho, hsml, &
-                                 neighborNum, neighborList, w)
+                                 neighborNum, neighborList, w, div_r)
             else
                 call con_density(ntotal+ndummy, v, mass, &
                                  neighborNum, neighborList, dwdx, drhodt)
@@ -108,7 +119,7 @@ contains
         !!! Internal forces
 #if SOLID
         call in_force(ntotal+ndummy, itype, x, v, mass, rho, p, e, c, &
-                      neighborNum, neighborList, dwdx, indvdt, tdsdt, indedt, Stress, dSdt)
+                      neighborNum, neighborList, dwdx, indvdt, tdsdt, indedt, Shear, dSdt, Stress)
 #else
         call in_force(ntotal+ndummy, itype, x, v, mass, rho, p, e, c, &
                       neighborNum, neighborList, dwdx, indvdt, tdsdt, indedt)
@@ -194,8 +205,8 @@ contains
         real(8) :: aver_courant = 0, max_courant = 0, cntemp
 #if SOLID
         ! integer :: solid_num
-        real(8) :: Stress_prev(dim, dim, maxn)
-        real(8) :: Stress(dim, dim, maxn), dSdt(dim, dim, maxn)
+        real(8) :: Shear_prev(dim, dim, maxn)
+        real(8) :: Shear(dim, dim, maxn), dSdt(dim, dim, maxn), Stress(dim, dim, maxn)
         real(8) :: J2, SigmaY
 #endif
 
@@ -210,31 +221,27 @@ contains
             dedt(i)      = 0
             drhodt(i)    = 0
             aver_v(:, i) = 0
-            Stress_prev(:, :, i) = 0
-            Stress(:, :, i)      = 0
-            dSdt(:, :, i)        = 0
+#if SOLID
+            Shear_prev(:, :, i) = 0
+            Shear(:, :, i)      = 0
+            dSdt(:, :, i)       = 0
+            Stress(:, :, i)     = 0
+#endif
         end forall
 
-! #if SOLID
-!         ! solid_num = 0
-!         ! do i = 1, ntotal
-!         !     if ( itype(i) == 8 ) solid_num = solid_num + 1
-!         ! end do
+#if SOLID
+        SigmaY = 5e8
+#endif
 
-!         allocate(Stress(dim, dim, maxn), dSdt(dim, dim, maxn), source=0._8)
-!         SigmaY = 5e8
-! #endif
-    
 #ifdef _OPENMP
         call omp_set_num_threads(nthreads)
-        chunkSize = maxn / nthreads
 #endif
 
         do i_time_step = 1, max_time_step
 
             if ( mod(i_time_step, print_interval) == 0 ) then
                 call pbflush()
-                write(*, "(A)") repeat("—", 68)
+                write(*, "(A)") repeat("—", 72)
                 write(*, "(2(A, G0))") " Courant Number mean: ", aver_courant, &
                                        " max: ", max_courant
                 write(*,*) "Time step = ", to_string(i_time_step)
@@ -263,10 +270,10 @@ contains
                     v_prev(:, i) = v(:, i)
                     v(:, i) = v(:, i) + (delta_t/2)*dvdt(:, i)
 #if SOLID
-                    Stress_prev(:, :, i) = Stress(:, :, i)
-                    Stress(:, :, i) = Stress(:, :, i) + (delta_t/2)*dSdt(:, :, i)
-                    J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
-                    if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
+                    Shear_prev(:, :, i) = Shear(:, :, i)
+                    Shear(:, :, i) = Shear(:, :, i) + (delta_t/2)*dSdt(:, :, i)
+                    J2 = sum( Shear(:, :, i)**2 )
+                    Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
 #endif
                 end do
                 !$OMP END PARALLEL DO
@@ -274,7 +281,7 @@ contains
 
 #if SOLID
             call single_step(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml, c, &
-                             tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r, Stress, dSdt)
+                             tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r, Shear, dSdt, Stress)
 #else
             call single_step(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml, c, &
                              tdsdt, dvdt, dedt, drhodt, aver_v, div_v, div_r)
@@ -299,9 +306,9 @@ contains
                     v(:, i) = v(:, i) + (delta_t/2) * dvdt(:, i) + aver_v(:, i)
                     x(:, i) = x(:, i) + delta_t * v(:, i)
 #if SOLID
-                    Stress(:, :, i) = Stress(:, :, i) + (delta_t/2) * dSdt(:, :, i)
-                    J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
-                    if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
+                    Shear(:, :, i) = Shear(:, :, i) + (delta_t/2) * dSdt(:, :, i)
+                    J2 = sum( Shear(:, :, i)**2 )
+                    Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
 #endif
                 end do
                 !$OMP END PARALLEL DO
@@ -325,9 +332,9 @@ contains
                     v(:, i) = v_prev(:, i) + delta_t * dvdt(:, i) + aver_v(:, i)
                     x(:, i) = x(:, i) + delta_t * v(:, i)
 #if SOLID
-                    Stress(:, :, i) = Stress_prev(:, :, i) + delta_t * dSdt(:, :, i)
-                    J2 = sqrt( 1.5 * sum( Stress(:, :, i)**2 ))
-                    if ( J2 > SigmaY ) Stress(:, :, i) = Stress(:, :, i) * SigmaY / J2
+                    Shear(:, :, i) = Shear_prev(:, :, i) + delta_t * dSdt(:, :, i)
+                    J2 = sum( Shear(:, :, i)**2 )
+                    Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
 #endif
                     cntemp = courant_num(hsml(i), div_v(i), c(i))
                     aver_courant = aver_courant + cntemp
@@ -346,7 +353,8 @@ contains
             time = time + delta_t
 
             if (mod(i_time_step, save_interval) == 0) then
-                call output((i_time_step/save_interval), ntotal+ndummy, itype, x, v, mass, rho, p, e, c, hsml, div_r)
+                call output((i_time_step/save_interval), ntotal+ndummy, &
+                             itype, x, v, mass, rho, p, e, c, hsml, div_r, Stress)
             end if
 
             if ( mod(i_time_step, print_interval) == 0 ) then
@@ -356,7 +364,7 @@ contains
                                   v(i, monitor_particle), &
                                   dvdt(i, monitor_particle)
                 end do
-                write(*, "(A)") repeat("—", 68)
+                write(*, "(A)") repeat("—", 72)
                 write(*,*)
                 call pbout(i_time_step, max_time_step, .true.)
             end if

@@ -3,7 +3,7 @@ module nnps_m
     use, intrinsic :: iso_fortran_env, only: err => error_unit
     use ctrl_dict, only: dim, skf, chunkSize
     use kernel_m,  only: kernel
-    use tools_m,   only: to_string, round, print_error, print_warning
+    use tools_m,   only: to_string, round, print_error, print_warning, ESC
     implicit none
 
     private
@@ -20,6 +20,10 @@ contains
         real(8), intent(inout) :: w(:, :)
         real(8), intent(inout) :: dwdx(:, :, :)
 
+#if CHECK_NEIGHBOR_LIST
+        integer :: i, j, k
+#endif
+
         select case (nnps)
         case (1)
             call direct_search(x, hsml, neighborNum, neighborList, w, dwdx)
@@ -28,6 +32,20 @@ contains
         case (3)
             call tree_search(x, hsml, neighborNum, neighborList, w, dwdx)
         end select
+
+#if CHECK_NEIGHBOR_LIST
+        do i = 1, size(x, 2)
+            do k = 1, neighborNum(i)
+                j = neighborList(i, k)
+                if ( j == 0 ) then
+                    write(err,"(A)",advance="no") ESC//"[31m"
+                    write(err,"(2(A,I0),A)") "Neighbor ", k, " of Particle ", i, &
+                                             " is 0."
+                    write(err,"(A)",advance="no") ESC//"[0m"
+                end if
+            end do
+        end do
+#endif
 
     end subroutine search_particles
 
@@ -158,9 +176,9 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, d, cell, xcell, ycell, zcell, minxcell, maxxcell, dx, dr, r, mhsml, this_w, this_dwdx) &
         !$OMP SHARED(grid, cell_index, cell_data, neighborNum, neighborList, w, dwdx, ghsmlx, cell_num) &
-        !$OMP SCHEDULE(dynamic, chunkSize)
+        !$OMP SCHEDULE(DYNAMIC, chunkSize)
         !!! determine interaction parameters:
-        do i = 1, ntotal - 1
+        do i = 1, ntotal - 1 !! loop over all particles but the last one
             !!! determine range of grid to go through:
             maxxcell(:) = 1
             minxcell(:) = 1
@@ -170,45 +188,48 @@ contains
             end do
 
             !!! search grid:
-            do zcell = minxcell(3), maxxcell(3)
-                do ycell = minxcell(2), maxxcell(2)
-                    do xcell = minxcell(1), maxxcell(1)
-                        j = grid(xcell, ycell, zcell)
+            do zcell = minxcell(3), maxxcell(3) !! Loop over all cells at z direction
+                do ycell = minxcell(2), maxxcell(2) !! Loop over all cells at y direction
+                    do xcell = minxcell(1), maxxcell(1) !! Loop over all cells at x direction
+                        j = grid(xcell, ycell, zcell) !! Fetch Particle j from grid
                         do while (j > i)
-                                dx(1) = x(1, i) - x(1, j)
-                                dr = dx(1)*dx(1)
-                                do d = 2, dim
-                                    dx(d) = x(d, i) - x(d, j)
-                                    dr = dr + dx(d)*dx(d)
-                                end do
-                                r = sqrt(dr)
-                                mhsml = 0.5_8 * (hsml(i) + hsml(j))
-                                if (r < mhsml * scale_k) then
-                                    !!! Neighbor particle ant tottal neighbor number for each particle
-                                    neighborNum(i) = neighborNum(i) + 1
-                                    neighborNum(j) = neighborNum(j) + 1           
+                            !!! Calculate distance between particle i and j
+                            dx(1) = x(1, i) - x(1, j)
+                            dr = dx(1)*dx(1)
+                            do d = 2, dim
+                                dx(d) = x(d, i) - x(d, j)
+                                dr = dr + dx(d)*dx(d)
+                            end do
+                            r = sqrt(dr)
+                            mhsml = 0.5_8 * (hsml(i) + hsml(j))
+                            if (r < mhsml * scale_k) then
+                                !!! Neighbor particle ant tottal neighbor number for each particle
+                                !$OMP CRITICAL
+                                neighborNum(i) = neighborNum(i) + 1
+                                neighborNum(j) = neighborNum(j) + 1
 #if CHECK_NEIGHBOR_NUM
-                                    if ( neighborNum(i) > kpair .or. neighborNum(j) > kpair ) then
-                                        write(*,*) i, j, neighborNum([i,j]), kpair
-                                        error stop "Too many neighbors"
-                                        ! write(*,*) "Too many neighbors"
-                                    end if
-#endif
-                                    neighborList(i, neighborNum(i)) = j
-                                    neighborList(j, neighborNum(j)) = i
-                                    !!! Kernel and derivations of kernel
-                                    call kernel(r, dx, mhsml, this_w, this_dwdx)
-                                    w(i, neighborNum(i)) = this_w
-                                    w(j, neighborNum(j)) = this_w
-                                    dwdx(:, i, neighborNum(i)) = this_dwdx
-                                    dwdx(:, j, neighborNum(j)) = -this_dwdx
+                                if ( neighborNum(i) > kpair .or. neighborNum(j) > kpair ) then
+                                    write(*,*) i, j, neighborNum([i,j]), kpair
+                                    error stop "Too many neighbors"
+                                    ! write(*,*) "Too many neighbors"
                                 end if
-                                j = cell_data(j)
-                        end do
-                    end do
-                end do
-            end do
-        end do
+#endif
+                                neighborList(i, neighborNum(i)) = j
+                                neighborList(j, neighborNum(j)) = i
+                                !!! Kernel and derivations of kernel
+                                call kernel(r, dx, mhsml, this_w, this_dwdx)
+                                w(i, neighborNum(i)) = this_w
+                                w(j, neighborNum(j)) = this_w
+                                dwdx(:, i, neighborNum(i)) = this_dwdx
+                                dwdx(:, j, neighborNum(j)) = -this_dwdx
+                                !$OMP END CRITICAL
+                            end if !! r < mhsml * scale_k   
+                            j = cell_data(j)
+                        end do !! j
+                    end do !! xcell
+                end do !! ycell
+            end do !! zcell
+        end do !! i
         !$OMP END PARALLEL DO
 
         deallocate(grid)
@@ -367,7 +388,9 @@ contains
             case (3)
                 range = sphere_t(x(:, i), scale_k*hsml(i), 0)
             end select
+            ! !$OMP CRITICAL
             call tree%query(range, found)
+            ! !$OMP END CRITICAL
             do k = 1, found%length
                 call found%fetch(j)
                 select type (j)
@@ -381,9 +404,10 @@ contains
                             dr = dr + dx(d)*dx(d)
                         end do
                         r = sqrt(dr)
+                        ! !$OMP CRITICAL
                         !!! Neighbor particle ant tottal neighbor number for each particle
                         neighborNum(i) = neighborNum(i) + 1
-                        neighborNum(j) = neighborNum(j) + 1                        
+                        neighborNum(j) = neighborNum(j) + 1
 #if CHECK_NEIGHBOR_NUM
                         if ( neighborNum(i) > kpair .or. neighborNum(j) > kpair ) then
                             write(*,*) i, j, neighborNum([i,j])
@@ -398,6 +422,7 @@ contains
                         w(j, neighborNum(j)) = this_w
                         dwdx(:, i, neighborNum(i)) =   this_dwdx
                         dwdx(:, j, neighborNum(j)) = - this_dwdx
+                        ! !$OMP END CRITICAL
                     end if
                 class default
                     error stop "Tree query"

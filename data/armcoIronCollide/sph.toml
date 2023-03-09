@@ -8,10 +8,10 @@ nick = "armco_iron_collide"
 DIM = 2
 
 ## Maximum Number of Particles
-maxN = 2900
+maxN = 2000
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 500
+kPair = 100
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -45,14 +45,14 @@ maxTimeStep = 10000
 ## Time Step
 deltaT = 1e-8
 
-summationDensity    = true
+# summationDensity    = true
 # averageVelocity     = true
 dummyParticle       = true
-viscosity           = true
+viscosity           = true # Must be true for Solid
 # gravity             = true
 artificialViscosity = true
-artificialHeat      = true
-# normalizeDensity    = true
+# artificialHeat      = true
+normalizeDensity    = true
 
 
 [Parallel]

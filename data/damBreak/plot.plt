@@ -5,8 +5,8 @@ set xlabel "x/m"
 set ylabel "y/m"
 set xtics  font ",12"
 set ytics  font ",12"
-set xrange [-10:110]
-set yrange [-10:50]
+set xrange [-5:105]
+set yrange [-5:45]
 set grid
 set size 1, 1
 unset key
@@ -14,10 +14,11 @@ unset key
 # set hidden3d
 # set pm3d
 
-do for [i=0:1e4:50] {
-    set title sprintf('%d', i)
-    plot sprintf('./output/%d.dat', i) using 2:3 pt 6 ps 0.5 lw 0.2 lt rgb "blue"
-    pause 0.1
+do for [i=1:300:1] {
+    set title sprintf('%.2fs', i*0.05)
+    plot sprintf('./output/Type_2_%d.dat', i) using 2:3 pt 6 ps 0.5 lw 0.2 lt rgb "blue", \
+         sprintf('./output/Type_-2_%d.dat', i) using 2:3 pt 1 ps 0.5 lw 0.2 lt rgb "orange"
+    pause 0.05
 }
 
 pause -1

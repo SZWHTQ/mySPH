@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
 
+# cd data/damBreak
+
 if [ ! -d "./output" ]
 then
     mkdir -p ./output

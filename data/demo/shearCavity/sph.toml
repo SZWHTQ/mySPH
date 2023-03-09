@@ -11,7 +11,7 @@ DIM = 2
 maxN = 1920
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 40
+kPair = 50
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -20,10 +20,10 @@ SPH = 2
 ##    1. Direct Search Method
 ##    2. Background-Grid Link List Search Method
 ##    3. Tree Search Method
-NNPS = 2
+NNPS = 3
 
 ## Indicator Variables for Smooth Length Estimation
-SLE = 0
+SLE = 2
 
 ## Smooth Kernel Function : 
 ##    1. cubic spline kernel by w4 - spline (monaghan 1985)

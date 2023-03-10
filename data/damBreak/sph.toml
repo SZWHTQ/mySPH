@@ -45,7 +45,7 @@ maxTimeStep = 15000
 ## Time Step
 deltaT = 1e-3
 
-summationDensity    = true
+summationDensity    = false
 # averageVelocity     = true
 dummyParticle       = true
 viscosity           = true

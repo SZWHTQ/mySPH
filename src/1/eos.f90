@@ -96,7 +96,7 @@ contains
             p = rho0*c0**2*mu + (gamma0+a*mu)*e
         end if
 
-        if ( p < 0 ) p = 0
+        ! if ( p < 0 ) p = 0
 
     end subroutine mie_gruneisen_eos_of_water
 

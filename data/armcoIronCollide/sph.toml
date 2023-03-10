@@ -1,6 +1,6 @@
 ## Project Name
 name = "Two-dimensional Armco Iron Collide"
-nick = "armco_iron_collide"
+nick = "taylor_rod"
 
 [Parameter]
 
@@ -11,7 +11,7 @@ DIM = 2
 maxN = 2000
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 100
+kPair = 80
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -45,19 +45,19 @@ maxTimeStep = 10000
 ## Time Step
 deltaT = 1e-8
 
-# summationDensity    = true
-# averageVelocity     = true
+summationDensity    = false
 dummyParticle       = true
 viscosity           = true # Must be true for Solid
 # gravity             = true
 artificialViscosity = true
 # artificialHeat      = true
-normalizeDensity    = true
+# averageVelocity     = true1
+# normalizeDensity    = true1
 
 
 [Parallel]
 
-OMP_NUM_THREADS = 1  # Overwrite the environment variable OMP_NUM_THREADS
+OMP_NUM_THREADS = 6  # Overwrite the environment variable OMP_NUM_THREADS
 
 [postProcess]
 writeDummyParticle2VTK = true

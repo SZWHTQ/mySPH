@@ -101,6 +101,7 @@ contains
             drhodt(i) = 0
         end do
 
+        !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:drhodt)
         do i = 1, ntotal
             do k = 1, neighborNum(i)
                 j = neighborList(i, k)
@@ -109,6 +110,7 @@ contains
                     * sum((v(:, i) - v(:, j)) * dwdx(:, i, k))
             end do
         end do
+        !$OMP END PARALLEL DO
 
 
     end subroutine con_density

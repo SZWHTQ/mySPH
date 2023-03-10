@@ -159,16 +159,18 @@ contains
                 write(*,*) "   Number of dummy particles: ", to_string(ndummy)
                 call print_statistics(ntotal+ndummy, neighborNum)
             end if
-            index = 0
-            number = 0
-            do i = 1, ntotal+ndummy
-                if ( itype(i) == 2 ) then
-                    number = number + 1
-                    index(number) = i
-                end if
-            end do
-            call calculate_area(number, mass(index(1:number)), rho(index(1:number)), area)
-            write(*,"(A, I0, ES15.7)") " >> Statistics: Target Area: ", number, area
+            
+            ! index = 0
+            ! number = 0
+            ! do i = 1, ntotal+ndummy
+            !     if ( itype(i) == 2 ) then
+            !         number = number + 1
+            !         index(number) = i
+            !     end if
+            ! end do
+            ! call calculate_area(number, mass(index(1:number)), rho(index(1:number)), area)
+            ! write(*,"(A, I0, ES15.7)") " >> Statistics: Target Area: ", number, area
+
             write(*,*) ">> Information for particle ", to_string(monitor_particle)
             write(*,1001) "Internal a ", "Artificial a", "External a", "Total a"
             do i = 1, dim
@@ -230,7 +232,7 @@ contains
         end forall
 
 #if SOLID
-        SigmaY = 5e8
+        SigmaY = 6e8
 #endif
 
 #ifdef _OPENMP
@@ -270,10 +272,12 @@ contains
                     v_prev(:, i) = v(:, i)
                     v(:, i) = v(:, i) + (delta_t/2)*dvdt(:, i)
 #if SOLID
-                    Shear_prev(:, :, i) = Shear(:, :, i)
-                    Shear(:, :, i) = Shear(:, :, i) + (delta_t/2)*dSdt(:, :, i)
-                    J2 = sum( Shear(:, :, i)**2 )
-                    Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                    if ( abs(itype(i)) == 8 ) then
+                        Shear_prev(:, :, i) = Shear(:, :, i)
+                        Shear(:, :, i) = Shear(:, :, i) + (delta_t/2)*dSdt(:, :, i)
+                        J2 = sum( Shear(:, :, i)**2 )
+                        Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                    end if
 #endif
                 end do
                 !$OMP END PARALLEL DO
@@ -306,9 +310,11 @@ contains
                     v(:, i) = v(:, i) + (delta_t/2) * dvdt(:, i) + aver_v(:, i)
                     x(:, i) = x(:, i) + delta_t * v(:, i)
 #if SOLID
-                    Shear(:, :, i) = Shear(:, :, i) + (delta_t/2) * dSdt(:, :, i)
-                    J2 = sum( Shear(:, :, i)**2 )
-                    Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                    if ( abs(itype(i)) == 8 ) then
+                        Shear(:, :, i) = Shear(:, :, i) + (delta_t/2) * dSdt(:, :, i)
+                        J2 = sum( Shear(:, :, i)**2 )
+                        Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                    end if
 #endif
                 end do
                 !$OMP END PARALLEL DO
@@ -332,9 +338,11 @@ contains
                     v(:, i) = v_prev(:, i) + delta_t * dvdt(:, i) + aver_v(:, i)
                     x(:, i) = x(:, i) + delta_t * v(:, i)
 #if SOLID
-                    Shear(:, :, i) = Shear_prev(:, :, i) + delta_t * dSdt(:, :, i)
-                    J2 = sum( Shear(:, :, i)**2 )
-                    Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                    if ( abs(itype(i)) == 8 ) then
+                        Shear(:, :, i) = Shear_prev(:, :, i) + delta_t * dSdt(:, :, i)
+                        J2 = sum( Shear(:, :, i)**2 )
+                        Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                    end if
 #endif
                     cntemp = courant_num(hsml(i), div_v(i), c(i))
                     aver_courant = aver_courant + cntemp

@@ -42,9 +42,13 @@ contains
         !     alpha = 1
         !     beta  = 1
         !     psi   = 0.1
-        case("tnt_bar", "tnt_cylinder", "undex_cylinder", "undex_chamber", "armco_iron_collide")
+        case("tnt_bar", "tnt_cylinder", "undex_cylinder", "undex_chamber")
             alpha = 1
             beta  = 10
+            psi   = 0.1
+        case("taylor_rod")
+            alpha = 1
+            beta  = 1
             psi   = 0.1
         case default
             alpha = 1

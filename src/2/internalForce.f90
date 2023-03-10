@@ -37,7 +37,7 @@ contains
         real(8), intent(in),    optional :: Shear(:, :, :)
         real(8), intent(inout), optional :: dSdt(:, :, :)
         real(8), intent(inout), optional :: Stress(:, :, :)
-        real(8), allocatable :: rdot(:, :, :)
+        real(8), allocatable :: rdot(:, :, :), aver_edot(:, :)
 #endif
         integer i, j, k, d, dd, ddd
 
@@ -47,6 +47,7 @@ contains
 
 #if SOLID
         allocate(rdot(dim, dim, ntotal), source=0._8)
+        allocate(aver_edot(dim, dim), source=0._8)
 #endif
 
         !!! Dynamic viscosity
@@ -92,17 +93,13 @@ contains
                         j = neighborList(i, k)
                             dv = v(:, j) - v(:, i)
                             do d = 1, dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
-                                do dd = d, dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
+                                do dd = 1, dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
                                     associate (vab => mass(j)/rho(j) * dv(d) * dwdx(dd, i, k))
                                     associate (vba => mass(j)/rho(j) * dv(dd) * dwdx(d, i, k))
                                         edot(d, dd, i) = edot(d, dd, i) &
-                                            + 0.5_8 * (vab + vba)
-                                        edot(dd, d, i) = edot(dd, d, i) &
-                                            + 0.5_8 * (vba + vab)
+                                            + 0.5 * (vab + vba)
                                         rdot(d, dd, i) = rdot(d, dd, i) &
-                                            + 0.5_8 * (vab - vba)
-                                        rdot(dd, d, i) = rdot(dd, d, i) &
-                                            + 0.5_8 * (vba - vab)
+                                            + 0.5 * (vab - vba)
                                     end associate
                                     end associate
                                 end do !! dd
@@ -115,7 +112,7 @@ contains
         end if !! Viscoisty
 
 
-        !$OMP PARALLEL DO PRIVATE(i)
+        !$OMP PARALLEL DO PRIVATE(i, aux, aver_edot, j, k, d, dd, ddd)
         do i = 1, ntotal !! All particles
 #if SOLID
         if ( abs(itype(i)) < 8 ) then !! Fluid
@@ -147,12 +144,46 @@ contains
 #if SOLID
         else if ( present(Shear) ) then !! Solid
 
-            tdsdt(i) = 1 / rho(i) * sum(Shear(:, :, i)*edot(:, :, i))
+            aux = 0
+            do d = 1, dim
+                aux = aux + edot(d, d, i)
+            end do
+            aux = aux / 3
+
+            aver_edot = edot(:, :, i) !! Strain Rate Tensor of Solid
+            do d = 1, dim
+                aver_edot(d, d) = aver_edot(d, d) - aux
+            end do
+
+            tdsdt(i) = 1 / rho(i) * sum(Shear(:, :, i) * aver_edot(:, :))
 
             select case ( abs(itype(i)) )
             case (8)
                 call mie_gruneisen_eos_of_solid(rho(i), e(i), p(i))
             end select
+
+            do k = 1, neighborNum(i)
+                j = neighborList(i, k)
+
+                !!! Deviatoric Stress Rate Tensor
+                do d = 1, dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
+                    do dd = 1, dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
+                        dSdt(d, dd, i) = 2 * eta(i) * aver_edot(d, dd)
+                        do ddd = 1, dim
+                            dSdt(d, dd, i) = dSdt(d, dd, i) + &
+                                Shear(d, ddd, i) * rdot(dd, ddd, i) &
+                              + Shear(dd, ddd, i) * rdot(d, ddd, i)
+                        end do !!! ddd
+                    end do !! dd
+                end do !! d
+            end do !! k
+
+            do d = 1, dim
+                do dd = 1, dim
+                    Stress(d, dd, i) = Shear(d, dd, i)
+                end do
+                Stress(d, d, i) = Stress(d, d, i) - p(i)
+            end do
 
         end if !! Fluid or Solid
 #endif
@@ -226,26 +257,7 @@ contains
                     do k = 1, neighborNum(i)
                         j = neighborList(i, k)
 
-                        !!! Deviatoric Stress Rate Tensor
-                        do d = 1, dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
-                            do dd = d, dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
-                                dSdt(d, dd, i) = 2 * eta(i) * edot(d, dd, i)
-                                dSdt(dd, d, i) = 2 * eta(i) * edot(dd, d, i)
-                                do ddd = 1, dim
-                                    if ( d == dd ) then
-                                        dSdt(d, d, i) = dSdt(d, d, i) &
-                                            - 2._8 * eta(i) * edot(ddd, ddd, i) / 3
-                                    end if !! d == dd
-                                    aux = Shear(d, ddd, i) * rdot(dd, ddd, i) &
-                                        + Shear(dd, ddd, i) * rdot(d, ddd, i)
-                                    dSdt(d, dd, i) = dSdt(d, dd, i) + aux
-                                    dSdt(dd, d, i) = dSdt(dd, d, i) + aux
-                                end do !!! ddd
-                            end do !! dd
-                        end do !! d
-
                         do d = 1, dim
-                            Stress(d, d, i) = Shear(d, d, i) - p(i)
                             do dd = 1, dim
                                 !!! Conservation of Momentum
                                 dvdt(d, i) = dvdt(d, i) &
@@ -323,6 +335,12 @@ contains
         do i = 1, ntotal
             dedt(i) = tdsdt(i) + 0.5_8 * dedt(i)
         end do
+
+        deallocate(edot)
+
+#if SOLID
+        deallocate(rdot, aver_edot)
+#endif
 
     end subroutine in_force
 

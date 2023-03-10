@@ -65,8 +65,8 @@ contains
             call undex()
         case("dam_break")
             call dam_break()
-        case ("armco_iron_collide")
-            call armco_iron_collide()
+        case ("taylor_rod")
+            call taylor_rod()
         end select
 
         call output(ini, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r, Stress)
@@ -311,7 +311,7 @@ contains
                 rho(k)   = 1000
                 mass(k)  = rho(k) * delta(1)*delta(2)
                 p(k)     = 0
-                e(k)     = 0
+                e(k)     = 1e8
                 itype(k) = 6
                 hsml(k)  = 1.5 * sum(delta)/2
                 x(:, k) = water_origin + [i-1, j-1] * delta
@@ -327,7 +327,7 @@ contains
                 rho(k)   = 1000
                 mass(k)  = rho(k) * delta(1)*delta(2)
                 p(k)     = 0
-                e(k)     = 0
+                e(k)     = 1e8
                 itype(k) = 6
                 hsml(k)  = 1.5 * sum(delta)/2
             end do
@@ -342,7 +342,7 @@ contains
                 rho(k)   = 1000
                 mass(k)  = rho(k) * delta(1)*delta(2)
                 p(k)     = 0
-                e(k)     = 0
+                e(k)     = 1e8
                 itype(k) = 6
                 hsml(k)  = 1.5 * sum(delta)/2
             end do
@@ -357,7 +357,7 @@ contains
                 rho(k)   = 1000
                 mass(k)  = rho(k) * delta(1)*delta(2)
                 p(k)     = 0
-                e(k)     = 0
+                e(k)     = 1e8
                 itype(k) = 6
                 hsml(k)  = 1.5 * sum(delta)/2
             end do
@@ -479,7 +479,7 @@ contains
 
     end subroutine dam_break
 
-    subroutine armco_iron_collide()
+    subroutine taylor_rod()
         real(8) :: solid_domain(4) = [0., 0.760, &
                                       0., 2.546] * 1e-2
         real(8) :: dx = 0.038 * 1e-2
@@ -500,14 +500,15 @@ contains
                 mass(k)  = rho(k) * dx * dx
                 p(k)     = 0
                 e(k)     = 0
+                c(k)     = 5000
                 itype(k) = 8
-                hsml(k)  = dx
+                hsml(k)  = dx * 2
             end do
         end do
 
         ntotal = Nx * Ny
 
-    end subroutine armco_iron_collide
+    end subroutine taylor_rod
 
     subroutine config_input_3()
         integer i, null

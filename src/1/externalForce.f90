@@ -50,9 +50,9 @@ contains
             case ("dam_break")
                 factor_s = 10
                 r0 = abs(x(1, 2) - x(2, 2)) * 1
-            case ("armco_iron_collide")
-                ! factor_s = 1e-2
-                ! r0 = abs(x(1, 2) - x(2, 2)) * 0.5
+            case ("taylor_rod")
+                factor_s = 1e-2
+                r0 = abs(x(1, 2) - x(2, 2)) * 1
             end select
 
             first_entry = .false.

@@ -31,9 +31,9 @@ contains
             call undex_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
         case("dam_break")
             call dam_break_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
-        case("armco_iron_collide")
-            call armco_iron_collide_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
-            ! call armco_iron_collide_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+        case("taylor_rod")
+            ! call taylor_rod_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
+            call taylor_rod_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
         end select
 
     end subroutine gen_dummy_particle
@@ -301,7 +301,7 @@ contains
                 mass(k)  = rho(k) * delta(1)*delta(2)
                 p(k)     = 0
                 e(k)     = 0
-                itype(k) = itype(1)
+                itype(k) = -itype(1)
                 hsml(k)  = 1.5 * sum(delta)/2
             end do
             first_entry = .false.
@@ -313,13 +313,19 @@ contains
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy, itype(:)
         real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
-        real(8) :: boundary(2, 2)
+        real(8) :: boundary(2, 2), dx
+        logical :: first_entry = .true.
+        save boundary, dx, first_entry
         integer :: scale_k, n_dp_1
         integer i
 
-        boundary = reshape([maxval(x(:,ntotal+1:ntotal+ndummy), 2), &
-                            minval(x(:,ntotal+1:ntotal+ndummy), 2)], &
-                            shape(boundary))
+        if ( first_entry ) then
+            dx = x(2, 2) - x(2, 1)
+            boundary = reshape([maxval(x(:,1:ntotal+ndummy), 2)+dx/2, &
+                                minval(x(:,1:ntotal+ndummy), 2)-dx/2], &
+                                shape(boundary))
+            first_entry = .false.
+        end if
 
         n_dp_1 = ndummy
 
@@ -336,10 +342,10 @@ contains
                 ndummy = ndummy + 1
                 x(1, ntotal+ndummy) =  x(1, i)
                 x(2, ntotal+ndummy) =  2*boundary(2, 1) - x(2, i)
-                v(:, ntotal+ndummy) = -v(:, i)
+                v(:, ntotal+ndummy) =  v(:, i)
                 mass(ntotal+ndummy) =  mass(i)
                 hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)= -itype(i)
+                itype(ntotal+ndummy)=  itype(i)
                 e(ntotal+ndummy)    =  e(i)
                 rho(ntotal+ndummy)  =  rho(i)
                 p(ntotal+ndummy)    =  p(i)
@@ -350,10 +356,10 @@ contains
                 ndummy = ndummy + 1
                 x(1, ntotal+ndummy) =  x(1, i)
                 x(2, ntotal+ndummy) =  2*boundary(2, 2) - x(2, i)
-                v(:, ntotal+ndummy) = -v(:, i)
+                v(:, ntotal+ndummy) =  v(:, i)
                 mass(ntotal+ndummy) =  mass(i)
                 hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)= -itype(i)
+                itype(ntotal+ndummy)=  itype(i)
                 e(ntotal+ndummy)    =  e(i)
                 rho(ntotal+ndummy)  =  rho(i)
                 p(ntotal+ndummy)    =  p(i)
@@ -364,10 +370,10 @@ contains
                 ndummy = ndummy + 1
                 x(1, ntotal+ndummy) =  2*boundary(1, 1) - x(1, i)
                 x(2, ntotal+ndummy) =  x(2, i)
-                v(:, ntotal+ndummy) = -v(:, i)
+                v(:, ntotal+ndummy) =  v(:, i)
                 mass(ntotal+ndummy) =  mass(i)
                 hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)= -itype(i)
+                itype(ntotal+ndummy)=  itype(i)
                 e(ntotal+ndummy)    =  e(i)
                 rho(ntotal+ndummy)  =  rho(i)
                 p(ntotal+ndummy)    =  p(i)
@@ -378,10 +384,10 @@ contains
                 ndummy = ndummy + 1
                 x(1, ntotal+ndummy) =  2*boundary(1, 2) - x(1, i)
                 x(2, ntotal+ndummy) =  x(2, i)
-                v(:, ntotal+ndummy) = -v(:, i)
+                v(:, ntotal+ndummy) =  v(:, i)
                 mass(ntotal+ndummy) =  mass(i)
                 hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)= -itype(i)
+                itype(ntotal+ndummy)=  itype(i)
                 e(ntotal+ndummy)    =  e(i)
                 rho(ntotal+ndummy)  =  rho(i)
                 p(ntotal+ndummy)    =  p(i)
@@ -604,10 +610,10 @@ contains
 
     end subroutine dam_break_dp
 
-    subroutine armco_iron_collide_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine taylor_rod_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), c(:), hsml(:)
         real(8) :: dx
         save dx
         real(8) :: wall_domain(4)
@@ -643,17 +649,18 @@ contains
                 mass(index)  = rho(index) * dx * dx
                 p(index)     = 0
                 e(index)     = 0
+                c(index)     = 5000
                 itype(index) = -itype(1)
-                hsml(index)  = dx
+                hsml(index)  = dx * 2
             end do
         end do
 
-    end subroutine armco_iron_collide_dp_1
+    end subroutine taylor_rod_dp_1
 
-    subroutine armco_iron_collide_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine taylor_rod_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)  
+        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), c(:), hsml(:)
         integer :: scale_k
 
         integer i
@@ -666,7 +673,7 @@ contains
         end select
 
         do i = 1, ntotal
-            if ( x(2, i) - 0 < hsml(i) * scale_k * 19 ) then
+            if ( x(2, i) - 0 < hsml(i) * scale_k ) then
                 ndummy = ndummy + 1
                 x(1, ntotal+ndummy)  =  x(1, i)
                 x(2, ntotal+ndummy)  = -x(2, i)
@@ -678,9 +685,10 @@ contains
                 e(ntotal+ndummy)     =  e(i)
                 rho(ntotal+ndummy)   =  rho(i)
                 p(ntotal+ndummy)     =  p(i)
+                c(ntotal+ndummy)     =  c(i)
             end if
         end do
 
-    end subroutine armco_iron_collide_dp_2
+    end subroutine taylor_rod_dp_2
 
 end module dummy_part_m

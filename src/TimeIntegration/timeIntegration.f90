@@ -239,6 +239,9 @@ contains
         call omp_set_num_threads(nthreads)
 #endif
 
+        call pbout(0, max_time_step, .true.)
+        call pbflush()
+
         do i_time_step = 1, max_time_step
 
             if ( mod(i_time_step, print_interval) == 0 ) then

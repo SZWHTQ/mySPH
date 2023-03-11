@@ -136,14 +136,14 @@ contains
         double precision dt, dr, estimate
         integer,parameter :: digit = 50
         integer remain(2), values(8), i
-        character(len=20) :: FMT
+        ! character(len=20) :: FMT
         logical,intent(in), optional :: isflushed
         if (present(isflushed) .and. isflushed) then
             write (*, *)
         end if
 
         ! 変数maxの桁数を調べて書式指定子の作成を行う
-        write (FMT, '(a, i0, a)') "(2(i", int(log10(real(max))) + 1, ",a))"
+        ! write (FMT, '(a, i0, a)') "(2(i", int(log10(real(max))) + 1, ",a))"
 
         ! 日時の取得
         call date_and_time(values=values)
@@ -165,20 +165,20 @@ contains
         remain(1) = int(estimate/6d4) ! minutes
         remain(2) = int((estimate-remain(1)*6d4)*1d-3) ! seconds
 
-        write (*, FMT, advance='no') value, " / ", max, " ["
+        write (*, "(1X, 2(I0, A), $)") value, " / ", max, " ["
         do i = 1, int(digit*rate)
-            write (*, '(a)', advance='no') "="
+            write (*, '(a, $)') "="
         end do
-        write (*, '(a)', advance='no') ">"
+        write (*, '(a, $)') ">"
         do i = int(digit*rate) + 1, digit
-            write (*, '(a)', advance='no') "-"
+            write (*, '(a, $)') "-"
         end do
 
         if (isflushed) then
-            fdigit = 2 * int(log10(real(max))) + 75
+            fdigit = 2 * int(log10(real(max))+1) + 75
         end if
-        write (*, '(a, f7.2, a, i3, a, i2, a, a)', advance='no') &
-               "]", 100d0*rate, "% ", remain(1), "m", remain(2), "s", char(13)
+        write (*, '(a, f7.2, a, i3, a, i2, a, a, $)') &
+               "]", 100d0*rate, "% ", remain(1), "m", remain(2), "s", CR
 
         if (value == max) then
             write (*, *)

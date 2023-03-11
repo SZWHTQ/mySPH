@@ -61,7 +61,7 @@ module ctrl_dict
 
     !!! Particle Interaction Variables
     integer :: max_interaction           !! Maximum Allowed Number of Interacting Pairs
-    integer :: niac                      !! Number of Interacting Pairs
+    ! integer :: niac                      !! Number of Interacting Pairs
 
     ! integer, allocatable :: new_pair(:,:)   !! New :: List of the Part of Interaction Pair
     ! real(8), allocatable :: new_w(:,:)      !! New :: Smooth Kernel Function for a Given Interaction Pair

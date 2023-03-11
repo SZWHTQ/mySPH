@@ -1,6 +1,6 @@
 module kernel_m
     use ctrl_dict, only: skf, dim
-    use tools_m,   only: print_error, PI
+    use tools_m,   only: PI
 
     implicit none
 

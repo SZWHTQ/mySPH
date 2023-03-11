@@ -51,8 +51,8 @@ contains
                                   div_v(:), div_r(:)
         real(8) :: indvdt(dim, maxn), indedt(maxn), exdvdt(dim, maxn), &
                    avdvdt(dim, maxn), avdedt(maxn), ahdedt(maxn)
-        real(8) :: area
-        integer :: number, index(maxn)
+        ! real(8) :: area
+        ! integer :: number, index(maxn)
 #if SOLID
         real(8), intent(in),    optional :: Shear(:, :, :)
         real(8), intent(inout), optional :: dSdt(:, :, :)

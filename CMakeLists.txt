@@ -10,10 +10,12 @@ project(
     VERSION "0.0.1"    
 )
 
-file(GLOB_RECURSE srcs0 src/0/*.f90)
-file(GLOB_RECURSE srcs1 src/1/*.f90)
-file(GLOB_RECURSE srcs2 src/2/*.f90)
-file(GLOB_RECURSE srcs3 src/3/*.f90)
+# file(GLOB_RECURSE srcs0 src/0/*.f90)
+# file(GLOB_RECURSE srcs1 src/1/*.f90)
+# file(GLOB_RECURSE srcs2 src/2/*.f90)
+# file(GLOB_RECURSE srcs3 src/3/*.f90)
+set(srcs)
+add_subdirectory("src")
 
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/module")
     make_directory("${PROJECT_SOURCE_DIR}/module")
@@ -41,10 +43,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 
 add_library(
     mySPH-lib
-    ${srcs0}
-    ${srcs1}
-    ${srcs2}
-    ${srcs3}
+    ${srcs}
 )
 
 find_package(Toml-f)

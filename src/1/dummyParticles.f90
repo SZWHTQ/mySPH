@@ -24,7 +24,7 @@ contains
             call tnt_bar_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
             call tnt_bar_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
         case("undex_chamber")
-            call undex_chamber_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            ! call undex_chamber_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
             call undex_chamber_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
         case("UNDEX")
             call undex_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
@@ -313,7 +313,7 @@ contains
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy, itype(:)
         real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
-        real(8) :: boundary(2, 2), dx
+        real(8) :: boundary(2, 2), dx, thickness
         logical :: first_entry = .true.
         save boundary, dx, first_entry
         integer :: scale_k, n_dp_1
@@ -340,8 +340,10 @@ contains
             !!! Dummy particle II on the Upper side
             if ( boundary(2, 1) - x(2, i) < hsml(i) * scale_k ) then
                 ndummy = ndummy + 1
+                thickness = hsml(i) * scale_k
                 x(1, ntotal+ndummy) =  x(1, i)
-                x(2, ntotal+ndummy) =  2*boundary(2, 1) - x(2, i)
+                ! x(2, ntotal+ndummy) =  2*boundary(2, 1) - x(2, i)
+                x(2, ntotal+ndummy) =  x(2, i) + thickness
                 v(:, ntotal+ndummy) =  v(:, i)
                 mass(ntotal+ndummy) =  mass(i)
                 hsml(ntotal+ndummy) =  hsml(i)
@@ -354,8 +356,10 @@ contains
             !!! Dummy particle II on the Lower side
             if ( x(2, i) - boundary(2, 2) < hsml(i) * scale_k ) then
                 ndummy = ndummy + 1
+                thickness = hsml(i) * scale_k
                 x(1, ntotal+ndummy) =  x(1, i)
-                x(2, ntotal+ndummy) =  2*boundary(2, 2) - x(2, i)
+                ! x(2, ntotal+ndummy) =  2*boundary(2, 2) - x(2, i)
+                x(2, ntotal+ndummy) =  x(2, i) - thickness
                 v(:, ntotal+ndummy) =  v(:, i)
                 mass(ntotal+ndummy) =  mass(i)
                 hsml(ntotal+ndummy) =  hsml(i)
@@ -364,11 +368,17 @@ contains
                 rho(ntotal+ndummy)  =  rho(i)
                 p(ntotal+ndummy)    =  p(i)
             end if
+        end do
 
+        n_dp_1 = ntotal+ndummy
+
+        do i = 1, n_dp_1
             !!! Monaghan type dummy particle on the Right side
             if ( boundary(1, 1) - x(1, i) < hsml(i) * scale_k ) then
+                thickness = hsml(i) * scale_k
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) =  2*boundary(1, 1) - x(1, i)
+                ! x(1, ntotal+ndummy) =  2*boundary(1, 1) - x(1, i)
+                x(1, ntotal+ndummy) =  x(1, i) + thickness
                 x(2, ntotal+ndummy) =  x(2, i)
                 v(:, ntotal+ndummy) =  v(:, i)
                 mass(ntotal+ndummy) =  mass(i)
@@ -381,8 +391,10 @@ contains
 
             !!! Monaghan type dummy particle on the Left side
             if ( x(1, i) - boundary(1, 2) < hsml(i) * scale_k ) then
+                thickness = hsml(i) * scale_k
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) =  2*boundary(1, 2) - x(1, i)
+                ! x(1, ntotal+ndummy) =  2*boundary(1, 2) - x(1, i)
+                x(1, ntotal+ndummy) =  x(1, i) - thickness
                 x(2, ntotal+ndummy) =  x(2, i)
                 v(:, ntotal+ndummy) =  v(:, i)
                 mass(ntotal+ndummy) =  mass(i)

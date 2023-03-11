@@ -1,9 +1,10 @@
 build
 _build
 module/*.mod
+a.out
 *.dat
 *.vtk
-*.pic
+*.png
 doc/books/*
 doc/The\ LaTeX\ testfile\ for\ vscode
 doc/Formula

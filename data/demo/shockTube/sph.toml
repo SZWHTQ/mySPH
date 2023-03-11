@@ -48,7 +48,7 @@ maxTimeStep = 5000
 ## Time Step
 deltaT = 2e-4
 
-# summationDensity    = true
+summationDensity    = false
 dummyParticle       = true
 # artificialViscosity = true
 # artificialHeat      = false
@@ -57,7 +57,7 @@ dummyParticle       = true
 
 
 [Parallel]
-OMP_NUM_THREADS = 4  # Overwrite the environment variable OMP_NUM_THREADS
+OMP_NUM_THREADS = 1  # Overwrite the environment variable OMP_NUM_THREADS
 
 
 [postProcess]

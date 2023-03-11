@@ -104,42 +104,48 @@ contains
                             "X", "V", &
                             "Mass"           , "Density",     "Pressure", &
                             "InternalEnergy", "SoundSpeed", "Type",    "SmoothingLength", &
-                            "DivDistance", "Stress"
+                            "DivDistance", &
+                            "StressXX"
             do i = 1, ntotal
                 write(11, 1002) i       , x(:, i), v(:, i), &
                                 mass(i) , rho(i) , p(i)   , e(i), c(i), &
-                                itype(i), hsml(i), div_r(i), ((Stress(d, dd, i), d = 1, dim), dd = 1, dim)
+                                itype(i), hsml(i), div_r(i), ((Stress(dd, d, i), d = 1, dim), dd = 1, dim)
             end do
             1001 format(A5, 7(A17), A6, 3(A17))
-            1002 format(I5, 7(2X, ES15.8), 2X, I4, 3(2X, ES15.8))
+            1002 format(I5, 7(2X, ES15.7E0), 2X, I4, 3(2X, ES15.7E0))
 
         case (2)
             write(11, 1003) "Index", &
                             "X", "Y", "U", "V", &
                             "Mass"           , "Density",     "Pressure", &
                             "InternalEnergy", "Sound Speed", "Type",    "SmoothingLength", &
-                            "DivDistance", "Stress"
+                            "DivDistance", &
+                            "StressXX", "StressXY", &
+                            "StressYX", "StressYY"
             do i = 1, ntotal
                 write(11, 1004) i       , x(:, i), v(:, i), &
                                 mass(i) , rho(i) , p(i)   , e(i), c(i), &
-                                itype(i), hsml(i), div_r(i), ((Stress(d, dd, i), d = 1, dim), dd = 1, dim)
+                                itype(i), hsml(i), div_r(i), ((Stress(dd, d, i), d = 1, dim), dd = 1, dim)
             end do
-            1003 format(A5, 9(A17), A6, 3(A17))
-            1004 format(I5, 9(2X, ES15.8), 2X, I4, 6(2X, ES15.8))
+            1003 format(A5, 9(A17), A6, 6(A17))
+            1004 format(I5, 9(2X, ES15.7E0), 2X, I4, 6(2X, ES15.7E0))
 
         case (3)
             write(11, 1005) "Index", &
                             "X", "Y", "Z", "U", "V", "W", &
                             "Mass"           , "Density",     "Pressure", &
                             "InternalEnergy",  "SoundSpeed",  "Type",    "SmoothingLength", &
-                            "DivDistance", "Stress"
+                            "DivDistance", &
+                            "StressXX", "StressXY", "StressXZ", &
+                            "StressYX", "StressYY", "StressYZ", &
+                            "StressZX", "StressZY", "StressZZ"
             do i = 1, ntotal
                 write(11, 1006) i       , x(:, i), v(:, i), &
                                 mass(i) , rho(i) , p(i)   , e(i), c(i), &
-                                itype(i), hsml(i), div_r(i), ((Stress(d, dd, i), d = 1, dim), dd = 1, dim)
+                                itype(i), hsml(i), div_r(i), ((Stress(dd, d, i), d = 1, dim), dd = 1, dim)
             end do
-            1005 format(A5, 11(A17), A6, 3(A17))
-            1006 format(I5, 11(2X, ES15.8), 2X, I4, 11(2X, ES15.8))
+            1005 format(A5, 11(A17), A6, 11(A17))
+            1006 format(I5, 11(2X, ES15.7E0), 2X, I4, 11(2X, ES15.7E0))
 
         end select
 
@@ -175,14 +181,7 @@ contains
         write (11, "(A)") "DATASET UNSTRUCTURED_GRID"
         write (11, '(A, I0, A)') "POINTS ", ntotal, " double"
         do i = 1, ntotal
-            ! select case(dim)
-            ! case (1)
-                write(11, 1001) x(:, i), (0.0, d = 1, 3-dim)
-            ! case (2)
-            !     write(11, 1001) x(:, i), 0.0
-            ! case (3)
-            !     write(11, 1001) x(:, i)
-            ! end select
+            write(11, 1001) x(:, i), (0.0, d = 1, 3-dim)
         end do
         write (11, "(A, I0)") "POINT_DATA ", ntotal
 
@@ -238,29 +237,13 @@ contains
         !!! Write particle velocity
         write (11, "(A)") "VECTORS U double"
         do i = 1, ntotal
-            ! select case (dim)
-            ! case (1)
             write(11, 1001) v(:, i), (0.0, d = 1, 3-dim)
-            ! case (2)
-            !     write(11, 1001) v(:, i), 0.0
-            ! case (3)
-            !     write(11, 1001) v(:, i)
-            ! end select
         end do
 
         !!! Write particle stress
         write (11, "(A)") "TENSORS Stress double"
         do i = 1, ntotal
-            ! select case (dim)
-            ! case (1)
-            !     write(11, 1001) Stress(1, 1, i)
-            ! case (2)
             write(11, 1001) ((Stress(d, dd, i), d = 1, dim), dd = 1, dim), (0.0, d = 1, 9-dim**2)
-            ! case (3)
-            !     write(11, 1001) Stress(1, 1, i), Stress(1, 2, i), Stress(1, 3, i), &
-            !                     Stress(2, 1, i), Stress(2, 2, i), Stress(2, 3, i), &
-            !                     Stress(3, 1, i), Stress(3, 2, i), Stress(3, 3, i)
-            ! end select
         end do
 
     end subroutine write_vtk
@@ -293,9 +276,9 @@ contains
             write(13, 1003) i, itype(i), hsml(i)
         end do
 
-        1001 format(I6, 6(2X, ES15.8))
-        1002 format(I6, 4(2X, ES15.8))
-        1003 format(I6, 2X, I4, 2X, ES15.8)
+        1001 format(I6, 6(2X, ES15.7E0))
+        1002 format(I6, 4(2X, ES15.7E0))
+        1003 format(I6, 2X, I4, 2X, ES15.7E0)
 
         close(11)
         close(12)

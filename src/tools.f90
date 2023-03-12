@@ -123,6 +123,34 @@ contains
 
     end subroutine print_warning
 
+    subroutine create_directory(name, info)
+        implicit none
+        character(len=*), intent(in) :: name
+        character(len=*), intent(inout), optional :: info
+        character(len=:), allocatable :: buffer
+        logical :: exist
+
+        allocate(buffer, source=trim(adjustl(name)))
+
+#ifdef __INTEL_COMPILER
+        inquire(Directory=buffer, Exist=exist)
+#elif __GNUC__
+        inquire(File=buffer, Exist=exist)
+#endif
+            if ( .not. exist ) then
+                if ( present(info) ) then
+                    info = "Created directory: "//trim(adjustl(buffer))
+                end if
+                call system('mkdir '//trim(adjustl(buffer)))
+            else
+                if ( present(info) ) then
+                    info = "Directory already exists: "//trim(adjustl(buffer))
+                end if
+            end if
+    
+            deallocate(buffer)
+
+    end subroutine create_directory
 
     !!! Thanks to Contrail (@StellaContrail) for subroutine pbout() and pbflush()
     !!! https://github.com/StellaContrail/FortranProgressbar.git

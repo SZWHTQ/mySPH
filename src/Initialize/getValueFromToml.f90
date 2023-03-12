@@ -1,9 +1,9 @@
 module parse_toml_m
     use ctrl_dict
     use tomlf, only: toml_table, get_value, toml_parse
+    use tools_m, only: create_directory, ESC
     implicit none
     private
-    character(len=*), parameter :: ESC = char(27)
 
     character(:), allocatable, public :: in_path      !! Input  Directory
     character(:), allocatable, public :: out_path     !! Output Directory
@@ -72,6 +72,8 @@ contains
         out_path = in_path//"/output"
         vtk_path = in_path//"/vtk"
 
+        call create_directory(out_path)
+        call create_directory(vtk_path)
 
     end subroutine get_project_dir_from_command_line
 

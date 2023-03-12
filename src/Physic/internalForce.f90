@@ -190,8 +190,6 @@ contains
         end do !! i
         !$OMP END PARALLEL DO
 
-        ! if ( nick == "undex_cylinder" ) call free_surface()
-
         !!! Calculate SPH sum for pressure force -p_a/rho
         !!! and viscous force eta_b/rho
         !!! and the internal energy change de/dt due to -p/rho*div_v

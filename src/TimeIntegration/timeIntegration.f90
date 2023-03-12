@@ -112,8 +112,6 @@ contains
 
         call detonation_wave(ntotal, i_time_step, delta_t, x, itype)
 
-        ! if ( nick == "undex_cylinder" ) call free_surface()
-
         call divergence(ntotal+ndummy, v, mass, rho, neighborNum, neighborList, dwdx, div_v)
 
         !!! Internal forces

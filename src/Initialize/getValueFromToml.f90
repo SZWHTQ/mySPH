@@ -94,9 +94,15 @@ contains
         call get_value(sph_file, 'name', project_name, 'untitled')
         call get_value(sph_file, 'nick', nick,         'unknown')
         write(*,*) ESC//"[32m"
+#ifndef _WIN32
         write(*, "(A)") "╭"//repeat("─", 11 + len(project_name))//"╮"
         write(*, "(A)") "│ Project: "//project_name//" │"
         write(*, "(A)") "╰"//repeat("─", 11 + len(project_name))//"╯"
+#else
+        write(*, "(A)") "|"//repeat("-", 11 + len(project_name))//"|"
+        write(*, "(A)") "| Project: "//project_name//" |"
+        write(*, "(A)") "|"//repeat("-", 11 + len(project_name))//"|"
+#endif
         write(*,*) ESC//"[0m"
 
 

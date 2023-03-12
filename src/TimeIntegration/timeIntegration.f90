@@ -244,7 +244,11 @@ contains
 
             if ( mod(i_time_step, print_interval) == 0 ) then
                 call pbflush()
+#ifndef _WIN32
                 write(*, "(A)") repeat("—", 72)
+#else
+                write(*, "(A)") repeat("-", 72)
+#endif
                 write(*, "(2(A, G0))") " Courant Number mean: ", aver_courant, &
                                        " max: ", max_courant
                 write(*,*) "Time step = ", to_string(i_time_step)
@@ -373,7 +377,11 @@ contains
                                   v(i, monitor_particle), &
                                   dvdt(i, monitor_particle)
                 end do
+#ifndef _WIN32
                 write(*, "(A)") repeat("—", 72)
+#else
+                write(*, "(A)") repeat("-", 72)
+#endif
                 write(*,*)
                 call pbout(i_time_step, max_time_step, .true.)
             end if

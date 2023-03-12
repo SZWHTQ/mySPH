@@ -25,8 +25,14 @@ contains
         ! logical :: types(8)
         integer :: particleType, num(-8:8)
         integer, allocatable :: type_list(:), type_indice(:, :)
+        integer, dimension(ntotal) :: this_itype
+        real(8), dimension(dim, ntotal) ::  this_x, this_v
+        real(8), dimension(ntotal) :: this_mass, this_rho, this_p, this_e, &
+                                    this_c, this_hsml, this_div_r
+        real(8), dimension(dim, dim, ntotal) :: this_Stress
+        
 
-        integer i
+        integer i, j, k
 
         ! types = .false.
 
@@ -59,16 +65,28 @@ contains
         do i = 1, size(type_list)
             particleType = type_list(i)
             allocate(fileName, source="Type_"//to_string(particleType)//"_"//to_string(index))
-            associate (slice => type_indice(particleType, 1:num(particleType)))
-            call write_file(out_path//"/"//fileName//'.dat',                           &
-                            num(particleType), itype(slice), x(:, slice), v(:, slice), &
-                            mass(slice), rho(slice), p(slice), e(slice), c(slice),     &
-                            hsml(slice), div_r(slice), Stress(:, :, slice))
-            call write_vtk(vtk_path//"/"//fileName//'.vtk',                           &
-                           num(particleType), itype(slice), x(:, slice), v(:, slice), &
-                           mass(slice), rho(slice), p(slice), e(slice), c(slice),     &
-                           hsml(slice), div_r(slice), Stress(:, :, slice))
-            end associate
+            do j = 1, num(particleType)
+                k = type_indice(particleType, j)
+                this_itype(j) = itype(k)
+                this_x(:, j) = x(:, k)
+                this_v(:, j) = v(:, k)
+                this_mass(j) = mass(k)
+                this_rho(j) = rho(k)
+                this_p(j) = p(k)
+                this_e(j) = e(k)
+                this_c(j) = c(k)
+                this_hsml(j) = hsml(k)
+                this_div_r(j) = div_r(k)
+                this_Stress(:, :, j) = Stress(:, :, k)
+            end do
+            call write_file(out_path//"/"//fileName//'.dat',               &
+                            num(particleType), this_itype, this_x, this_v, &
+                            this_mass, this_rho, this_p, this_e, this_c,   &
+                            this_hsml, this_div_r, this_Stress)
+            call write_vtk(vtk_path//"/"//fileName//'.vtk',               &
+                           num(particleType), this_itype, this_x, this_v, &
+                           this_mass, this_rho, this_p, this_e, this_c,   &
+                           this_hsml, this_div_r, this_Stress)
             deallocate(fileName)
         end do
 

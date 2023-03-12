@@ -9,7 +9,6 @@ list(
     "${dir}/courantNumber.f90"
     "${dir}/decomposePar.f90"
     "${dir}/divergence.f90"
-    "${dir}/dummyParticles.f90"
     "${dir}/hsml.f90"
     "${dir}/kernel.f90"
 )

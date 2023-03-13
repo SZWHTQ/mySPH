@@ -2,18 +2,18 @@ module visc_m
     implicit none
     
 contains
-    subroutine viscosity(itype, eta)
+    subroutine viscosity(Type, eta)
         implicit none
-        integer, intent(in) :: itype(:)
+        integer, intent(in) :: Type(:)
         real(8), intent(inout) :: eta(:)
         integer :: ntotal
         integer i
 
-        ntotal = size(itype)
+        ntotal = size(Type)
 
         !$OMP PARALLEL DO PRIVATE(i)
         do i = 1, ntotal
-            select case(abs(itype(i)))
+            select case(abs(Type(i)))
             case (1)
                 eta(i) = 0
             case (2)

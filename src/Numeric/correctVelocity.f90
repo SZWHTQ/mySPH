@@ -1,17 +1,13 @@
 module corr_velo_m
     use ctrl_dict, only: dim
+    use sph
     use parse_toml_m, only: nick
     implicit none
 
 contains
-    subroutine aver_velo(ntotal, v, mass, rho, neighborNum, neighborList, w, aver_v)
+    subroutine aver_velo(ntotal, P, aver_v)
         integer, intent(in) :: ntotal
-        real(8), intent(in) :: v(:, :)
-        real(8), intent(in) :: mass(:)
-        real(8), intent(in) :: rho(:)
-        integer, intent(in) :: neighborNum(:)
-        integer, intent(in) :: neighborList(:, :)
-        real(8), intent(in) :: w(:, :)
+        type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: aver_v(:, :)
         real(8) :: epsilon
         real(8) :: dv(dim)
@@ -27,15 +23,15 @@ contains
         forall(i=1:dim, j=1:ntotal) aver_v(i, j) = 0._8
 
         do i = 1, ntotal
-            do k = 1, neighborNum(i)
-                j = neighborList(i, k)
+            do k = 1, P(i)%neighborNum
+                j = P(i)%neighborList(k)
                 
-                dv = v(:, i) - v(:, j)
+                dv = P(i)%v(:) - P(j)%v(:)
                 aver_v(:, i) = aver_v(:, i) &
                     - epsilon               &
-                    * 2 * mass(j) * dv      &
-                    / (rho(i) + rho(j))     &
-                    * w(i, k)
+                    * 2 * P(j)%mass * dv      &
+                    / (P(i)%Density + P(j)%Density)     &
+                    * P(i)%w(k)
             end do
         end do
 

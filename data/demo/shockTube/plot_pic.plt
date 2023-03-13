@@ -15,7 +15,7 @@ plot './exact/Riemann_0.2s.txt' u 1:4 with lines lw 4 lt rgb "black" title "Exac
      '~/OneDrive/Thesis/Data/shockTube/SPH/1600/output/500.dat' u 2:6 with lines lw 2 lt rgb "green" title "SPH 1600", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/800/output/1000.dat' u 2:6 with lines lw 2 dashtype "-" lt rgb "cyan" title "SPH 800", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/400/output/1000.dat' u 2:6 with lines lw 2 dashtype "." lt rgb "blue" title "SPH 400", \
-     './output/Type_1_20.dat' u 2:6 with lines lw 2 lt rgb "red" title "Riemann"
+     './output/Type_1_20.dat' u 4:8 with lines lw 2 lt rgb "red" title "Riemann"
 
 unset key
 set origin 0.5, 0.49
@@ -28,7 +28,7 @@ plot './exact/Riemann_0.2s.txt' u 1:2 with lines lw 4 lt rgb "black" title "Exac
      '~/OneDrive/Thesis/Data/shockTube/SPH/1600/output/500.dat' u 2:5 with lines lw 2 lt rgb "green" title "SPH 1600", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/800/output/1000.dat' u 2:5 with lines lw 2 dashtype "-" lt rgb "cyan" title "SPH 800", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/400/output/1000.dat' u 2:5 with lines lw 2 dashtype "." lt rgb "blue" title "SPH 400", \
-     './output/Type_1_20.dat' u 2:5 with lines lw 2 lt rgb "red" title "Riemann"
+     './output/Type_1_20.dat' u 4:7 with lines lw 2 lt rgb "red" title "Riemann"
 
 set origin 0, 0
 set size 0.5, 0.49
@@ -39,7 +39,7 @@ plot './exact/Riemann_0.2s.txt' u 1:3 with lines lw 4 lt rgb "black" title "Exac
      '~/OneDrive/Thesis/Data/shockTube/SPH/1600/output/500.dat' u 2:3 with lines lw 2 lt rgb "green" title "SPH 1600", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/800/output/1000.dat' u 2:3 with lines lw 2 dashtype "-" lt rgb "cyan" title "SPH 800", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/400/output/1000.dat' u 2:3 with lines lw 2 dashtype "." lt rgb "blue" title "SPH 400", \
-     './output/Type_1_20.dat' u 2:3 with lines lw 2 lt rgb "red" title "Riemann"
+     './output/Type_1_20.dat' u 4:5 with lines lw 2 lt rgb "red" title "Riemann"
 
 set origin 0.5, 0
 set size 0.5, 0.49
@@ -50,6 +50,6 @@ set grid
 plot '~/OneDrive/Thesis/Data/shockTube/SPH/1600/output/500.dat' u 2:7 with lines lw 2 lt rgb "green" title "SPH 1600", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/800/output/1000.dat' u 2:7 with lines lw 2 dashtype "-" lt rgb "cyan" title "SPH 800", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/400/output/1000.dat' u 2:7 with lines lw 2 dashtype "." lt rgb "blue" title "SPH 400", \
-     './output/Type_1_20.dat' u 2:7 with lines lw 2 lt rgb "red" title "Riemann"
+     './output/Type_1_20.dat' u 4:9 with lines lw 2 lt rgb "red" title "Riemann"
 
 pause -1

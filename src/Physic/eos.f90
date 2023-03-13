@@ -6,7 +6,7 @@ module eos_m
 
 contains
     !!! Gamma law EOS: subroutine to calculate the pressure and sound
-    !!! itype = 1
+    !!! Type = 1
     elemental subroutine gas_eos(rho, e, p, c)
         real(8), intent(in)  :: rho, e
         real(8), intent(inout) :: p,   c
@@ -20,7 +20,7 @@ contains
 
     !!! Artificial equation of state for the artificial compressibility
     !!! Artificial EOS, Form 1 (Monaghan, 1994) !! Modified for dam break
-    !!! itype = 2
+    !!! Type = 2
     elemental subroutine arti_water_eos_1(rho, p, c)
         real(8), intent(in)  :: rho
         real(8), intent(inout) :: p, c
@@ -35,7 +35,7 @@ contains
     end subroutine arti_water_eos_1
 
     !!! Artificial EOS, form 2 (Morris, 1997)
-    !!! itype = 3
+    !!! Type = 3
     elemental subroutine arti_water_eos_2(rho, p, c)
         real(8), intent(in)  :: rho
         real(8), intent(inout) :: p, c
@@ -46,7 +46,7 @@ contains
     end subroutine arti_water_eos_2
 
     !!! TNT gas EOS/Gamma Law
-    !!! itype = 4
+    !!! Type = 4
     elemental subroutine tnt_eos(rho, e, p)
         real(8), intent(in)  :: rho, e
         real(8), intent(inout) :: p
@@ -57,7 +57,7 @@ contains
     end subroutine tnt_eos
 
     !!! TNT gas EOS/Jones-Wilkins-Lee
-    !!! itype = 5
+    !!! Type = 5
     elemental subroutine jwl_eos(rho, e, p)
         real(8), intent(in)  :: rho, e
         real(8), intent(inout) :: p
@@ -76,7 +76,7 @@ contains
     end subroutine jwl_eos
 
     !!! Water EOS/Mie-Gruneisen
-    !!! itype = 6
+    !!! Type = 6
     elemental subroutine mie_gruneisen_eos_of_water(rho, e, p)
         real(8), intent(in)  :: rho, e
         real(8), intent(inout) :: p
@@ -101,7 +101,7 @@ contains
     end subroutine mie_gruneisen_eos_of_water
 
     !!! Water EOS/Polynomial
-    !!! itype = 7
+    !!! Type = 7
     elemental subroutine water_polynomial_eos(rho, e, p)
         real(8), intent(in)  :: rho, e
         real(8), intent(inout) :: p
@@ -125,7 +125,7 @@ contains
     end subroutine water_polynomial_eos
 
     !!! Solid EOS/Mie-Gruneisen
-    !!! itype = 8
+    !!! Type = 8
     elemental subroutine mie_gruneisen_eos_of_solid(rho, e, p)
         real(8), intent(in)  :: rho, e
         real(8), intent(inout) :: p

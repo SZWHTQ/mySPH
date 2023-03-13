@@ -1,32 +1,21 @@
 #include "../macro.h"
 module in_force_m
-    use ctrl_dict, only: dim, maxn, &
-                         viscosity_w, pa_sph
+    use ctrl_dict, only: dim, maxn, viscosity_w, pa_sph
+    use sph
     use parse_toml_m, only: nick
     ! use boundary_condition_m
 
     implicit none
 
 contains
-    subroutine in_force(ntotal, itype, x, v, mass, rho, p, e, c, &
-                        neighborNum, neighborList, dwdx, dvdt, tdsdt, dedt, Shear, dSdt, Stress)
+    subroutine in_force(ntotal, P, dvdt, tdsdt, dedt, Shear, dSdt)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         use visc_m
         use eos_m
-        use initial_m, only: eta
+        ! use initial_m, only: eta
         !$ use omp_lib
         integer, intent(in)  :: ntotal
-        integer, intent(in)  :: itype(:)
-        real(8), intent(in)  :: x(:, :)
-        real(8), intent(in)  :: v(:, :)
-        real(8), intent(in)  :: mass(:)
-        real(8), intent(in)  :: rho(:)
-        real(8), intent(inout) :: p(:)
-        real(8), intent(in)  :: e(:)
-        real(8), intent(inout) :: c(:)
-        integer, intent(in)  :: neighborNum(:)
-        integer, intent(in)  :: neighborList(:, :)
-        real(8), intent(in)  :: dwdx(:, :, :)
+        type(Particle), intent(inout) :: P(:)
         real(8), intent(inout) :: dvdt(:, :), tdsdt(:), dedt(:)
         real(8), allocatable :: edot(:, :, :)
         real(8) :: dv(dim)
@@ -36,7 +25,6 @@ contains
         ! integer :: solid_num
         real(8), intent(in),    optional :: Shear(:, :, :)
         real(8), intent(inout), optional :: dSdt(:, :, :)
-        real(8), intent(inout), optional :: Stress(:, :, :)
         real(8), allocatable :: rdot(:, :, :), aver_edot(:, :)
 #endif
         integer i, j, k, d, dd, ddd
@@ -51,7 +39,7 @@ contains
 #endif
 
         !!! Dynamic viscosity
-        if ( viscosity_w ) call viscosity(itype(1:ntotal), eta)
+        if ( viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%KineticViscocity)
 
 
         if ( viscosity_w ) then
@@ -60,25 +48,25 @@ contains
                 !!! Calculate SPH sum for Strain Rate Tensor of Fluid
                 !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
 #if SOLID
-                if ( abs(itype(i)) < 8 ) then !! Fluid
+                if ( abs(P(i)%Type) < 8 ) then !! Fluid
 #endif
-                    do k = 1, neighborNum(i) !! All neighbors of each particle
-                        j = neighborList(i, k)
-                        dv = v(:, j) - v(:, i)
+                    do k = 1, P(i)%neighborNum !! All neighbors of each particle
+                        j = P(i)%neighborList(k)
+                        dv = P(j)%v(:) - P(i)%v(:)
                         do d = 1, dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
                             do dd = 1, dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
                                 edot(d, dd, i) = edot(d, dd, i) &
-                                    + mass(j)/rho(j)            &
-                                    * dv(d) * dwdx(dd, i, k)
+                                    + P(j)%Mass/P(j)%Density            &
+                                    * dv(d) * P(i)%dwdx(dd, k)
                                 edot(dd, d, i) = edot(dd, d, i) &
-                                    + mass(j)/rho(j)            &
-                                    * dv(dd) * dwdx(d, i, k)
+                                    + P(j)%Mass/P(j)%Density            &
+                                    * dv(dd) * P(i)%dwdx(d, k)
                                 if ( d == dd ) then !! δii = 1, δij = 0
                                     do ddd = 1, dim
                                         edot(d, d, i) = edot(d, d, i) &
                                             - 2._8 / 3                &
-                                            * mass(j)/rho(j)          &
-                                            * dv(ddd) * dwdx(ddd, i, k)
+                                            * P(j)%Mass/P(j)%Density          &
+                                            * dv(ddd) * P(i)%dwdx(ddd, k)
                                     end do
                                 end if !! d == dd
                             end do !! dd
@@ -89,13 +77,15 @@ contains
                 !!! εab = 1/2 * (va,b + vb,a)
                 !!! Rab = 1/2 * (va,b + vb,a)
                 else if ( present(Shear) ) then !! Solid
-                    do k = 1, neighborNum(i) !! All neighbors of each particle
-                        j = neighborList(i, k)
-                            dv = v(:, j) - v(:, i)
+                    do k = 1, P(i)%neighborNum !! All neighbors of each particle
+                        j = P(i)%neighborList(k)
+                            dv = P(j)%v(:) - P(i)%v(:)
                             do d = 1, dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
                                 do dd = 1, dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
-                                    associate (vab => mass(j)/rho(j) * dv(d) * dwdx(dd, i, k))
-                                    associate (vba => mass(j)/rho(j) * dv(dd) * dwdx(d, i, k))
+                                    associate (vab => &
+                                        P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k))
+                                    associate (vba => &
+                                        P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k))
                                         edot(d, dd, i) = edot(d, dd, i) &
                                             + 0.5 * (vab + vba)
                                         rdot(d, dd, i) = rdot(d, dd, i) &
@@ -115,31 +105,31 @@ contains
         !$OMP PARALLEL DO PRIVATE(i, aux, aver_edot, j, k, d, dd, ddd)
         do i = 1, ntotal !! All particles
 #if SOLID
-        if ( abs(itype(i)) < 8 ) then !! Fluid
+        if ( abs(P(i)%Type) < 8 ) then !! Fluid
 #endif
             !!! Viscous entropy Tds/dt = 1/2 eta/rho εab•εab
             if ( viscosity_w ) then
-                tdsdt(i) = 0.5_8 * eta(i) / rho(i) &
+                tdsdt(i) = 0.5_8 * P(i)%KineticViscocity / P(i)%Density &
                          * sum(edot(:, :, i)**2)
             end if
 
             !!! Pressure from equation of state
-            select case ( abs(itype(i)) )
+            select case ( abs(P(i)%Type) )
             case (1)
-                call gas_eos(rho(i), e(i), p(i), c(i))
+                call gas_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure, P(i)%SoundSpeed)
             case (2)
-                call arti_water_eos_1(rho(i), p(i), c(i))
+                call arti_water_eos_1(P(i)%Density, P(i)%Pressure, P(i)%SoundSpeed)
             case (3)
-                call arti_water_eos_2(rho(i), p(i), c(i))
+                call arti_water_eos_2(P(i)%Density, P(i)%Pressure, P(i)%SoundSpeed)
             case (4)
-                call tnt_eos(rho(i),e(i),p(i))
+                call tnt_eos(P(i)%Density,P(i)%InternalEnergy,P(i)%Pressure)
             case (5)
-                call jwl_eos(rho(i), e(i), p(i))
+                call jwl_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             case (6)
-                call mie_gruneisen_eos_of_water(rho(i), e(i), p(i))
+                call mie_gruneisen_eos_of_water(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             case (7)
-                call water_polynomial_eos(rho(i), e(i), p(i))
-            end select !! abs(itype(i))
+                call water_polynomial_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+            end select !! abs(P(i)%Type)
 
 #if SOLID
         else if ( present(Shear) ) then !! Solid
@@ -155,20 +145,20 @@ contains
                 aver_edot(d, d) = aver_edot(d, d) - aux
             end do
 
-            tdsdt(i) = 1 / rho(i) * sum(Shear(:, :, i) * aver_edot(:, :))
+            tdsdt(i) = 1 / P(i)%Density * sum(Shear(:, :, i) * aver_edot(:, :))
 
-            select case ( abs(itype(i)) )
+            select case ( abs(P(i)%Type) )
             case (8)
-                call mie_gruneisen_eos_of_solid(rho(i), e(i), p(i))
+                call mie_gruneisen_eos_of_solid(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             end select
 
-            do k = 1, neighborNum(i)
-                j = neighborList(i, k)
+            do k = 1, P(i)%neighborNum
+                j = P(i)%neighborList(k)
 
                 !!! Deviatoric Stress Rate Tensor
                 do d = 1, dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
                     do dd = 1, dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
-                        dSdt(d, dd, i) = 2 * eta(i) * aver_edot(d, dd)
+                        dSdt(d, dd, i) = 2 * P(i)%KineticViscocity * aver_edot(d, dd)
                         do ddd = 1, dim
                             dSdt(d, dd, i) = dSdt(d, dd, i) + &
                                 Shear(d, ddd, i) * rdot(dd, ddd, i) &
@@ -180,9 +170,9 @@ contains
 
             do d = 1, dim
                 do dd = 1, dim
-                    Stress(d, dd, i) = Shear(d, dd, i)
+                    P(i)%Stress(d, dd) = Shear(d, dd, i)
                 end do
-                Stress(d, d, i) = Stress(d, d, i) - p(i)
+                P(i)%Stress(d, d) = P(i)%Stress(d, d) - P(i)%Pressure
             end do
 
         end if !! Fluid or Solid
@@ -199,26 +189,26 @@ contains
         case (1)
             !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux)
             do i = 1, ntotal  !! All particles
-                if ( abs(itype(i)) < 8 ) then !! Fluid
-                    do k = 1, neighborNum(i) !! All neighbors of each particle
-                        j = neighborList(i, k)
+                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                    do k = 1, P(i)%neighborNum !! All neighbors of each particle
+                        j = P(i)%neighborList(k)
 
                         !!! Auxiliary variables
-                        rhoij = 1._8 / (rho(i)*rho(j))
-                        aux = (p(i) + p(j)) * rhoij
+                        rhoij = 1._8 / (P(i)%Density*P(j)%Density)
+                        aux = (P(i)%Pressure + P(j)%Pressure) * rhoij
 
                         !!! Conservation of Momentum
                         dvdt(:, i) = dvdt(: ,i)                  &
-                            + mass(j)                            &
-                            * ( - aux * dwdx(:, i, k)            &
-                                + matmul(  eta(i)*edot(:, :, i)  &
-                                         + eta(j)*edot(:, :, j), &
-                                         dwdx(:, i, k)) * rhoij )
+                            + P(j)%Mass                            &
+                            * ( - aux * P(i)%dwdx(:, k)            &
+                                + matmul(  P(i)%KineticViscocity*edot(:, :, i)  &
+                                         + P(j)%KineticViscocity*edot(:, :, j), &
+                                         P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy
                         dedt(i) = dedt(i)   &
-                            + mass(j) * aux &
-                            * dot_product(v(:, i)-v(:, j), dwdx(:, i, k))
+                            + P(j)%Mass * aux &
+                            * dot_product(P(i)%v(:)-P(j)%v(:), P(i)%dwdx(:, k))
 
                     end do !! k
                 else !! Solid
@@ -230,43 +220,44 @@ contains
         case (2)
             !$OMP PARALLEL DO PRIVATE(i, j, k, aux)
             do i = 1, ntotal  !! All particles
-                if ( abs(itype(i)) < 8 ) then !! Fluid
-                    do k = 1, neighborNum(i) !! All neighbors of each particle
-                        j = neighborList(i, k)
+                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                    do k = 1, P(i)%neighborNum !! All neighbors of each particle
+                        j = P(i)%neighborList(k)
 
                         !!! Auxiliary variables
-                        aux = (p(i)/rho(i)**2 + p(j)/rho(j)**2)
+                        aux = (P(i)%Pressure/P(i)%Density**2 + P(j)%Pressure/P(j)%Density**2)
 
                         !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(: ,i)                            &
-                            + mass(j)                                      &
-                            * ( - aux * dwdx(:, i, k)                      &
-                                + matmul(  eta(i)*edot(:, :, i)/rho(i)**2  &
-                                         + eta(j)*edot(:, :, j)/rho(j)**2, &
-                                         dwdx(:, i, k)) )
+                        dvdt(:, i) = dvdt(: ,i)                                                 &
+                            + P(j)%Mass                                                         &
+                            * ( - aux * P(i)%dwdx(:, k)                                         &
+                                + matmul(  P(i)%KineticViscocity*edot(:, :, i)/P(i)%Density**2  &
+                                         + P(j)%KineticViscocity*edot(:, :, j)/P(j)%Density**2, &
+                                         P(i)%dwdx(:, k)) )
 
                         !!! Conservation of Energy
                         dedt(i) = dedt(i)   &
-                            + mass(j) * aux &
-                            * dot_product( v(:, i)-v(:, j), dwdx(:, i, k) )
+                            + P(j)%Mass * aux &
+                            * dot_product( P(i)%v(:)-P(j)%v(:), P(i)%dwdx(:, k) )
 
                     end do !! k
                 else if ( present(Shear) ) then!! Solid
-                    do k = 1, neighborNum(i)
-                        j = neighborList(i, k)
+                    do k = 1, P(i)%neighborNum
+                        j = P(i)%neighborList(k)
 
                         do d = 1, dim
                             do dd = 1, dim
                                 !!! Conservation of Momentum
                                 dvdt(d, i) = dvdt(d, i) &
-                                    + mass(j) * ( Stress(d, dd, i) / rho(i)**2   &
-                                                + Stress(d, dd, j) / rho(j)**2 ) &
-                                              * dwdx(d, i, k)
+                                    + P(j)%Mass * ( P(i)%Stress(d, dd) / P(i)%Density**2   &
+                                                  + P(j)%Stress(d, dd) / P(j)%Density**2 ) &
+                                              * P(i)%dwdx(d, k)
                             end do
                             !!! Conservation of Energy
                             dedt(i) = dedt(i) &
-                                + mass(j) * ( p(i) / rho(i)**2 + p(j) / rho(j)**2 ) &
-                                * ( v(d, i)-v(d, j) ) * dwdx(d, i, k)
+                                + P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
+                                              + P(j)%Pressure / P(j)%Density**2 ) &
+                                * ( P(i)%v(d)-P(j)%v(d) ) * P(i)%dwdx(d, k)
                         end do
 
                     end do !! k
@@ -279,45 +270,45 @@ contains
             !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux) &
             !$OMP PRIVATE(Z_l, Z_r, v_l, v_r, v_ij, v_star, p_star, e_ij)
             do i = 1, ntotal !! All particles
-                if ( abs(itype(i)) < 8 ) then !! Fluid
-                    do k = 1, neighborNum(i) !! All neighbors of each particle
-                        j = neighborList(i, k)
+                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                    do k = 1, P(i)%neighborNum !! All neighbors of each particle
+                        j = P(i)%neighborList(k)
 
                         !!! Auxiliary variables
-                        rhoij = 1._8 / (rho(i)*rho(j))
+                        rhoij = 1._8 / (P(i)%Density*P(j)%Density)
 
-                        Z_l = rho(i) * c(i)
-                        Z_r = rho(j) * c(j)
+                        Z_l = P(i)%Density * P(i)%SoundSpeed
+                        Z_r = P(j)%Density * P(j)%SoundSpeed
 
-                        e_ij = (x(:, j) - x(:, i)) / norm2(x(:, j) - x(:, i))
-                        v_l = dot_product(v(:, i), e_ij)
-                        v_r = dot_product(v(:, j), e_ij)
+                        e_ij = (P(j)%x(:) - P(i)%x(:)) / norm2(P(j)%x(:) - P(i)%x(:))
+                        v_l = dot_product(P(i)%v(:), e_ij)
+                        v_r = dot_product(P(j)%v(:), e_ij)
 
-                        v_ij = ( Z_l*v_l + Z_r*v_r + (p(i)-p(j)) ) &
+                        v_ij = ( Z_l*v_l + Z_r*v_r + (P(i)%Pressure-P(j)%Pressure) ) &
                              / ( Z_l + Z_r )
 
                         !!! Riemann Solution
-                        p_star = ( Z_l*p(j) + Z_r*p(i) &
+                        p_star = ( Z_l*P(j)%Pressure + Z_r*P(i)%Pressure &
                             +   Z_l*Z_r*(v_l - v_r) )  &
                             / ( Z_l + Z_r )
                         v_star = v_ij * e_ij        &
-                            + ( (v(:, i)+v(:, j))/2 &
+                            + ( (P(i)%v(:)+P(j)%v(:))/2 &
                                 - ((v_l+v_r)/2)*e_ij )
 
                         aux = 2 * p_star * rhoij
 
                         !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(: ,i)                  &
-                            + mass(j)                            &
-                            * ( - aux * dwdx(:, i, k)            &
-                                + matmul(  eta(i)*edot(:, :, i)  &
-                                         + eta(j)*edot(:, :, j), &
-                                         dwdx(:, i, k)) * rhoij )
+                        dvdt(:, i) = dvdt(: ,i)                                 &
+                            + P(j)%Mass                                         &
+                            * ( - aux * P(i)%dwdx(:, k)                         &
+                                + matmul(  P(i)%KineticViscocity*edot(:, :, i)  &
+                                         + P(j)%KineticViscocity*edot(:, :, j), &
+                                         P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy
                         dedt(i) = dedt(i)   &
-                            + mass(j) * aux &
-                            * dot_product(2 * (v(:, i)-v_star), dwdx(:, i, k))
+                            + P(j)%Mass * aux &
+                            * dot_product(2 * (P(i)%v(:)-v_star), P(i)%dwdx(:, k))
 
                     end do
                 else !! Solid

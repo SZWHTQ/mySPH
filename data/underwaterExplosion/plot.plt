@@ -13,7 +13,7 @@ unset key
 
 do for [i=0:12:1] {
     set title sprintf('%.3fμs', i*1e-7*1e6)
-    plot sprintf('./output/%d.dat', i) using 2:3 pt 6 lw 1 lt rgb "blue"
+    plot sprintf('./output/%d.dat', i) using 4:5 pt 6 lw 1 lt rgb "blue"
     pause 0.5
 }
 

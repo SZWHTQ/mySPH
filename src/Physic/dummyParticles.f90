@@ -7,12 +7,13 @@ module dummy_part_m
 
     public gen_dummy_particle
 contains
-    subroutine gen_dummy_particle(ntotal, ndummy, Particles)
+    subroutine gen_dummy_particle(ndummy, Particles)
         ! use ctrl_dict, only: i_time_step
-        integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy
         type(Particle), intent(inout) :: Particles(:)
+        integer :: ntotal
 
+        ntotal = size(Particles)
         ndummy = 0
 
         select case(nick)

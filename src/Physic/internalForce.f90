@@ -8,15 +8,15 @@ module in_force_m
     implicit none
 
 contains
-    subroutine in_force(ntotal, P, dvdt, tdsdt, dedt, Shear, dSdt)
+    subroutine in_force(P, dvdt, tdsdt, dedt, Shear, dSdt)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         use visc_m
         use eos_m
         ! use initial_m, only: eta
         !$ use omp_lib
-        integer, intent(in)  :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8), intent(inout) :: dvdt(:, :), tdsdt(:), dedt(:)
+        integer :: ntotal
         real(8), allocatable :: edot(:, :, :)
         real(8) :: dv(dim)
         real(8) :: rhoij, aux
@@ -29,6 +29,7 @@ contains
 #endif
         integer i, j, k, d, dd, ddd
 
+        ntotal = size(P)
         !!! Initialization of Strain Rate Tensor, velocity divergence,
         !!! viscous energy, internal energy, acceleration
         allocate(edot(dim, dim, ntotal), source=0._8)

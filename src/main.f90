@@ -6,6 +6,7 @@ program main
     use input_m
     use time_integration_m
     implicit none
+    integer :: ntotal
     type(Particle), allocatable :: Particles(:)
     integer startT, endT, rate
     character(len=16) :: buffer
@@ -17,9 +18,9 @@ program main
     ! call initialize()
     call allocateParticleList(Particles, maxn, dim, max_interaction/maxn)
 
-    call input(Particles)
+    call input(ntotal, Particles)
 
-    call time_integration(Particles)
+    call time_integration(ntotal, Particles)
 
     call system_clock(endT, rate)
     write(buffer, "(F15.3)") dble((endT - startT))/rate

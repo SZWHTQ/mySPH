@@ -116,7 +116,7 @@ contains
 
         !$omp parallel do private(i)
         do i = 1, ParticleNum
-            Particles(i)%Type              = 0
+            Particles(i)%Type               = 0
             Particles(i)%status             = 0
             Particles(i)%Mass               = 0.0_8
             Particles(i)%Density            = 0.0_8

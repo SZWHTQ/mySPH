@@ -7,28 +7,30 @@ module he_m
 
     public detonation_wave
 contains
-    subroutine detonation_wave(ntotal, i_time_step, delta_t, Particles)
-        integer, intent(in)    :: ntotal
-        integer, intent(in)    :: i_time_step
-        real(8), intent(in)    :: delta_t
+    subroutine detonation_wave(i_time_step, delta_t, Particles)
+        integer, intent(in) :: i_time_step
+        real(8), intent(in) :: delta_t
         type(Particle), intent(inout) :: Particles(:)
+        integer :: ntotal
 
+        ntotal = size(Particles)
         select case(nick)
         case("tnt_bar")
-            call tnt_bar_detonation(ntotal, i_time_step, delta_t, Particles)
+            call tnt_bar_detonation(i_time_step, delta_t, Particles)
         case("undex_cylinder")
-            call undex_cylinder_detonation(ntotal, i_time_step, delta_t, Particles)
+            call undex_cylinder_detonation(i_time_step, delta_t, Particles)
         end select
 
     end subroutine detonation_wave
 
-    subroutine tnt_bar_detonation(ntotal, i_time_step, delta_t, Particles)
-        integer, intent(in)    :: ntotal
-        integer, intent(in)    :: i_time_step
-        real(8), intent(in)    :: delta_t
+    subroutine tnt_bar_detonation(i_time_step, delta_t, Particles)
+        integer, intent(in) :: i_time_step
+        real(8), intent(in) :: delta_t
         type(Particle), intent(inout) :: Particles(:)
+        integer :: ntotal
         integer i
 
+        ntotal = size(Particles)
         do i = 1, ntotal
             if ( Particles(i)%x(1) < D*i_time_step*delta_t) then
                 Particles(i)%Type = 5
@@ -37,15 +39,16 @@ contains
 
     end subroutine tnt_bar_detonation
 
-    subroutine undex_cylinder_detonation(ntotal, i_time_step, delta_t, Particles)
+    subroutine undex_cylinder_detonation(i_time_step, delta_t, Particles)
         use geometry_m, only: point_t, circle_t
-        integer, intent(in) :: ntotal
-        integer, intent(in)    :: i_time_step
-        real(8), intent(in)    :: delta_t
+        integer, intent(in) :: i_time_step
+        real(8), intent(in) :: delta_t
         type(Particle), intent(inout) :: Particles(:)
+        integer :: ntotal
         type(circle_t) :: boundary
         integer i
 
+        ntotal = size(Particles)
         boundary = circle_t([0,0], D*i_time_step*delta_t, 0)
 
         do i = 1, ntotal

@@ -4,21 +4,23 @@ module output_m
     implicit none
 
 contains
-    subroutine output(index, ntotal, Particles)
+    subroutine output(index, Particles)
         use parse_toml_m, only: out_path, vtk_path
         use sph
         ! use ctrl_dict,    only: write_vtk_w
         use tools_m,      only: to_string
         integer, intent(in) :: index
-        integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
-        type(Particle) :: this(ntotal)
+        integer :: ntotal
+        type(Particle), allocatable :: this(:)
         integer :: particleType, num(-8:8)
         integer, allocatable :: type_list(:), type_indice(:, :)
         character(:), allocatable :: fileName
         
         integer i, j, k
 
+        ntotal = size(Particles)
+        call allocateParticleList(this, ntotal, dim, size(Particles(1)%neighborList))
         num = 0
         allocate(type_indice(-8:8, ntotal), source=0)
         do i = 1, ntotal
@@ -52,21 +54,24 @@ contains
                 k = type_indice(particleType, j)
                 this(j) = Particles(k)
             end do
-            call write_file(out_path//"/"//fileName//'.dat', num(particleType), this)
-            call write_vtk(vtk_path//"/"//fileName//'.vtk',  num(particleType), this)
+            call write_file(out_path//"/"//fileName//'.dat', this(1:num(particleType)))
+            call write_vtk(vtk_path//"/"//fileName//'.vtk',  this(1:num(particleType)))
             deallocate(fileName)
         end do
 
+        deallocate(this, type_list, type_indice)
+
     end subroutine output
 
-    subroutine write_file(fileDir, ntotal, Particles)
+    subroutine write_file(fileDir, Particles)
         ! use ctrl_dict, only: write_dp_w
         use sph
         character(len=*), intent(in) :: fileDir
-        integer, intent(in) :: ntotal
         type(Particle), intent(in) :: Particles(:)
+        integer :: ntotal
         integer i, d, dd
 
+        ntotal = size(Particles)
         open(11, file = fileDir)
 
         select case (dim)
@@ -120,15 +125,16 @@ contains
 
     end subroutine write_file
 
-    subroutine write_vtk(fileDir, ntotal, Particles)
+    subroutine write_vtk(fileDir, Particles)
         ! use ctrl_dict, only: write_dp_vtk_w
         use tools_m,   only: now
         use sph
         character(len=*), intent(in) :: fileDir
-        integer, intent(in) :: ntotal
         type(Particle), intent(in) :: Particles(:)
+        integer :: ntotal
         integer i, d, dd
 
+        ntotal = size(Particles)
         open(11, file = fileDir)
         1001 format(*(ES12.5, 3X))
 

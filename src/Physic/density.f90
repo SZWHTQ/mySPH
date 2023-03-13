@@ -8,14 +8,15 @@ module density_m
 
 contains
     !!! Subroutine to calculate the density with SPH summation algorithm
-    subroutine sum_density(ntotal, P)
-        integer, intent(in) :: ntotal
+    subroutine sum_density(P)
         type(Particle), intent(inout) :: P(:)
+        integer :: ntotal
         real(8) :: self
         real(8) :: hv(dim)
         real(8), allocatable :: wi(:)  !! Integration of the kernel itself
         integer i, j, k
 
+        ntotal = size(P)
         allocate(wi(ntotal), source=0._8)
         hv = 0
 
@@ -81,13 +82,14 @@ contains
     end subroutine sum_density
 
     !!! Subroutine to calculate the density with SPH continuity approach
-    subroutine con_density(ntotal, P, drhodt)
-        integer, intent(in)  :: ntotal
+    subroutine con_density(P, drhodt)
         type(Particle), intent(in) :: P(:)
+        integer :: ntotal
         real(8), intent(inout) :: drhodt(:)    !! Density change rate of each particle
 
         integer i, j, k
 
+        ntotal = size(P)
         do i = 1, ntotal
             drhodt(i) = 0
         end do
@@ -107,15 +109,16 @@ contains
     end subroutine con_density
 
     !!! PVRS Riemann Solver
-    subroutine con_density_riemann(ntotal, P, drhodt)
-        integer, intent(in)  :: ntotal
+    subroutine con_density_riemann(P, drhodt)
         type(Particle), intent(in) :: P(:)
+        integer :: ntotal
         real(8), intent(inout) :: drhodt(:)    !! Density change rate of each particle
         real(8) :: Z_l, Z_r, v_l, v_r
         real(8) :: v_ij
         real(8) :: v_star(dim), e_ij(dim)
         integer i, j, k
 
+        ntotal = size(P)
         do i = 1, ntotal
             drhodt(i) = 0
         end do
@@ -146,9 +149,9 @@ contains
 
     end subroutine con_density_riemann
 
-    subroutine sum_density_dsph(ntotal, P)
-        integer, intent(in)  :: ntotal
+    subroutine sum_density_dsph(P)
         type(Particle), intent(inout) :: P(:)
+        integer :: ntotal
         real(8) :: self
         real(8) :: hv(dim)
         real(8) :: rho_max, rho_min, criteria, ratio
@@ -156,6 +159,7 @@ contains
         integer, allocatable :: dc_point(:)
         integer i, j, k, s
 
+        ntotal = size(P)
         allocate(wi(ntotal), source=0._8)
         allocate(dc_point(ntotal), source=0)
         hv = 0

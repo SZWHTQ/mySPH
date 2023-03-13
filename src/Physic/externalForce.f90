@@ -5,10 +5,10 @@ module ex_force_m
     implicit none
 
 contains
-    subroutine ex_force(ntotal, P, dvdt)
-        integer, intent(in)  :: ntotal
+    subroutine ex_force(P, dvdt)
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:, :)
+        integer :: ntotal
         real(8) :: dx(dim), dr, r
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
@@ -16,6 +16,7 @@ contains
 
         integer i, j, k, d
 
+        ntotal = size(P)
         forall (i=1:dim, j=1:ntotal) dvdt(i, j) = 0
 
         !!! Consider gravity or not

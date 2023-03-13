@@ -1,6 +1,5 @@
 module input_m
-    use ctrl_dict, only: ntotal, dim, &
-                         read_ini_file_W
+    use ctrl_dict, only: dim, read_ini_file_W
     use sph
     ! use initial_m, only: Type, x, v, mass, rho, p, e, c, hsml
     use parse_toml_m, only: in_path, out_path, vtk_path, nick
@@ -9,19 +8,21 @@ module input_m
     implicit none
 
 contains
-    subroutine input(Particles)
+    subroutine input(ntotal, Particles)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
 
         if ( read_ini_file_w ) then
-            call read_initial_file(Particles)
+            call read_initial_file(ntotal, Particles)
         else
-            call write_initial_file(Particles)
+            call write_initial_file(ntotal, Particles)
         end if
 
     end subroutine input
 
     !!! Load initial particle information from external disk file
-    subroutine read_initial_file(Particles)
+    subroutine read_initial_file(ntotal, Particles)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
         integer i, null
 
@@ -43,35 +44,34 @@ contains
 
     end subroutine read_initial_file
 
-    subroutine write_initial_file(Particles)
+    subroutine write_initial_file(ntotal, Particles)
         use ctrl_dict, only: maxn
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
-        real(8) :: div_r(maxn)
-        real(8) :: Stress(dim,dim,maxn)
         integer :: ini = 0
 
         select case(nick)
         case("shear_cavity")
-            call shear_cavity(Particles)
+            call shear_cavity(ntotal, Particles)
         case("shock_tube")
-            call shock_tube(Particles)
+            call shock_tube(ntotal, Particles)
         case("tnt_bar")
-            call tnt_bar(Particles)
+            call tnt_bar(ntotal, Particles)
         case("tnt_cylinder")
-            call tnt_cylinder(Particles)
+            call tnt_cylinder(ntotal, Particles)
         case("undex_cylinder")
-            call undex_cylinder(Particles)
+            call undex_cylinder(ntotal, Particles)
         case("undex_chamber")
-            call undex_chamber(Particles)
+            call undex_chamber(ntotal, Particles)
         case("UNDEX")
-            call undex(Particles)
+            call undex(ntotal, Particles)
         case("dam_break")
-            call dam_break(Particles)
+            call dam_break(ntotal, Particles)
         case ("taylor_rod")
-            call taylor_rod(Particles)
+            call taylor_rod(ntotal, Particles)
         end select
 
-        ! call output(ini, ntotal, Type, x, v, mass, rho, p, e, c, hsml, div_r, Stress)
+        call output(0, Particles(1:ntotal))
 
         write(*,*) "Initial particle configuration generated"
         write(*,*) ">> Total number of particles: ", to_string(ntotal)
@@ -79,7 +79,8 @@ contains
 
     end subroutine write_initial_file
 
-    subroutine shock_tube(P)
+    subroutine shock_tube(ntotal, P)
+        integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: dx
         real(8) :: gamma
@@ -120,7 +121,8 @@ contains
 
     end subroutine shock_tube
 
-    subroutine shear_cavity(P)
+    subroutine shear_cavity(ntotal, P)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         integer :: m, n, mp, np, k
         real(8) :: xl, yl, dx, dy
@@ -162,7 +164,8 @@ contains
 
     end subroutine shear_cavity
 
-    subroutine tnt_bar(P)
+    subroutine tnt_bar(ntotal, P)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: space_x
         real(8) :: rho0 = 1630, E0 = 4.29e6
@@ -185,7 +188,8 @@ contains
 
     end subroutine tnt_bar
 
-    subroutine tnt_cylinder(P)
+    subroutine tnt_cylinder(ntotal, P)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: rho0 = 1630, e0 = 4.29e6
         integer :: nr = 20, nt = 60
@@ -232,7 +236,8 @@ contains
 
     end subroutine tnt_cylinder
 
-    subroutine undex_cylinder(P)
+    subroutine undex_cylinder(ntotal, P)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: rho0(2) = [1630., 1000.], e0(2) = [4.29e6, 0.]
         real(8) :: p0 = 101.325e3
@@ -294,7 +299,8 @@ contains
 
     end subroutine undex_cylinder
 
-    subroutine undex_chamber(P)
+    subroutine undex_chamber(ntotal, P)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         integer :: water_n(2) = [90, 90], &
                      tnt_n(2) = [61, 61]
@@ -389,8 +395,9 @@ contains
 
     end subroutine undex_chamber
 
-    subroutine undex(P)
+    subroutine undex(ntotal, P)
         use geometry_m
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: fluid_domian(4) = [0.0, 0.1, -0.045, 0.045]
         real(8) :: confined = 1
@@ -457,7 +464,8 @@ contains
 
     end subroutine undex
 
-    subroutine dam_break(P)
+    subroutine dam_break(ntotal, P)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         ! real(8) :: fluid_domian(4) = [0, 2, 0, 1]
         real(8) :: fluid_domian(4) = [0, 25, 0, 25]
@@ -488,7 +496,8 @@ contains
 
     end subroutine dam_break
 
-    subroutine taylor_rod(P)
+    subroutine taylor_rod(ntotal, P)
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: solid_domain(4) = [0., 0.760, &
                                       0., 2.546] * 1e-2

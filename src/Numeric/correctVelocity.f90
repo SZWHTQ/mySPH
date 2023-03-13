@@ -5,10 +5,10 @@ module corr_velo_m
     implicit none
 
 contains
-    subroutine aver_velo(ntotal, P, aver_v)
-        integer, intent(in) :: ntotal
+    subroutine aver_velo(P, aver_v)
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: aver_v(:, :)
+        integer :: ntotal
         real(8) :: epsilon
         real(8) :: dv(dim)
 
@@ -20,6 +20,7 @@ contains
         !!! the ε ≤ 0.3
         parameter(epsilon = 0.3)
 
+        ntotal = size(P)
         forall(i=1:dim, j=1:ntotal) aver_v(i, j) = 0._8
 
         do i = 1, ntotal

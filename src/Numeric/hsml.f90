@@ -5,15 +5,16 @@ module hsml_m
 
 contains
     !!! Subroutine to evolve smoothing length
-    subroutine h_upgrade(ntotal, sle, delta_t, P)
-        integer, intent(in) :: ntotal
+    subroutine h_upgrade(sle, delta_t, P)
         integer, intent(in) :: sle
         real(8), intent(in) :: delta_t
         type(Particle), intent(inout) :: P(:)
+        integer :: ntotal
         real(8) :: factor
         real(8), allocatable :: dhsmldt(:)
         integer i
 
+        ntotal = size(P)
         allocate(dhsmldt(ntotal))
 
         select case (sle)

@@ -5,11 +5,11 @@ module arti_visc_m
     implicit none
 
 contains
-    subroutine arti_visc(ntotal, P, dvdt, dedt)
-        integer, intent(in)  :: ntotal
+    subroutine arti_visc(P, dvdt, dedt)
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:,:)
         real(8), intent(inout) :: dedt(:)
+        integer :: ntotal
         real(8) :: alpha !! Bulk viscosity
         real(8) :: beta  !! Shear viscosity 
                          !! To Avoid non-physical penetration
@@ -20,6 +20,7 @@ contains
 
         integer i, j, k
 
+        ntotal = size(P)
         forall (i=1:ntotal)
             dvdt(:, i) = 0
             dedt(i)    = 0

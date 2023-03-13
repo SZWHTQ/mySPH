@@ -5,7 +5,11 @@ module time_integration_m
     implicit none
 
 contains
+! #if SOLID
     subroutine single_step(ntotal, ndummy, Particles, drhodt, dvdt, dedt, tdsdt, aver_v, Shear, dSdt)
+! #else
+!     subroutine single_step(ntotal, ndummy, Particles, drhodt, dvdt, dedt, tdsdt, aver_v)
+! #endif
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         !$ use omp_lib
 #ifndef _OPENMP
@@ -18,7 +22,6 @@ contains
                              arti_heat_w, aver_velocity_w, print_statistics_w, dummy_parti_w, &
                              nthreads, chunkSize
 #endif
-        use initial_m, only: neighborList, neighborNum, w, dwdx
         use sph
         use nnps_m
         use density_m
@@ -58,14 +61,10 @@ contains
             avdvdt(:, i) = 0
             avdedt(i)    = 0
             ahdedt(i)    = 0
-            Particles(i)%neighborNum     = 0
-            Particles(i)%neighborList(:) = 0
-            Particles(i)%w(:)       = 0
-            Particles(i)%dwdx(:, :) = 0
         end do
 
         !!! Positions of dummy (boundary) particles
-        if ( dummy_parti_w ) call gen_dummy_particle(ntotal, ndummy, Particles)
+        if ( dummy_parti_w ) call gen_dummy_particle(ndummy, Particles(1:ntotal))
 
 #ifdef _OPENMP
         chunkSize = (ntotal+ndummy) / nthreads
@@ -80,43 +79,45 @@ contains
         select case (pa_sph)
         case (1, 2)
             if ( sum_density_w ) then
-                call sum_density(ntotal+ndummy, Particles)
+                call sum_density(Particles(1:ntotal+ndummy))
             else
-                call con_density(ntotal+ndummy, Particles, drhodt)
+                call con_density(Particles(1:ntotal+ndummy), drhodt)
             end if
         case (3)
-            call con_density_riemann(ntotal+ndummy, Particles, drhodt)
+            call con_density_riemann(Particles(1:ntotal+ndummy), drhodt)
         case (4)
-            call sum_density_dsph(ntotal+ndummy, Particles)
+            call sum_density_dsph(Particles(1:ntotal+ndummy))
         case default
             write(err, "(1X, A, I0)") "Error density scheme ", pa_sph
             error stop
         end select
 
-        call detonation_wave(ntotal, i_time_step, delta_t, Particles)
+        call detonation_wave(i_time_step, delta_t, Particles(1:ntotal))
 
-        call divergence(Particles)
+        call divergence(Particles(1:ntotal+ndummy))
 
         !!! Internal forces
 #if SOLID
-        call in_force(ntotal+ndummy, Particles, indvdt, tdsdt, indedt, Shear, dSdt)
+        call in_force(Particles(1:ntotal+ndummy), indvdt, tdsdt, indedt, Shear, dSdt)
 #else
-        call in_force(ntotal+ndummy, Particles, indvdt, tdsdt, indedt)
+        call in_force(Particles(1:ntotal+ndummy), indvdt, tdsdt, indedt)
 #endif
 
         !!! Artificial viscosity
-        if ( arti_visc_w ) call arti_visc(ntotal+ndummy, Particles, avdvdt, avdedt)
+        if ( arti_visc_w ) call arti_visc(Particles(1:ntotal+ndummy), avdvdt, avdedt)
 
         !!! External force
-        if ( ex_force_w ) call ex_force(ntotal+ndummy, Particles, exdvdt)
+        if ( ex_force_w ) call ex_force(Particles(1:ntotal+ndummy), exdvdt)
 
-        if ( arti_heat_w ) call arti_heat(ntotal+ndummy, Particles, ahdedt)
+        if ( arti_heat_w ) call arti_heat(Particles(1:ntotal+ndummy), ahdedt)
 
         !!! Calculating average velocity of each particle for avoiding penetration
-        if ( aver_velocity_w ) call aver_velo(ntotal, Particles, aver_v)
+        if ( aver_velocity_w ) call aver_velo(Particles(1:ntotal), aver_v)
 
         !!! Calculating the neighboring particles and updating HSML
-        call h_upgrade(ntotal, sle, delta_t, Particles)
+        call h_upgrade(sle, delta_t, Particles(1:ntotal))
+
+        call allocateNeighborList(Particles, dim, maxval(Particles%neighborNum)+5)
 
         !!! Convert velocity, force and energy to f and dfdt
         do i = 1, ntotal
@@ -157,32 +158,35 @@ contains
 
     end subroutine single_step
 
-    subroutine time_integration(P)
+    subroutine time_integration(ntotal, P)
 #ifndef _OPENMP
-        use ctrl_dict, only: dim, maxn, i_time_step, max_time_step, ntotal,   &
-                             save_interval, print_interval, monitor_particle, &
-                             sum_density_w, nsym
+        use ctrl_dict, only: dim, maxn, i_time_step, max_time_step, &
+                             save_interval, print_interval,         &
+                             monitor_particle, sum_density_w, nsym
 #else
-        use ctrl_dict, only: dim, maxn, i_time_step, max_time_step, ntotal,   &
-                             save_interval, print_interval, monitor_particle, &
-                             sum_density_w, nsym, nthreads, chunkSize
+        use ctrl_dict, only: dim, maxn, i_time_step, max_time_step, &
+                             save_interval, print_interval,         &
+                             monitor_particle, sum_density_w, nsym, &
+                             nthreads, chunkSize
 #endif
         use sph
         ! use initial_m
         use cour_num_m
         use output_m
         implicit none
+        integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: P(:)
         integer :: ndummy
         real(8) :: v_prev(dim, maxn), e_prev(maxn), rho_prev(maxn)
         real(8) :: tdsdt(maxn), dvdt(dim, maxn), dedt(maxn), &
                    drhodt(maxn), aver_v(dim, maxn)
-        real(8) :: time = 0, temp_rho, temp_e
+        real(8) :: temp_rho, temp_e
+        real(8) :: time = 0
         real(8) :: aver_courant = 0, max_courant = 0, cntemp
 #if SOLID
         ! integer :: solid_num
         real(8) :: Shear_prev(dim, dim, maxn)
-        real(8) :: Shear(dim, dim, maxn), dSdt(dim, dim, maxn), Stress(dim, dim, maxn)
+        real(8) :: Shear(dim, dim, maxn), dSdt(dim, dim, maxn)
         real(8) :: J2, SigmaY
 #endif
 
@@ -201,7 +205,6 @@ contains
             Shear_prev(:, :, i) = 0
             Shear(:, :, i)      = 0
             dSdt(:, :, i)       = 0
-            Stress(:, :, i)     = 0
 #endif
         end forall
 
@@ -334,7 +337,7 @@ contains
             time = time + delta_t
 
             if (mod(i_time_step, save_interval) == 0) then
-                call output((i_time_step/save_interval), ntotal+ndummy, P)
+                call output((i_time_step/save_interval), P(1:ntotal+ndummy))
             end if
 
             if ( mod(i_time_step, print_interval) == 0 ) then

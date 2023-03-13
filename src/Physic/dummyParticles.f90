@@ -1,50 +1,52 @@
 module dummy_part_m
     use ctrl_dict, only: dim, skf
+    use sph
     use parse_toml_m, only: nick
     implicit none
     private
 
     public gen_dummy_particle
 contains
-    subroutine gen_dummy_particle(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
+    subroutine gen_dummy_particle(ndummy, Particles)
         ! use ctrl_dict, only: i_time_step
-        integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), c(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: Particles(:)
+        integer :: ntotal
 
+        ntotal = size(Particles)
         ndummy = 0
 
         select case(nick)
         case("shear_cavity")
-            call shear_cavity_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            call shear_cavity_dp(ntotal, ndummy, Particles)
         case("shock_tube")
-            call shock_tube_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
-            call shock_tube_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
+            call shock_tube_dp_1(ntotal, ndummy, Particles)
+            call shock_tube_dp_2(ntotal, ndummy, Particles)
         case("tnt_bar")
-            call tnt_bar_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
-            call tnt_bar_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            call tnt_bar_dp_1(ntotal, ndummy, Particles)
+            call tnt_bar_dp_2(ntotal, ndummy, Particles)
         case("undex_chamber")
-            ! call undex_chamber_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
-            call undex_chamber_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            ! call undex_chamber_dp_1(ntotal, ndummy, Particles)
+            call undex_chamber_dp_2(ntotal, ndummy, Particles)
         case("UNDEX")
-            call undex_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
-            call undex_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            call undex_dp_1(ntotal, ndummy, Particles)
+            call undex_dp_2(ntotal, ndummy, Particles)
         case("dam_break")
-            call dam_break_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+            call dam_break_dp(ntotal, ndummy, Particles)
         case("taylor_rod")
-            ! call taylor_rod_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
-            call taylor_rod_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
+            ! call taylor_rod_dp_1(ntotal, ndummy, Particles)
+            call taylor_rod_dp_2(ntotal, ndummy, Particles)
         end select
 
     end subroutine gen_dummy_particle
 
-    subroutine shear_cavity_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine shear_cavity_dp(ntotal, ndummy, P)
         ! use ctrl_dict, only: i_time_step
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8) :: xl, dx, drive
-        integer :: i, mp, l, layer
+        integer :: i, mp, l, layer, index
 
         ndummy = 0
         mp     = 40
@@ -57,55 +59,59 @@ contains
             !!! Monaghan type dummy particle on the Upper side
             do i = 1, 2*(mp+l) - 1
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) = dx * (i-l) / 2
-                x(2, ntotal+ndummy) = xl + dx / 2 * (l-1)
-                v(1, ntotal+ndummy) = drive
-                v(2, ntotal+ndummy) = 0
+                index = ntotal+ndummy
+                P(index)%x(1) = dx * (i-l) / 2
+                P(index)%x(2) = xl + dx / 2 * (l-1)
+                P(index)%v(1) = drive
+                P(index)%v(2) = 0
             end do
 
             !!! Monaghan type dummy particle on the Lower side
             do i = 1, 2*(mp+l) - 1
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) = dx * (i-l) / 2
-                x(2, ntotal+ndummy) = 0 - dx / 2 * (l-1)
-                v(1, ntotal+ndummy) = 0
-                v(2, ntotal+ndummy) = 0
+                index = ntotal+ndummy
+                P(index)%x(1) = dx * (i-l) / 2
+                P(index)%x(2) = 0 - dx / 2 * (l-1)
+                P(index)%v(1) = 0
+                P(index)%v(2) = 0
             end do
 
             !!! Monaghan type dummy particle on the Left side
             do i = 1, 2*(mp+l) - 3
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) = 0 - dx / 2 * (l-1)
-                x(2, ntotal+ndummy) = dx * (i-l+1) / 2
-                v(1, ntotal+ndummy) = 0
-                v(2, ntotal+ndummy) = 0
+                index = ntotal+ndummy
+                P(index)%x(1) = 0 - dx / 2 * (l-1)
+                P(index)%x(2) = dx * (i-l+1) / 2
+                P(index)%v(1) = 0
+                P(index)%v(2) = 0
             end do
 
             do i = 1, 2*(mp+l) - 3
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) = xl + dx / 2*(l-1)
-                x(2, ntotal+ndummy) = dx * (i-l+1) / 2
-                v(1, ntotal+ndummy) = 0
-                v(2, ntotal+ndummy) = 0
+                index = ntotal+ndummy
+                P(index)%x(1) = xl + dx / 2*(l-1)
+                P(index)%x(2) = dx * (i-l+1) / 2
+                P(index)%v(1) = 0
+                P(index)%v(2) = 0
             end do
         end do
 
         do i = 1, ndummy
-            rho(ntotal+i)   = 1000
-            mass(ntotal+i)  = rho(ntotal+i) * dx**2
-            p(ntotal+i)     = 0
-            e(ntotal+i)     = 357.1
-            itype(ntotal+i) = -itype(1)
-            hsml(ntotal+i)  = dx
+            P(ntotal+i)%Density         = 1000
+            P(ntotal+i)%Mass            = P(ntotal+i)%Density * dx**2
+            P(ntotal+i)%Pressure        = 0
+            P(ntotal+i)%InternalEnergy  = 357.1
+            P(ntotal+i)%Type           = -P(1)%Type
+            P(ntotal+i)%SmoothingLength = dx
         end do
 
 
     end subroutine shear_cavity_dp
 
-    subroutine shock_tube_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
+    subroutine shock_tube_dp_1(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), c(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8) :: dx, gamma
         integer :: layer = 1
         integer i
@@ -115,37 +121,41 @@ contains
 
         do i = 1, layer
             ndummy = ndummy + 1
-            x(1, ntotal + ndummy) = -0.6 - dx / 4 * (i+1)
-            v(1, ntotal + ndummy) =  0
-            hsml(ntotal + ndummy) =  dx * 2
-            itype(ntotal+ ndummy) = -1
-            rho(ntotal  + ndummy) =  1
-            mass(ntotal + ndummy) =  rho(ntotal +  ndummy) * dx / 4
-            p(ntotal    + ndummy) =  1
-            e(ntotal    + ndummy) =  2.5
-            c(ntotal    + ndummy) =  sqrt(gamma*p(ntotal+ndummy)/rho(ntotal+ndummy))
+            P(ntotal+ndummy)%x(1)            = -0.6 - dx / 4 * (i+1)
+            P(ntotal+ndummy)%v(1)            =  0
+            P(ntotal+ndummy)%SmoothingLength =  dx * 2
+            P(ntotal+ndummy)%Type           = -1
+            P(ntotal+ndummy)%Density         =  1
+            P(ntotal+ndummy)%Mass            =  P(ntotal+ndummy)%Density * dx / 4
+            P(ntotal+ndummy)%Pressure        =  1
+            P(ntotal+ndummy)%InternalEnergy  =  2.5
+            P(ntotal+ndummy)%SoundSpeed      = sqrt(gamma                       &
+                                                    * P(ntotal+ndummy)%Pressure &
+                                                    / P(ntotal+ndummy)%Density)
 
             ndummy = ndummy + 1
-            x(1, ntotal + ndummy) =  0.6 + dx * (i+1)
-            v(1, ntotal + ndummy) =  0
-            hsml(ntotal + ndummy) =  dx * 2
-            itype(ntotal+ ndummy) = -1
-            rho(ntotal  + ndummy) =  0.25
-            mass(ntotal + ndummy) =  rho(ntotal +  ndummy) * dx
-            p(ntotal    + ndummy) =  0.1795
-            e(ntotal    + ndummy) =  1.795
-            c(ntotal    + ndummy) =  sqrt(gamma*p(ntotal+ndummy)/rho(ntotal+ndummy))
+            P(ntotal+ndummy)%x(1)            =  0.6 + dx * (i+1)
+            P(ntotal+ndummy)%v(1)            =  0
+            P(ntotal+ndummy)%SmoothingLength =  dx * 2
+            P(ntotal+ndummy)%Type           = -1
+            P(ntotal+ndummy)%Density         =  0.25
+            P(ntotal+ndummy)%Mass            =  P(ntotal+ndummy)%Density * dx
+            P(ntotal+ndummy)%Pressure        =  0.1795
+            P(ntotal+ndummy)%InternalEnergy  =  1.795
+            P(ntotal+ndummy)%SoundSpeed      =  sqrt(gamma                      &
+                                                    * P(ntotal+ndummy)%Pressure &
+                                                    / P(ntotal+ndummy)%Density)
         end do
 
     end subroutine shock_tube_dp_1
 
-    subroutine shock_tube_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
+    subroutine shock_tube_dp_2(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), c(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8) :: gamma
         integer :: scale_k, n_dp_1
-        integer i
+        integer i, index
 
         n_dp_1 = ndummy
         gamma = 1.4
@@ -158,40 +168,32 @@ contains
         end select
 
         do i = 1, ntotal
-            if ( x(1, i) - x(1, ntotal+n_dp_1 - 1) < hsml(i) * scale_k ) then
+            if ( P(i)%x(1) - P(ntotal+n_dp_1 - 1)%x(1) &
+               < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-
-                x(1, ntotal+ndummy) =  2*x(1, ntotal+n_dp_1 - 1) - x(1, i)
-                v(1, ntotal+ndummy) = -v(1, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)= -itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
-                c(ntotal+ndummy)    =  c(i)
+                index = ntotal + ndummy
+                P(index) = P(i)
+                P(index)%x(1)  =  2*P(ntotal+n_dp_1 - 1)%x(1) - P(i)%x(1)
+                P(index)%v(1)  = -P(i)%v(1)
+                P(index)%Type = -P(i)%Type
             end if
-            if ( x(1, ntotal+n_dp_1) - x(1, i) < hsml(i) * scale_k ) then
+            if ( P(ntotal+n_dp_1)%x(1) - P(i)%x(1) &
+               < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-
-                x(1, ntotal+ndummy) =  2*x(1, ntotal+n_dp_1) - x(1, i)
-                v(1, ntotal+ndummy) = -v(1, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)= -itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
-                c(ntotal+ndummy)    =  c(i)
+                index = ntotal + ndummy
+                P(index) = P(i)
+                P(index)%x(1) =  2*P(ntotal+n_dp_1)%x(1) - P(i)%x(1)
+                P(index)%v(1) = -P(i)%v(1)
+                P(index)%Type = -P(i)%Type
             end if
         end do
 
     end subroutine shock_tube_dp_2
 
-    subroutine tnt_bar_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine tnt_bar_dp_1(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8) :: space_x
         real :: rho0 = 1630, E0 = 4.29e6
         integer :: layer = 2
@@ -201,22 +203,22 @@ contains
 
         do i = 1, layer
             ndummy = ndummy + 1
-            x(1, ntotal + ndummy) =  0 -  space_x * i
-            v(1, ntotal + ndummy) =  0
-            mass(ntotal + ndummy) =  rho0 * space_x
-            hsml(ntotal + ndummy) =  space_x * 1.5
-            itype(ntotal+ ndummy) =  -itype(1)
-            e(ntotal   +  ndummy) =  E0
-            rho(ntotal +  ndummy) =  rho0
-            p(ntotal   +  ndummy) =  0
+            P(ntotal+ndummy)%x(1)            =  0 -  space_x * i
+            P(ntotal+ndummy)%v(1)            =  0
+            P(ntotal+ndummy)%Mass            =  rho0 * space_x
+            P(ntotal+ndummy)%SmoothingLength =  space_x * 1.5
+            P(ntotal+ndummy)%Type           =  -P(1)%Type
+            P(ntotal+ndummy)%InternalEnergy  =  E0
+            P(ntotal+ndummy)%Density         =  rho0
+            P(ntotal+ndummy)%Pressure        =  0
         end do
 
     end subroutine tnt_bar_dp_1
 
-    subroutine tnt_bar_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine tnt_bar_dp_2(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         integer :: scale_k, n_dp_1
         integer i
 
@@ -230,27 +232,23 @@ contains
         end select
 
         do i = 1, ntotal
-            if (  x(1, i) - x(1, ntotal+n_dp_1) < hsml(i) * scale_k ) then
+            if (  P(i)%x(1) - P(ntotal+n_dp_1)%x(1) &
+                < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-
-                x(1, ntotal+ndummy) = 2*x(1, ntotal+n_dp_1) - x(1, i)
-                v(1, ntotal+ndummy) = -v(1, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)= -itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                P(ntotal+ndummy) = P(i)
+                P(ntotal+ndummy)%x(1) = 2*P(ntotal+n_dp_1)%x(1) - P(i)%x(1)
+                P(ntotal+ndummy)%v(1) = -P(i)%v(1)
+                P(ntotal+ndummy)%Type= -P(i)%Type
 
             end if
         end do
 
     end subroutine tnt_bar_dp_2
 
-    subroutine undex_chamber_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine undex_chamber_dp_1(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         integer :: n(2) = [201, 201]
         real(8) :: length(2) = [1, 1], origin(2) = [-0.5, -0.5]
         real(8) :: delta(2)
@@ -267,63 +265,77 @@ contains
             !!! Monaghan type dummy particle on the Upper side
             do i = 1, n(1) + 2*(l+1)
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) = origin(1) + delta(1) * (i-l-2)
-                x(2, ntotal+ndummy) = length(2)+origin(2) + delta(2) * (l+1)
+                P(ntotal+ndummy)%x(1) = origin(1) + delta(1) * (i-l-2)
+                P(ntotal+ndummy)%x(2) = length(2)+origin(2) + delta(2) * (l+1)
             end do
 
             !!! Monaghan type dummy particle on the Lower side
             do i = 1, n(1) + 2*(l+1)
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) = origin(1) + delta(1) * (i-l-2)
-                x(2, ntotal+ndummy) = origin(2) - delta(2) * (l+1)
+                P(ntotal+ndummy)%x(1) = origin(1) + delta(1) * (i-l-2)
+                P(ntotal+ndummy)%x(2) = origin(2) - delta(2) * (l+1)
             end do
 
             !!! Monaghan type dummy particle on the Left side
             do i = 1, n(2) + 2*l
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) = origin(1) - delta(1) * (l+1)
-                x(2, ntotal+ndummy) = origin(2) + delta(2) * (i-l-1)
+                P(ntotal+ndummy)%x(1) = origin(1) - delta(1) * (l+1)
+                P(ntotal+ndummy)%x(2) = origin(2) + delta(2) * (i-l-1)
             end do
 
             !!! Monaghan type dummy particle on the Right side
             do i = 1, n(2) + 2*l
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) = length(1) + origin(1) + delta(1) * (l+1)
-                x(2, ntotal+ndummy) = origin(2) + delta(2) * (i-l-1)
+                P(ntotal+ndummy)%x(1) = length(1) + origin(1) + delta(1) * (l+1)
+                P(ntotal+ndummy)%x(2) = origin(2) + delta(2) * (i-l-1)
             end do
         end do
 
         if (first_entry) then
             do i = 1, ndummy
                 k = ntotal + i
-                v(:, k) = 0
-                rho(k)   = 1000
-                mass(k)  = rho(k) * delta(1)*delta(2)
-                p(k)     = 0
-                e(k)     = 0
-                itype(k) = -itype(1)
-                hsml(k)  = 1.5 * sum(delta)/2
+                P(k)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%Type           = -P(1)%Type
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
             end do
             first_entry = .false.
         end if
 
     end subroutine undex_chamber_dp_1
 
-    subroutine undex_chamber_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine undex_chamber_dp_2(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8) :: boundary(2, 2), dx, thickness
         logical :: first_entry = .true.
         save boundary, dx, first_entry
         integer :: scale_k, n_dp_1
         integer i
 
+        boundary = reshape([-huge(0._8), -huge(0._8),  &
+                             huge(0._8),  huge(0._8)], &
+                             shape(boundary))
         if ( first_entry ) then
-            dx = x(2, 2) - x(2, 1)
-            boundary = reshape([maxval(x(:,1:ntotal+ndummy), 2)+dx/2, &
-                                minval(x(:,1:ntotal+ndummy), 2)-dx/2], &
-                                shape(boundary))
+            dx = P(2)%x(2) - P(1)%x(2)
+            do i = 1, ntotal+ndummy
+                if ( P(i)%x(1) > boundary(1,1) ) then
+                    boundary(1,1) = P(i)%x(1)
+                end if
+                if ( p(i)%x(2) > boundary(2,1) ) then
+                    boundary(2,1) = P(i)%x(2)
+                end if
+                if ( p(i)%x(1) < boundary(1,2) ) then
+                    boundary(1,2) = P(i)%x(1)
+                end if
+                if ( p(i)%x(2) < boundary(2,2) ) then
+                    boundary(2,2) = P(i)%x(2)
+                end if
+            end do
             first_entry = .false.
         end if
 
@@ -338,35 +350,26 @@ contains
 
         do i = 1, ntotal
             !!! Dummy particle II on the Upper side
-            if ( boundary(2, 1) - x(2, i) < hsml(i) * scale_k ) then
+            if ( boundary(2, 1) - P(i)%x(2) &
+               < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-                thickness = hsml(i) * scale_k
-                x(1, ntotal+ndummy) =  x(1, i)
-                ! x(2, ntotal+ndummy) =  2*boundary(2, 1) - x(2, i)
-                x(2, ntotal+ndummy) =  x(2, i) + thickness
-                v(:, ntotal+ndummy) =  v(:, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)=  itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                thickness = P(i)%SmoothingLength * scale_k
+                P(ntotal+ndummy) = P(i)
+                ! P(ntotal+ndummy)%x(2) =  2*boundary(2, 1) - P(i)%x(2)
+                P(ntotal+ndummy)%x(2) =  P(i)%x(2) + thickness
+                ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
+                ! P(ntotal+ndummy)%Type =  P(i)%Type
             end if
 
             !!! Dummy particle II on the Lower side
-            if ( x(2, i) - boundary(2, 2) < hsml(i) * scale_k ) then
+            if ( P(i)%x(2) - boundary(2, 2) < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-                thickness = hsml(i) * scale_k
-                x(1, ntotal+ndummy) =  x(1, i)
-                ! x(2, ntotal+ndummy) =  2*boundary(2, 2) - x(2, i)
-                x(2, ntotal+ndummy) =  x(2, i) - thickness
-                v(:, ntotal+ndummy) =  v(:, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)=  itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                thickness = P(i)%SmoothingLength * scale_k
+                P(ntotal+ndummy) = P(i)
+                ! P(ntotal+ndummy)%x(2) =  2*boundary(2, 2) - P(i)%x(2)
+                P(ntotal+ndummy)%x(2) =  P(i)%x(2) - thickness
+                ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
+                ! P(ntotal+ndummy)%Type =  P(i)%Type
             end if
         end do
 
@@ -374,44 +377,34 @@ contains
 
         do i = 1, n_dp_1
             !!! Monaghan type dummy particle on the Right side
-            if ( boundary(1, 1) - x(1, i) < hsml(i) * scale_k ) then
-                thickness = hsml(i) * scale_k
+            if ( boundary(1, 1) - P(i)%x(1) < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-                ! x(1, ntotal+ndummy) =  2*boundary(1, 1) - x(1, i)
-                x(1, ntotal+ndummy) =  x(1, i) + thickness
-                x(2, ntotal+ndummy) =  x(2, i)
-                v(:, ntotal+ndummy) =  v(:, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)=  itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                thickness = P(i)%SmoothingLength * scale_k
+                P(ntotal+ndummy) = P(i)
+                ! P(ntotal+ndummy)%x(1) =  2*boundary(1, 1) - P(i)%x(1)
+                P(ntotal+ndummy)%x(1) =  P(i)%x(1) + thickness
+                ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
+                ! P(ntotal+ndummy)%Type =  P(i)%Type
             end if
 
             !!! Monaghan type dummy particle on the Left side
-            if ( x(1, i) - boundary(1, 2) < hsml(i) * scale_k ) then
-                thickness = hsml(i) * scale_k
+            if ( P(i)%x(1) - boundary(1, 2) < P(i)%SmoothingLength * scale_k ) then
+                thickness = P(i)%SmoothingLength * scale_k
                 ndummy = ndummy + 1
-                ! x(1, ntotal+ndummy) =  2*boundary(1, 2) - x(1, i)
-                x(1, ntotal+ndummy) =  x(1, i) - thickness
-                x(2, ntotal+ndummy) =  x(2, i)
-                v(:, ntotal+ndummy) =  v(:, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)=  itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                P(ntotal+ndummy) = P(i)
+                ! P(ntotal+ndummy)%x(1) =  2*boundary(1, 2) - P(i)%x(1)
+                P(ntotal+ndummy)%x(1) =  P(i)%x(1) - thickness
+                ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
+                ! P(ntotal+ndummy)%Type =  P(i)%Type
             end if
         end do
 
     end subroutine undex_chamber_dp_2
 
-    subroutine undex_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine undex_dp_1(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8) :: wall_domain(4) = [0., 0., -0.05, 0.05]
         real(8) :: dx = 5e-4
         integer :: Ny
@@ -428,34 +421,47 @@ contains
             do i = 1, Ny
                 ndummy = ndummy + 1
                 index  = ntotal + ndummy
-                x(:, index)  = [wall_domain(1) - (l - 1) * dx, &
+                P(index)%x(:)  = [wall_domain(1) - (l - 1) * dx, &
                                 wall_domain(3) + (i - 1) * dx]
-                v(:, index)  = 0
-                rho(index)   = 1000
-                mass(index)  = rho(index) * dx * dx
-                p(index)     = 0
-                e(index)     = 2e7
-                itype(index) = -6
-                hsml(index)  = dx
+                P(index)%v(:)            = 0
+                P(index)%Density         = 1000
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 2e7
+                P(index)%Type           = -6
+                P(index)%SmoothingLength = dx
             end do
         end do
 
     end subroutine undex_dp_1
 
-    subroutine undex_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine undex_dp_2(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8), save :: boundary(2, 2)
         integer :: scale_k, n_dp_1
         logical, save :: first_entry = .true.
         integer i
 
+        boundary = reshape([-huge(0._8), -huge(0._8),  &
+                             huge(0._8),  huge(0._8)], &
+                             shape(boundary))
         if ( first_entry ) then
-            boundary = reshape([maxval(x(:,1:ntotal), 2), &
-                                minval(x(:,1:ntotal), 2)], &
-                                shape(boundary))
-            boundary = boundary * 1.01
+            do i = 1, ntotal+ndummy
+                if ( P(i)%x(1) > boundary(1,1) ) then
+                    boundary(1,1) = P(i)%x(1)
+                end if
+                if ( p(i)%x(2) > boundary(2,1) ) then
+                    boundary(2,1) = P(i)%x(2)
+                end if
+                if ( p(i)%x(1) < boundary(1,2) ) then
+                    boundary(1,2) = P(i)%x(1)
+                end if
+                if ( p(i)%x(2) < boundary(2,2) ) then
+                    boundary(2,2) = P(i)%x(2)
+                end if
+            end do
             first_entry = .false.
         end if
 
@@ -470,68 +476,40 @@ contains
 
         do i = 1, ntotal
             !!! Dummy particle II Upside
-            if ( boundary(2, 1) - x(2, i) < hsml(i) * scale_k ) then
+            if ( boundary(2, 1) - P(i)%x(2) < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) =  x(1, i)
-                x(2, ntotal+ndummy) =  2*boundary(2, 1) - x(2, i)
-                v(:, ntotal+ndummy) =  v(:, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)=  itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                P(ntotal+ndummy) = P(i)
+                P(ntotal+ndummy)%x(2) =  2*boundary(2, 1) - P(i)%x(2)
             end if
 
             !!! Dummy particle II Downside
-            if ( x(2, i) - boundary(2, 2) < hsml(i) * scale_k ) then
+            if ( P(i)%x(2) - boundary(2, 2) < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) =  x(1, i)
-                x(2, ntotal+ndummy) =  2*boundary(2, 2) - x(2, i)
-                v(:, ntotal+ndummy) =  v(:, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)=  itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                P(ntotal+ndummy) = P(i)
+                P(ntotal+ndummy)%x(2) =  2*boundary(2, 2) - P(i)%x(2)
             end if
 
             !!! Monaghan type dummy particle on the Right side
-            if ( boundary(1, 1) - x(1, i) < hsml(i) * scale_k ) then
+            if ( boundary(1, 1) - P(i)%x(1) < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy) =  2*boundary(1, 1) - x(1, i)
-                x(2, ntotal+ndummy) =  x(2, i)
-                v(:, ntotal+ndummy) =  v(:, i)
-                mass(ntotal+ndummy) =  mass(i)
-                hsml(ntotal+ndummy) =  hsml(i)
-                itype(ntotal+ndummy)=  itype(i)
-                e(ntotal+ndummy)    =  e(i)
-                rho(ntotal+ndummy)  =  rho(i)
-                p(ntotal+ndummy)    =  p(i)
+                P(ntotal+ndummy) = P(i)
+                P(ntotal+ndummy)%x(1) =  2*boundary(1, 1) - P(i)%x(1)
             end if
 
             ! !!! Monaghan type dummy particle on the Left side
-            ! if ( x(1, i) - boundary(1, 2) < hsml(i) * scale_k ) then
+            ! if ( P(i)%x(1) - boundary(1, 2) < P(i)%SmoothingLength * scale_k ) then
             !     ndummy = ndummy + 1
-            !     x(1, ntotal+ndummy) =  2*boundary(1, 2) - x(1, i)
-            !     x(2, ntotal+ndummy) =  x(2, i)
-            !     v(:, ntotal+ndummy) =  v(:, i)
-            !     mass(ntotal+ndummy) =  mass(i)
-            !     hsml(ntotal+ndummy) =  hsml(i)
-            !     itype(ntotal+ndummy)=  itype(i)
-            !     e(ntotal+ndummy)    =  e(i)
-            !     rho(ntotal+ndummy)  =  rho(i)
-            !     p(ntotal+ndummy)    =  p(i)
+            !     P(ntotal+ndummy) = P(i)
+            !     P(ntotal+ndummy)%x(1) =  2*boundary(1, 2) - P(i)%x(1)
             ! end if
         end do
 
     end subroutine undex_dp_2
 
-    subroutine dam_break_dp(ntotal, ndummy, itype, x, v, mass, rho, p, e, hsml)
+    subroutine dam_break_dp(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8) :: dx
         save dx
         real(8) :: wall_domain(4)
@@ -546,7 +524,7 @@ contains
         ndummy = 0
 
         if ( first_entry ) then
-            dx = abs(x(1, 2) - x(2, 2))
+            dx = abs(P(2)%x(1) - P(2)%x(2))
             first_entry = .false.
         end if
         ! wall_domain = [0, 0, 0, 3]
@@ -560,29 +538,30 @@ contains
             do i = 1, Ny
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                x(:, index)  = [wall_domain(1) - (l-0.5)*dx, wall_domain(3) + (i-layer-0.5)*dx]
-                v(:, index)  = 0
-                rho(index)   = 1000
-                mass(index)  = rho(index) * dx * dx
-                p(index)     = 0
-                e(index)     = 0
-                itype(index) = -itype(1)
-                hsml(index)  = dx
+                P(index)%x(:) = [wall_domain(1) - (l-0.5)*dx, &
+                                 wall_domain(3) + (i-layer-0.5)*dx]
+                P(index)%v(:) = 0
+                P(index)%Density         = 1000
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%Type           = -P(1)%Type
+                P(index)%SmoothingLength = dx
             end do
 
             !!! Dummy particle I on the Right side
             do i = 1, Ny
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                x(:, index)  = [wall_domain(2) + (l-0.5)*dx, &
-                                wall_domain(3) + (i-layer-0.5)*dx]
-                v(:, index)  = 0
-                rho(index)   = 1000
-                mass(index)  = rho(index) * dx * dx
-                p(index)     = 0
-                e(index)     = 0
-                itype(index) = -itype(1)
-                hsml(index)  = dx
+                P(index)%x(:) = [wall_domain(2) + (l-0.5)*dx, &
+                                 wall_domain(3) + (i-layer-0.5)*dx]
+                P(index)%v(:) = 0
+                P(index)%Density         = 1000
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%Type           = -P(1)%Type
+                P(index)%SmoothingLength = dx
             end do
 
             !!! Dummy particle I on the Bottom
@@ -590,15 +569,15 @@ contains
             do i = 1, Nx
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                x(:, index)  = [wall_domain(1) + (i-0.5)*dx, &
-                                wall_domain(3) - (l-0.5)*dx]
-                v(:, index)  = 0
-                rho(index)   = 1000
-                mass(index)  = rho(index) * dx * dx
-                p(index)     = 0
-                e(index)     = 0
-                itype(index) = -itype(1)
-                hsml(index)  = dx
+                P(index)%x(:) = [wall_domain(1) + (i-0.5)*dx, &
+                                 wall_domain(3) - (l-0.5)*dx]
+                P(index)%v(:) = 0
+                P(index)%Density         = 1000
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%Type           = -P(1)%Type
+                P(index)%SmoothingLength = dx
             end do
         end do
 
@@ -608,24 +587,24 @@ contains
             do i = 1, Nx - l + 1
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                x(:, index)  = [sum(wall_domain(1:2))/2 + (i+l-1.5)*dx/2, &
-                                wall_domain(3) + (i-0.5)*dx/2]
-                v(:, index)  = 0
-                rho(index)   = 1000
-                mass(index)  = rho(index) * dx * dx / 4
-                p(index)     = 0
-                e(index)     = 0
-                itype(index) = -itype(1)
-                hsml(index)  = dx
+                P(index)%x(:)  = [sum(wall_domain(1:2))/2 + (i+l-1.5)*dx/2, &
+                                  wall_domain(3) + (i-0.5)*dx/2]
+                P(index)%v(:)  = 0
+                P(index)%Density         = 1000
+                P(index)%Mass            = P(index)%Density * dx * dx / 4
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%Type           = -P(1)%Type
+                P(index)%SmoothingLength = dx
             end do
         end do
 
     end subroutine dam_break_dp
 
-    subroutine taylor_rod_dp_1(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
+    subroutine taylor_rod_dp_1(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), c(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         real(8) :: dx
         save dx
         real(8) :: wall_domain(4)
@@ -640,7 +619,7 @@ contains
         ndummy = 0
 
         if ( first_entry ) then
-            dx = abs(x(1, 2) - x(2, 2)) / 2
+            dx = abs(P(2)%x(1) - P(2)%x(2)) / 2
             first_entry = .false.
         end if
 
@@ -654,25 +633,25 @@ contains
             do j = 1, Ny
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                x(:, index)  = [wall_domain(2) - (i-0.5)*dx, &
+                P(index)%x(:)  = [wall_domain(2) - (i-0.5)*dx, &
                                 wall_domain(4) - (j-0.5)*dx]
-                v(:, index)  = 0
-                rho(index)   = 7850
-                mass(index)  = rho(index) * dx * dx
-                p(index)     = 0
-                e(index)     = 0
-                c(index)     = 5000
-                itype(index) = -itype(1)
-                hsml(index)  = dx * 2
+                P(index)%v(:)  = 0
+                P(index)%Density         = 7850
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%SoundSpeed      = 5000
+                P(index)%Type           = -P(1)%Type
+                P(index)%SmoothingLength = dx * 2
             end do
         end do
 
     end subroutine taylor_rod_dp_1
 
-    subroutine taylor_rod_dp_2(ntotal, ndummy, itype, x, v, mass, rho, p, e, c, hsml)
+    subroutine taylor_rod_dp_2(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy, itype(:)
-        real(8), intent(inout) :: x(:,:), v(:,:), mass(:), rho(:), p(:), e(:), c(:), hsml(:)
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
         integer :: scale_k
 
         integer i
@@ -685,19 +664,12 @@ contains
         end select
 
         do i = 1, ntotal
-            if ( x(2, i) - 0 < hsml(i) * scale_k ) then
+            if ( P(i)%x(2) - 0 < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
-                x(1, ntotal+ndummy)  =  x(1, i)
-                x(2, ntotal+ndummy)  = -x(2, i)
-                v(1, ntotal+ndummy)  =  v(1, i)
-                v(2, ntotal+ndummy)  = -v(2, i)
-                mass(ntotal+ndummy)  =  mass(i)
-                hsml(ntotal+ndummy)  =  hsml(i)
-                itype(ntotal+ndummy) = -itype(i)
-                e(ntotal+ndummy)     =  e(i)
-                rho(ntotal+ndummy)   =  rho(i)
-                p(ntotal+ndummy)     =  p(i)
-                c(ntotal+ndummy)     =  c(i)
+                P(ntotal+ndummy) = P(i)
+                P(ntotal+ndummy)%x(2)  = -P(i)%x(2)
+                P(ntotal+ndummy)%v(2)  = -P(i)%v(2)
+                P(ntotal+ndummy)%Type = -P(i)%Type
             end if
         end do
 

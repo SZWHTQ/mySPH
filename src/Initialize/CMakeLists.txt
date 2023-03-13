@@ -6,6 +6,7 @@ list(
     "${dir}/getValueFromToml.f90"
     "${dir}/allocateMemory.f90"
     "${dir}/input.f90"
+    "${dir}/SPH.f90"
 )
 
 set(srcs "${srcs}" PARENT_SCOPE)

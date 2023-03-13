@@ -1,7 +1,11 @@
 module initial_m
     use ctrl_dict, only: maxn, max_interaction, dim
+    use sph
     implicit none
-    integer, allocatable, public :: itype(:)  !! Type of Particles
+    private
+    
+    integer, allocatable, public :: Type(:)  !! Type of Particles
+    integer, allocatable, public :: status(:) !! Status of Particles
     real(8), allocatable, public :: x(:, :)   !! Position of Particles
     real(8), allocatable, public :: v(:, :)   !! Velocity of Particles
     real(8), allocatable, public :: mass(:)   !! Particle mass
@@ -16,8 +20,6 @@ module initial_m
     real(8), allocatable, public :: dwdx(:, :, :)    !! The First Derivative of the Smooth Kernel Function for a Given Interaction Pair
     integer, allocatable, public :: neighborNum(:)
 
-    private
-
     public :: initialize
 
 contains
@@ -27,7 +29,7 @@ contains
 
         kpair = max_interaction / maxn
 
-        allocate(itype(maxn), source=0)
+        allocate(Type(maxn), status(maxn), source=0)
         allocate(x(dim, maxn), v(dim, maxn), source=0._8)
         allocate(mass(maxn), source=0._8)
         allocate(rho(maxn), p(maxn), e(maxn), c(maxn), source=0._8)
@@ -37,11 +39,12 @@ contains
         ! allocate(w(max_interaction), source=0._8)
         ! allocate(dwdx(dim, max_interaction), source=0._8)
 
+        allocate(neighborNum(maxn), source=0)
         allocate(neighborList(maxn, kpair), source=0)
         allocate(w(maxn, kpair), source=0._8)
         allocate(dwdx(dim, maxn, kpair), source=0._8)
-        allocate(neighborNum(maxn), source=0)
 
     end subroutine initialize
+
 
 end module initial_m

@@ -1,21 +1,20 @@
 module hsml_m
     use ctrl_dict, only: dim
+    use sph
     implicit none
 
 contains
     !!! Subroutine to evolve smoothing length
-    subroutine h_upgrade(ntotal, sle, delta_t, mass, rho, div_v, hsml)
-        integer, intent(in) :: ntotal
+    subroutine h_upgrade(sle, delta_t, P)
         integer, intent(in) :: sle
         real(8), intent(in) :: delta_t
-        real(8), intent(in) :: mass(:)
-        real(8), intent(in) :: rho(:)
-        real(8), intent(in) :: div_v(:)
-        real(8), intent(inout) :: hsml(:)
+        type(Particle), intent(inout) :: P(:)
+        integer :: ntotal
         real(8) :: factor
         real(8), allocatable :: dhsmldt(:)
         integer i
 
+        ntotal = size(P)
         allocate(dhsmldt(ntotal))
 
         select case (sle)
@@ -24,14 +23,16 @@ contains
             return
         case (1)
             factor = 2._8
-            forall (i=1:ntotal) hsml(i) = factor * (mass(i)/rho(i))**(1._8/dim)
+            forall (i=1:ntotal) P(i)%SmoothingLength = factor*(P(i)%Mass/P(i)%Density)**(1._8/dim)
         case (2)
             !!! dh/dt = (-1/dim)*(h/rho)*(drho/dt)
             !!! drho/dt = sum(m*dv*dwdx )
             do i = 1, ntotal
-                dhsmldt(i) = (hsml(i)/dim)*div_v(i)
-                hsml(i)  = hsml(i) + delta_t*dhsmldt(i)
-                if (hsml(i) <= 0) hsml(i) = hsml(i) - delta_t*dhsmldt(i)
+                dhsmldt(i) = (P(i)%SmoothingLength/dim)*P(i)%divergenceVelocity
+                P(i)%SmoothingLength  = P(i)%SmoothingLength + delta_t*dhsmldt(i)
+                if (P(i)%SmoothingLength <= 0) then
+                    P(i)%SmoothingLength = P(i)%SmoothingLength - delta_t*dhsmldt(i)
+                end if
             end do
         end select
 

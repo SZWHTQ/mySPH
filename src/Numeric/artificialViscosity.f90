@@ -1,22 +1,15 @@
 module arti_visc_m
     use ctrl_dict, only: dim
+    use sph
     use parse_toml_m, only: nick
     implicit none
 
 contains
-    subroutine arti_visc(ntotal, x, v, mass, rho, c, hsml, neighborNum, neighborList, dwdx, dvdt, dedt)
-        integer, intent(in)  :: ntotal
-        real(8), intent(in) :: x(:, :)
-        real(8), intent(in) :: v(:, :)
-        real(8), intent(in) :: mass(:)
-        real(8), intent(in) :: rho(:)
-        real(8), intent(in) :: c(:)
-        real(8), intent(in) :: hsml(:)
-        integer, intent(in) :: neighborNum(:)
-        integer, intent(in) :: neighborList(:, :)
-        real(8), intent(in) :: dwdx(:, :, :)
+    subroutine arti_visc(P, dvdt, dedt)
+        type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:,:)
         real(8), intent(inout) :: dedt(:)
+        integer :: ntotal
         real(8) :: alpha !! Bulk viscosity
         real(8) :: beta  !! Shear viscosity 
                          !! To Avoid non-physical penetration
@@ -27,6 +20,7 @@ contains
 
         integer i, j, k
 
+        ntotal = size(P)
         forall (i=1:ntotal)
             dvdt(:, i) = 0
             dedt(i)    = 0
@@ -59,18 +53,18 @@ contains
         !!! Calculate SPH sum for artificial viscous
         !$OMP PARALLEL DO PRIVATE(i, j, k, dx, dv, xv, hsml_ij, rho_ij, c_ij, phi_ij, PI_ij)
         do i = 1, ntotal
-            do k = 1, neighborNum(i)
-                j = neighborList(i, k)
+            do k = 1, P(i)%neighborNum
+                j = P(i)%neighborList(k)
                 
-                dx = x(:, i) - x(:, j)
-                dv = v(:, i) - v(:, j)
+                dx = P(i)%x(:) - P(j)%x(:)
+                dv = P(i)%v(:) - P(j)%v(:)
                 xv = sum( dx * dv )
 
                 !!! Artificial viscous force only if v_ij * r_ij < 0
                 if (xv < 0._8) then
-                    hsml_ij = 0.5_8 * ( hsml(i) + hsml(j) )
-                    rho_ij  = 0.5_8 * ( rho(i)  + rho(j)  )
-                    c_ij    = 0.5_8 * ( c(i)    + c(j)    )
+                    hsml_ij = 0.5_8 * ( P(i)%SmoothingLength + P(j)%SmoothingLength )
+                    rho_ij  = 0.5_8 * ( P(i)%Density  + P(j)%Density  )
+                    c_ij    = 0.5_8 * ( P(i)%SoundSpeed    + P(j)%SoundSpeed    )
 
                     !!! Calculate phi_ij = hsml*v_ij*r_ij / (r_ij^2+psi^2*hsml_ij^2)
                     !!! varphi = psi * hsml_ij
@@ -84,9 +78,9 @@ contains
                           / rho_ij
 
                     !!! Calculate SPH sum for artificial viscous force
-                    associate (aux => PI_ij*dwdx(:, i, k))
-                        dvdt(:, i) = dvdt(:, i) - mass(j) * aux
-                        dedt(i)    = dedt(i) + 0.5_8 * mass(j) * sum(dv*aux)
+                    associate (aux => PI_ij*P(i)%dwdx(:, k))
+                        dvdt(:, i) = dvdt(:, i) - P(j)%mass * aux
+                        dedt(i)    = dedt(i) + 0.5_8 * P(j)%mass * sum(dv*aux)
                     end associate
                 end if
             end do

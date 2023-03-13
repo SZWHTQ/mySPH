@@ -7,7 +7,7 @@ set(CMAKE_BUILD_TYPE Debug)
 project(
     "mySPH"
     LANGUAGES "Fortran"
-    VERSION "0.0.1"    
+    VERSION "0.1.0"    
 )
 
 # file(GLOB_RECURSE srcs0 src/0/*.f90)

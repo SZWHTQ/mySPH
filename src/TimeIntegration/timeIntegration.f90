@@ -196,7 +196,7 @@ contains
         use cour_num_m
         use output_m
         implicit none
-        integer :: ndummy
+        integer :: ndummy = 0
         real(8) :: v_prev(dim, maxn), e_prev(maxn), rho_prev(maxn)
         real(8) :: tdsdt(maxn), dvdt(dim, maxn), dedt(maxn), &
                    drhodt(maxn), aver_v(dim, maxn), &

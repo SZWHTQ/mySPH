@@ -117,8 +117,6 @@ contains
         !!! Calculating the neighboring particles and updating HSML
         call h_upgrade(sle, delta_t, Particles(1:ntotal))
 
-        call allocateNeighborList(Particles, dim, maxval(Particles%neighborNum)+5)
-
         !!! Convert velocity, force and energy to f and dfdt
         do i = 1, ntotal
             dvdt(:, i) = indvdt(:, i) + avdvdt(:, i) + exdvdt(:, i)
@@ -152,6 +150,8 @@ contains
                               exdvdt(i, monitor_particle),   dvdt(i, monitor_particle)
             end do
         end if
+
+        call allocateNeighborList(Particles, dim, maxval(Particles%neighborNum)+5)
 
         1001 format(A17, A14, 2(A15))
         1002 format(1X, 4(2X, ES13.6))

@@ -170,13 +170,12 @@ contains
                              nthreads, chunkSize
 #endif
         use sph
-        ! use initial_m
         use cour_num_m
         use output_m
         implicit none
         integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        integer :: ndummy
+        integer :: ndummy = 0
         real(8) :: v_prev(dim, maxn), e_prev(maxn), rho_prev(maxn)
         real(8) :: tdsdt(maxn), dvdt(dim, maxn), dedt(maxn), &
                    drhodt(maxn), aver_v(dim, maxn)
@@ -184,7 +183,6 @@ contains
         real(8) :: time = 0
         real(8) :: aver_courant = 0, max_courant = 0, cntemp
 #if SOLID
-        ! integer :: solid_num
         real(8) :: Shear_prev(dim, dim, maxn)
         real(8) :: Shear(dim, dim, maxn), dSdt(dim, dim, maxn)
         real(8) :: J2, SigmaY

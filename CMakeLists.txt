@@ -10,10 +10,6 @@ project(
     VERSION "0.2.0"    
 )
 
-# file(GLOB_RECURSE srcs0 src/0/*.f90)
-# file(GLOB_RECURSE srcs1 src/1/*.f90)
-# file(GLOB_RECURSE srcs2 src/2/*.f90)
-# file(GLOB_RECURSE srcs3 src/3/*.f90)
 set(srcs)
 add_subdirectory("src")
 

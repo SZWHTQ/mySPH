@@ -7,7 +7,7 @@ set(CMAKE_BUILD_TYPE Debug)
 project(
     "mySPH"
     LANGUAGES "Fortran"
-    VERSION "0.2.0"    
+    VERSION "0.1.1"    
 )
 
 set(srcs)

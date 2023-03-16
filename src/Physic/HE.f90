@@ -1,5 +1,5 @@
 module he_m
-    use parse_toml_m, only: nick
+    use ctrl_dict, only: Project
     use sph
     implicit none
     private
@@ -14,7 +14,7 @@ contains
         integer :: ntotal
 
         ntotal = size(Particles)
-        select case(nick)
+        select case(Project%nick)
         case("tnt_bar")
             call tnt_bar_detonation(i_time_step, delta_t, Particles)
         case("undex_cylinder")

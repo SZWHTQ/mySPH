@@ -1,7 +1,7 @@
 #include "../macro.h"
 module nnps_m
     use, intrinsic :: iso_fortran_env, only: err => error_unit
-    use ctrl_dict, only: dim, skf, chunkSize
+    use ctrl_dict, only: Config, Field
     use sph
     use kernel_m,  only: kernel
     use tools_m,   only: to_string, round, print_error, print_warning, ESC
@@ -50,16 +50,16 @@ contains
         ! include "mpif.h"
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal, kpair
-        real(8) :: this_w, this_dwdx(dim)
+        real(8) :: this_w, this_dwdx(Field%dim)
         integer :: scale_k
-        real(8) :: dx(dim), dr, r, mhsml
+        real(8) :: dx(Field%dim), dr, r, mhsml
 
         integer i, j, d !! Loop variables
 
         ! integer :: tid !! OMP Parallel parameters
         ! integer :: nprocs, pid, ierror, remain  !! MPI Parallel parameters
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             scale_k = 2
         case (2, 3)
@@ -77,7 +77,7 @@ contains
                 ! r  = norm2(dx)
                 dx(1) = P(i)%x(1) - P(j)%x(1)
                 dr = dx(1)*dx(1)
-                do d = 2, dim
+                do d = 2, Field%dim
                     dx(d) = P(i)%x(d) - P(j)%x(d)
                     dr = dr + dx(d)*dx(d)
                 end do
@@ -107,20 +107,21 @@ contains
     end subroutine direct_search
 
     subroutine link_list_search(P)
+        use back_ground_grid_m
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal, kpair
-        real(8) :: this_w, this_dwdx(dim)
+        real(8) :: this_w, this_dwdx(Field%dim)
         real(8) :: maxhsml, mhsml
         integer, allocatable   :: grid(:, :, :)
         integer, allocatable   :: cell_index(:, :), cell_data(:)
         integer :: cell(3), xcell, ycell, zcell, &
                    minxcell(3), maxxcell(3), &
-                   cell_num(dim), ghsmlx(dim)
-        real(8) :: dr, r, dx(dim), grid_max_coor(dim), grid_min_coor(dim)
+                   cell_num(Field%dim), ghsmlx(Field%dim)
+        real(8) :: dr, r, dx(Field%dim), grid_max_coor(Field%dim), grid_min_coor(Field%dim)
         real(8) :: scale
         integer :: i, j, d, scale_k
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             scale_k = 2
         case (2, 3)
@@ -138,7 +139,7 @@ contains
         grid_max_coor(:) = -huge(0._8)
         grid_min_coor(:) =  huge(0._8)
         do i = 1, ntotal
-            do d = 1, dim
+            do d = 1, Field%dim
                 if ( P(i)%x(d) > grid_max_coor(d) ) grid_max_coor(d) = P(i)%x(d)
                 if ( P(i)%x(d) < grid_min_coor(d) ) grid_min_coor(d) = P(i)%x(d)
             end do
@@ -150,7 +151,8 @@ contains
         end associate
         
         !!! initialize grid:
-        call initialize_grid(ntotal, maxval(P%SmoothingLength), grid, cell_num, ghsmlx, grid_max_coor, grid_min_coor)
+        maxhsml = maxval(P%SmoothingLength)
+        call initialize_grid(ntotal, maxhsml, grid, cell_num, ghsmlx, grid_max_coor, grid_min_coor)
 
         !!! position particles on grid and create linked list:
         do i = 1, ntotal
@@ -162,13 +164,13 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, d, cell, xcell, ycell, zcell, minxcell, maxxcell, dx, dr, r, mhsml, this_w, this_dwdx) &
         !$OMP SHARED(grid, cell_index, cell_data, P, ghsmlx, cell_num) &
-        !$OMP SCHEDULE(DYNAMIC, chunkSize)
+        !$OMP SCHEDULE(dynamic, Config%chunkSize)
         !!! determine interaction parameters:
         do i = 1, ntotal - 1 !! loop over all particles but the last one
             !!! determine range of grid to go through:
             maxxcell(:) = 1
             minxcell(:) = 1
-            do d = 1, dim
+            do d = 1, Field%dim
                 maxxcell(d) = min(cell_index(d, i) + ghsmlx(d), cell_num(d))
                 minxcell(d) = max(cell_index(d, i) - ghsmlx(d), 1)
             end do
@@ -182,7 +184,7 @@ contains
                             !!! Calculate distance between particle i and j
                             dx(1) = P(i)%x(1) - P(j)%x(1)
                             dr = dx(1)*dx(1)
-                            do d = 2, dim
+                            do d = 2, Field%dim
                                 dx(d) = P(i)%x(d) - P(j)%x(d)
                                 dr = dr + dx(d)*dx(d)
                             end do
@@ -222,103 +224,27 @@ contains
 
     end subroutine link_list_search
 
-    pure subroutine initialize_grid(ntotal, hsml, grid, cell_num, ghsmlx, grid_max_coor, grid_min_coor)
-        integer, intent(in) :: ntotal                                !! Number of particles
-        real(8), intent(in) :: hsml                                  !! Smoothing length
-        integer, intent(inout), allocatable :: grid(:, :, :)         !! Grid
-        integer, intent(inout) :: cell_num(:)                        !! Number of grid cells
-        integer, intent(inout) :: ghsmlx(:)                          !! Smoothing length
-        real(8), intent(inout) :: grid_max_coor(:), grid_min_coor(:) !! Maximum and minium grid cell coordinates
-        integer, parameter     :: nppg = 3  !! averaged number of particles per grid cell
-
-        !!! initialize parameters: maximum number of grid cells
-
-        !!! range of sorting grid
-
-        associate( d=>(grid_max_coor(:) - grid_min_coor(:)) )
-            !!! number of grid cells in x-, y- and z-direction:
-            if (dim == 1) then
-                cell_num(1) = min((ntotal)/nppg + 1, 1000)
-            else if (dim == 2) then
-                cell_num(1) = min(int(((ntotal)*d(1) &
-                                /(d(2)*nppg))**(1._8/2) )     + 1, 1000)
-                cell_num(2) = min(int(cell_num(1)*d(2)/d(1))  + 1, 1000)
-            else if (dim == 3) then
-                cell_num(1) = min(int(((ntotal)*d(1)*d(1) &
-                                /(d(2)*d(3)*nppg))**(1._8/3)) + 1, 1000)
-                cell_num(2) = min(int(cell_num(1)*d(2)/d(1))  + 1, 1000)
-                cell_num(3) = min(int(cell_num(1)*d(3)/d(1))  + 1, 1000)
-            end if
-            !!! smoothing length measured in grid cells:
-            ghsmlx(:) = int(dble(cell_num(:))*hsml/d(:)) + 1
-        end associate
-
-        !!! Initialize grid
-        select case(dim)
-        case (1)
-            allocate( grid(cell_num(1),          1,           1 ), source=0 )
-        case (2)
-            allocate( grid(cell_num(1), cell_num(2),          1 ), source=0 )
-        case (3)
-            allocate( grid(cell_num(1), cell_num(2), cell_num(3)), source=0 )
-        end select
-
-    end subroutine initialize_grid
-
-    subroutine grid_geometry(index, coor, cell_num, grid_max_coor, grid_min_coor, cell)
-        use ctrl_dict, only: i_time_step
-        integer, intent(in) :: index            !! Particle index
-        real(8), intent(in) :: coor(:)          !! Particle coordinates
-        integer, intent(in) :: cell_num(:)      !! Cell number
-        real(8), intent(in) :: grid_max_coor(:), &
-                               grid_min_coor(:) !! Maximum and minium grid cell coordinates
-        integer, intent(inout) :: cell(3)     !! Cell coordinates
-
-        integer :: d
-
-        cell(:) = 1
-
-        do d = 1, dim
-            if ((coor(d) > grid_max_coor(d)) .or. (coor(d) < grid_min_coor(d))) then
-                write(*,*) ' >> error: particle out of range'
-                write(*,*) "   Time Step:"//to_string(i_time_step)
-                write(*,*) '   particle position: coor('//to_string(index)//', ' &
-                            //to_string(d)//') = '//to_string(coor(d))
-                write(*,*) '   range: [xmin,xmax]('//to_string(d)//') = ['// &
-                            to_string(grid_min_coor(d))//', '//to_string(grid_max_coor(d))//']'
-                error stop
-            else
-                cell(d) = int(dble(cell_num(d))*(coor(d) - grid_min_coor(d))/(grid_max_coor(d)-grid_min_coor(d)) + 1.0_8)
-                if (cell(d) > cell_num(d)) then
-                    write(*,*) 'cell(d) is greater than cell_num(d)'
-                    cell(d) = cell_num(d)
-                end if
-            end if
-        end do
-
-    end subroutine grid_geometry
-
     subroutine tree_search(P)
         use tree_m
         use link_list_m
         use geometry_m
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal, kpair
-        real(8) :: this_w, this_dwdx(dim)
+        real(8) :: this_w, this_dwdx(Field%dim)
         real(8) :: mhsml
         class(geometry_t), allocatable :: domain, range
         type(tree_t)      :: tree
         type(link_list_t) :: found
         class(*), allocatable :: j
-        real(8) :: scale, min(dim), max(dim), length(dim)
-        real(8) :: dx(dim), dr, r
+        real(8) :: scale, min(Field%dim), max(Field%dim), length(Field%dim)
+        real(8) :: dx(Field%dim), dr, r
         integer :: scale_k
         logical :: flag
         integer i, k, d
 
         found%length = 0
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             scale_k = 2
         case (2, 3)
@@ -334,7 +260,7 @@ contains
         min = huge(0._8)
         max = -huge(0._8)
         do i = 1, ntotal
-            do d = 1, dim
+            do d = 1, Field%dim
                 if ( P(i)%x(d) > max(d) ) then
                     max(d) = P(i)%x(d)
                 end if
@@ -344,7 +270,7 @@ contains
             end do
         end do
         length = scale * (max - min)
-        select case (dim)
+        select case (Field%dim)
         case (1)
             domain = line_t((min+max)/2, length(1), 0)
         case (2)
@@ -370,7 +296,7 @@ contains
         ! !$OMP SHARED(P) &
         ! !$OMP SCHEDULE(dynamic, chunkSize)
         do i = 1, ntotal - 1
-            select case (dim)
+            select case (Field%dim)
             case (1)
                 range = line_t(P(i)%x(:), scale_k*P(i)%SmoothingLength*2, 0)
             case (2)
@@ -389,7 +315,7 @@ contains
                         mhsml = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
                         dx(1) = P(i)%x(1) - P(j)%x(1)
                         dr = dx(1) * dx(1)
-                        do d = 2, dim
+                        do d = 2, Field%dim
                             dx(d) = P(i)%x(d) - P(j)%x(d)
                             dr = dr + dx(d)*dx(d)
                         end do

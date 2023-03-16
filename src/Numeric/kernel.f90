@@ -1,5 +1,5 @@
 module kernel_m
-    use ctrl_dict, only: skf, dim
+    use ctrl_dict, only: Field, Config
     use tools_m,   only: PI
 
     implicit none
@@ -13,7 +13,7 @@ contains
         real(8), intent(inout) :: w        !! Kernel for all interaction pairs
         real(8), intent(inout) :: dwdx(:)  !! Derivative of kernel with respect to x, y and z
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             call cubic_spline_function(r, dx, hsml, w, dwdx)
         case (2)
@@ -43,14 +43,14 @@ contains
         dwdx = 0
 
         !!! Calculate factor alpha_d
-        if (dim == 1) then
+        if (Field%dim == 1) then
             factor = 1.0_8 / (hsml)
-        else if (dim == 2) then
+        else if (Field%dim == 2) then
             factor = 15._8 / (7._8*PI*hsml**2)
-        else if (dim == 3) then
+        else if (Field%dim == 3) then
             factor = 3.0_8 / (2._8*PI*hsml**3)
         ! else
-        !     call print_error(dim, "Unsupported Dimension", type="value")
+        !     call print_error(Field%dim, "Unsupported Dimension", type="value")
         !     error stop "at subroutine cubic_spline_function"
         end if
 
@@ -85,10 +85,10 @@ contains
         dwdx = 0
 
         !!! Calculate factor alpha_d
-        if (1 <= dim .and. dim <= 3) then ! NOTE: Var "dim" is an integer
-            factor = 1.0_8 / (sqrt(PI)*hsml)**dim
+        if (1 <= Field%dim .and. Field%dim <= 3) then ! NOTE: Var "dim" is an integer
+            factor = 1.0_8 / (sqrt(PI)*hsml)**Field%dim
         ! else
-        !     call print_error(dim, "Unsupported Dimension", type="value")
+        !     call print_error(Field%dim, "Unsupported Dimension", type="value")
         !     error stop "at subroutine gauss_kernel_function"
         end if
 
@@ -120,15 +120,15 @@ contains
         dwdx = 0
 
         !!! Calculate factor alpha_d
-        if (dim == 1) then
+        if (Field%dim == 1) then
             factor = 1.0_8 / (120._8*hsml)
-        else if (dim == 2) then
+        else if (Field%dim == 2) then
             factor = 7.0_8 / (478._8*PI*hsml**2)
-        else if (dim == 3) then
+        else if (Field%dim == 3) then
             factor = 1.0_8 / (120._8*PI*hsml**3)
             ! factor = 3.0_8 / (359._8*PI*hsml**3) !! Chap.3 P90
         ! else
-        !     call print_error(dim, "Unsupported Dimension", type="value")
+        !     call print_error(Field%dim, "Unsupported Dimension", type="value")
         !     error stop "at subroutine quintic_kernel_function"
         end if
 

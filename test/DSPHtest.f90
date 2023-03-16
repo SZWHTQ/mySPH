@@ -1,6 +1,5 @@
 program main
     use ctrl_dict
-    use initial_m
     use nnps_m
     use kernel_m
     implicit none

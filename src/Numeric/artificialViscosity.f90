@@ -1,7 +1,6 @@
 module arti_visc_m
-    use ctrl_dict, only: dim
+    use ctrl_dict, only: Field, Project
     use sph
-    use parse_toml_m, only: nick
     implicit none
 
 contains
@@ -15,7 +14,7 @@ contains
                          !! To Avoid non-physical penetration
                          !! Shall be 10 in HE simulation
         real(8) :: psi   !! Parameter to avoid singularities
-        real(8) :: dx(dim), dv(dim)
+        real(8) :: dx(Field%dim), dv(Field%dim)
         real(8) :: xv, hsml_ij, rho_ij, c_ij, phi_ij, PI_ij
 
         integer i, j, k
@@ -27,7 +26,7 @@ contains
         end forall
         
 
-        select case(nick)
+        select case(Project%nick)
         ! case ("dam_break")
         !     alpha = 1
         !     beta  = 1

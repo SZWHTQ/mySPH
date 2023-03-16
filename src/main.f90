@@ -1,10 +1,10 @@
 program main
-    use ctrl_dict, only: maxn, dim, max_interaction
-    use parse_toml_m
-    use sph
-    use initial_m
-    use input_m
-    use time_integration_m
+    use ctrl_dict,          only: Field
+    use parse_toml_m,       only: fetch_control_value
+    use sph,                only: Particle, allocateParticleList
+    use input_m,            only: input
+    use time_integration_m, only: time_integration
+    use tools_m,            only: to_string, round
     implicit none
     integer :: ntotal
     type(Particle), allocatable :: Particles(:)
@@ -15,8 +15,7 @@ program main
 
     call fetch_control_value()
 
-    ! call initialize()
-    call allocateParticleList(Particles, maxn, dim, max_interaction/maxn)
+    call allocateParticleList(Particles, Field%maxn, Field%dim, Field%pairNum)
 
     call input(ntotal, Particles)
 

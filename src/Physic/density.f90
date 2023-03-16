@@ -1,7 +1,6 @@
 module density_m
-    use ctrl_dict, only: dim, norm_dens_w, DSPH_w
+    use ctrl_dict, only: Config, Field
     use sph
-    ! use initial_m, only: v, mass, rho, hsml, neighborList, w, dwdx
     use kernel_m,  only: kernel
 
     implicit none
@@ -12,7 +11,7 @@ contains
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal
         real(8) :: self
-        real(8) :: hv(dim)
+        real(8) :: hv(Field%dim)
         real(8), allocatable :: wi(:)  !! Integration of the kernel itself
         integer i, j, k
 
@@ -24,7 +23,7 @@ contains
         !!! and take contribution of particle itself
 
         !!! Firstly, calculate the integration of the kernel over the space
-        if ( norm_dens_w ) then
+        if ( Config%norm_dens_w ) then
             !$OMP PARALLEL DO PRIVATE(i, self, hv)
             do i = 1, ntotal
                 if ( P(i)%divergencePosition < 1.5 ) then
@@ -35,7 +34,7 @@ contains
             !$OMP END PARALLEL DO
         end if
 
-        if ( norm_dens_w ) then
+        if ( Config%norm_dens_w ) then
             !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:wi)
             do i = 1, ntotal
                 if ( P(i)%divergencePosition < 1.5 ) then
@@ -67,7 +66,7 @@ contains
         ! !$OMP END PARALLEL DO
 
         !!! Thirdly, calculate the normalized rho, rho = Σrho / Σw
-        if ( norm_dens_w ) then
+        if ( Config%norm_dens_w ) then
             !$OMP PARALLEL DO PRIVATE(i)
             do i = 1, ntotal
                 if ( P(i)%divergencePosition < 1.5 ) then
@@ -115,7 +114,7 @@ contains
         real(8), intent(inout) :: drhodt(:)    !! Density change rate of each particle
         real(8) :: Z_l, Z_r, v_l, v_r
         real(8) :: v_ij
-        real(8) :: v_star(dim), e_ij(dim)
+        real(8) :: v_star(Field%dim), e_ij(Field%dim)
         integer i, j, k
 
         ntotal = size(P)
@@ -153,7 +152,7 @@ contains
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal
         real(8) :: self
-        real(8) :: hv(dim)
+        real(8) :: hv(Field%dim)
         real(8) :: rho_max, rho_min, criteria, ratio
         real(8), allocatable :: wi(:)  !! Integration of the kernel itself
         integer, allocatable :: dc_point(:)

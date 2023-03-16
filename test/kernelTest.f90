@@ -1,5 +1,5 @@
 program main
-    use ctrl_dict, only: skf, dim
+    use ctrl_dict, only: Field, Config
     use kernel_m
     use tools_m, only: PI
     implicit none
@@ -28,7 +28,7 @@ program main
     "SPH",  "SPH diff",  "SPH Error",  "SPH diff Error", &
    "CSPH", "CSPH diff", "CSPH Error", "CSPH diff Error"
     do k = 1, 30
-        dim = size(dx)
+        Field%dim = size(dx)
         delta = 1./k
         hsml  = delta * 1
         m = (ntotal+1)/2
@@ -37,7 +37,7 @@ program main
             y(i) = func(x(i))
         end do
             
-        skf = 1
+        Config%skf = 1
         do i = 1, ntotal
             dx = x(m) - x(i)
             call kernel(norm2(dx), dx, hsml, w(i), dwdx(:, i))

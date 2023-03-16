@@ -1,26 +1,24 @@
 #include "../macro.h"
 module in_force_m
-    use ctrl_dict, only: dim, maxn, viscosity_w, pa_sph
+    use ctrl_dict, only: Config, Field
     use sph
-    use parse_toml_m, only: nick
     ! use boundary_condition_m
 
     implicit none
 
 contains
-    subroutine in_force(P, dvdt, tdsdt, dedt, Shear, dSdt)
+    subroutine in_force(P, dvdt, dedt, Shear, dSdt)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         use visc_m
         use eos_m
-        ! use initial_m, only: eta
         !$ use omp_lib
         type(Particle), intent(inout) :: P(:)
-        real(8), intent(inout) :: dvdt(:, :), tdsdt(:), dedt(:)
+        real(8), intent(inout) :: dvdt(:, :), dedt(:)
         integer :: ntotal
-        real(8), allocatable :: edot(:, :, :)
-        real(8) :: dv(dim)
+        real(8), allocatable :: tdsdt(:), edot(:, :, :)
+        real(8) :: dv(Field%dim)
         real(8) :: rhoij, aux
-        real(8) :: Z_l, Z_r, v_l, v_r, v_ij, e_ij(dim), v_star(dim), p_star
+        real(8) :: Z_l, Z_r, v_l, v_r, v_ij, e_ij(Field%dim), v_star(Field%dim), p_star
 #if SOLID
         ! integer :: solid_num
         real(8), intent(in),    optional :: Shear(:, :, :)
@@ -32,18 +30,19 @@ contains
         ntotal = size(P)
         !!! Initialization of Strain Rate Tensor, velocity divergence,
         !!! viscous energy, internal energy, acceleration
-        allocate(edot(dim, dim, ntotal), source=0._8)
+        allocate(tdsdt(ntotal), source=0._8)
+        allocate(edot(Field%dim, Field%dim, ntotal), source=0._8)
 
 #if SOLID
-        allocate(rdot(dim, dim, ntotal), source=0._8)
-        allocate(aver_edot(dim, dim), source=0._8)
+        allocate(rdot(Field%dim, Field%dim, ntotal), source=0._8)
+        allocate(aver_edot(Field%dim, Field%dim), source=0._8)
 #endif
 
         !!! Dynamic viscosity
-        if ( viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%KineticViscocity)
+        if ( Config%viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%KineticViscocity)
 
 
-        if ( viscosity_w ) then
+        if ( Config%viscosity_w ) then
                 !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux)
                 do i = 1, ntotal !! All particles
                 !!! Calculate SPH sum for Strain Rate Tensor of Fluid
@@ -54,8 +53,8 @@ contains
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
                         dv = P(j)%v(:) - P(i)%v(:)
-                        do d = 1, dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
-                            do dd = 1, dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
+                        do d = 1, Field%dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
+                            do dd = 1, Field%dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
                                 edot(d, dd, i) = edot(d, dd, i) &
                                     + P(j)%Mass/P(j)%Density            &
                                     * dv(d) * P(i)%dwdx(dd, k)
@@ -63,7 +62,7 @@ contains
                                     + P(j)%Mass/P(j)%Density            &
                                     * dv(dd) * P(i)%dwdx(d, k)
                                 if ( d == dd ) then !! δii = 1, δij = 0
-                                    do ddd = 1, dim
+                                    do ddd = 1, Field%dim
                                         edot(d, d, i) = edot(d, d, i) &
                                             - 2._8 / 3                &
                                             * P(j)%Mass/P(j)%Density          &
@@ -81,8 +80,8 @@ contains
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
                             dv = P(j)%v(:) - P(i)%v(:)
-                            do d = 1, dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
-                                do dd = 1, dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
+                            do d = 1, Field%dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
+                                do dd = 1, Field%dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
                                     associate (vab => &
                                         P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k))
                                     associate (vba => &
@@ -109,7 +108,7 @@ contains
         if ( abs(P(i)%Type) < 8 ) then !! Fluid
 #endif
             !!! Viscous entropy Tds/dt = 1/2 eta/rho εab•εab
-            if ( viscosity_w ) then
+            if ( Config%viscosity_w ) then
                 tdsdt(i) = 0.5_8 * P(i)%KineticViscocity / P(i)%Density &
                          * sum(edot(:, :, i)**2)
             end if
@@ -136,13 +135,13 @@ contains
         else if ( present(Shear) ) then !! Solid
 
             aux = 0
-            do d = 1, dim
+            do d = 1, Field%dim
                 aux = aux + edot(d, d, i)
             end do
             aux = aux / 3
 
             aver_edot = edot(:, :, i) !! Strain Rate Tensor of Solid
-            do d = 1, dim
+            do d = 1, Field%dim
                 aver_edot(d, d) = aver_edot(d, d) - aux
             end do
 
@@ -157,10 +156,10 @@ contains
                 j = P(i)%neighborList(k)
 
                 !!! Deviatoric Stress Rate Tensor
-                do d = 1, dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
-                    do dd = 1, dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
+                do d = 1, Field%dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
+                    do dd = 1, Field%dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
                         dSdt(d, dd, i) = 2 * P(i)%KineticViscocity * aver_edot(d, dd)
-                        do ddd = 1, dim
+                        do ddd = 1, Field%dim
                             dSdt(d, dd, i) = dSdt(d, dd, i) + &
                                 Shear(d, ddd, i) * rdot(dd, ddd, i) &
                               + Shear(dd, ddd, i) * rdot(d, ddd, i)
@@ -169,8 +168,8 @@ contains
                 end do !! d
             end do !! k
 
-            do d = 1, dim
-                do dd = 1, dim
+            do d = 1, Field%dim
+                do dd = 1, Field%dim
                     P(i)%Stress(d, dd) = Shear(d, dd, i)
                 end do
                 P(i)%Stress(d, d) = P(i)%Stress(d, d) - P(i)%Pressure
@@ -184,7 +183,7 @@ contains
         !!! Calculate SPH sum for pressure force -p_a/rho
         !!! and viscous force eta_b/rho
         !!! and the internal energy change de/dt due to -p/rho*div_v
-        select case (pa_sph)
+        select case (Config%pa_sph)
 
         !!! For SPH algorithm 1
         case (1)
@@ -246,8 +245,8 @@ contains
                     do k = 1, P(i)%neighborNum
                         j = P(i)%neighborList(k)
 
-                        do d = 1, dim
-                            do dd = 1, dim
+                        do d = 1, Field%dim
+                            do dd = 1, Field%dim
                                 !!! Conservation of Momentum
                                 dvdt(d, i) = dvdt(d, i) &
                                     + P(j)%Mass * ( P(i)%Stress(d, dd) / P(i)%Density**2   &
@@ -317,7 +316,7 @@ contains
             end do
             !$OMP END PARALLEL DO
         case default
-            write(err, "(1X, A, I0)") "Error SPH Scheme ", pa_sph
+            write(err, "(1X, A, I0)") "Error SPH Scheme ", Config%pa_sph
             error stop
         end select
 

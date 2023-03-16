@@ -1,7 +1,6 @@
 module dummy_part_m
-    use ctrl_dict, only: dim, skf
+    use ctrl_dict, only: Field, Config, Project
     use sph
-    use parse_toml_m, only: nick
     implicit none
     private
 
@@ -16,7 +15,7 @@ contains
         ntotal = size(Particles)
         ndummy = 0
 
-        select case(nick)
+        select case(Project%nick)
         case("shear_cavity")
             call shear_cavity_dp(ntotal, ndummy, Particles)
         case("shock_tube")
@@ -160,7 +159,7 @@ contains
         n_dp_1 = ndummy
         gamma = 1.4
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             scale_k = 2
         case (2, 3)
@@ -224,7 +223,7 @@ contains
 
         n_dp_1 = ndummy
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             scale_k = 2
         case (2, 3)
@@ -341,7 +340,7 @@ contains
 
         n_dp_1 = ndummy
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             scale_k = 2
         case (2, 3)
@@ -467,7 +466,7 @@ contains
 
         n_dp_1 = ndummy
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             scale_k = 2
         case (2, 3)
@@ -656,7 +655,7 @@ contains
 
         integer i
 
-        select case (skf)
+        select case (Config%skf)
         case (1)
             scale_k = 2
         case (2, 3)

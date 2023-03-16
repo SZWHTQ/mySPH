@@ -1,8 +1,6 @@
 module input_m
-    use ctrl_dict, only: dim, read_ini_file_W
+    use ctrl_dict, only: Project, Config, Field
     use sph
-    ! use initial_m, only: Type, x, v, mass, rho, p, e, c, hsml
-    use parse_toml_m, only: in_path, out_path, vtk_path, nick
     use output_m,  only: output
     use tools_m
     implicit none
@@ -12,7 +10,7 @@ contains
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
 
-        if ( read_ini_file_w ) then
+        if ( Config%read_ini_file_w ) then
             call read_initial_file(ntotal, Particles)
         else
             call write_initial_file(ntotal, Particles)
@@ -22,12 +20,12 @@ contains
 
     !!! Load initial particle information from external disk file
     subroutine read_initial_file(ntotal, Particles)
-        integer, intent(inout) :: ntotal
+        integer,        intent(inout) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
         integer i, null
 
 
-        open(11, file = in_path // "ini.dat")
+        open(11, file = Project%in_path // "ini.dat")
 
         write(*,*) "   Loading initial particle configuration..."
         read(11,*) ntotal
@@ -45,17 +43,18 @@ contains
     end subroutine read_initial_file
 
     subroutine write_initial_file(ntotal, Particles)
-        use ctrl_dict, only: maxn
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
         integer :: ini = 0
 
-        select case(nick)
+        select case(Project%nick)
         case("shear_cavity")
             call shear_cavity(ntotal, Particles)
         case("shock_tube")
+            ntotal = Field%ntotal
             call shock_tube(ntotal, Particles)
         case("tnt_bar")
+            ntotal = Field%ntotal
             call tnt_bar(ntotal, Particles)
         case("tnt_cylinder")
             call tnt_cylinder(ntotal, Particles)
@@ -71,7 +70,7 @@ contains
             call taylor_rod(ntotal, Particles)
         end select
 
-        call output(0, Particles(1:ntotal))
+        call output(ini, Particles(1:ntotal))
 
         write(*,*) "Initial particle configuration generated"
         write(*,*) ">> Total number of particles: ", to_string(ntotal)
@@ -88,7 +87,7 @@ contains
         integer :: n_left
         integer i
 
-        if ( dim /= 1 ) dim = 1
+        if ( Field%dim /= 1 ) Field%dim = 1
 
         gamma = 1.4
         dx = 0.6 / ntotal * 5
@@ -129,7 +128,7 @@ contains
 
         integer i, j
 
-        if ( dim /= 2 ) dim = 2
+        if ( Field%dim /= 2 ) Field%dim = 2
 
         m = 41
         n = 41
@@ -171,7 +170,7 @@ contains
         real(8) :: rho0 = 1630, E0 = 4.29e6
         integer i
 
-        if ( dim /= 1 ) dim = 1
+        if ( Field%dim /= 1 ) Field%dim = 1
 
         space_x = 0.1 / ntotal
 
@@ -197,7 +196,7 @@ contains
         real(8) :: theta, rot(2, 2)
         integer i, j, k
 
-        if ( dim /= 2 ) dim = 2
+        if ( Field%dim /= 2 ) Field%dim = 2
 
         ntotal = nr * nt
 
@@ -247,7 +246,7 @@ contains
         real(8) :: theta, rot(2, 2)
         integer i, j, k, index
 
-        if ( dim /= 2 ) dim = 2
+        if ( Field%dim /= 2 ) Field%dim = 2
 
         ntotal = sum(nr) * nt
 
@@ -310,7 +309,7 @@ contains
         real(8) :: delta(2), tnt_delta(2)
         integer i, j, k
 
-        if ( dim /= 2 )  dim = 2
+        if ( Field%dim /= 2 )  Field%dim = 2
 
         delta = (length - tnt_length) / (water_n*2)
         tnt_delta = tnt_length / (tnt_n - 1)

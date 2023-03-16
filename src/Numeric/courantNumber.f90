@@ -1,6 +1,5 @@
 module cour_num_m
-    use ctrl_dict, only: delta_t
-    use parse_toml_m, only: nick
+    use ctrl_dict, only: Project, Config
     implicit none
 
 contains
@@ -10,7 +9,7 @@ contains
         real(8) :: xi
         real(8) :: alpha, beta
 
-        select case(nick)
+        select case(Project%nick)
         case("dam_break")
             alpha = 1
             beta  = 1
@@ -25,9 +24,9 @@ contains
             beta  = 1
         end select
 
-        xi = delta_t &
-        * ( hsml * div_v + c + 1.2*(alpha*c+beta*hsml*abs(div_v)) ) &
-        / hsml
+        xi = Config%delta_t &
+            * ( hsml * div_v + c + 1.2*(alpha*c+beta*hsml*abs(div_v)) ) &
+            / hsml
 
     end function courant_num
 

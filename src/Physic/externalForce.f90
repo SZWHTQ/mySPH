@@ -1,7 +1,6 @@
 module ex_force_m
-    use ctrl_dict, only: dim, i_time_step, gravity_w
+    use ctrl_dict, only: Config, Field, Project
     use sph
-    use parse_toml_m, only: nick
     implicit none
 
 contains
@@ -9,7 +8,7 @@ contains
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:, :)
         integer :: ntotal
-        real(8) :: dx(dim), dr, r
+        real(8) :: dx(Field%dim), dr, r
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
         logical, save :: first_entry = .true.
@@ -17,11 +16,11 @@ contains
         integer i, j, k, d
 
         ntotal = size(P)
-        forall (i=1:dim, j=1:ntotal) dvdt(i, j) = 0
+        forall (i=1:Field%dim, j=1:ntotal) dvdt(i, j) = 0
 
         !!! Consider gravity or not
-        if ( gravity_w ) then
-            forall (i=1:ntotal) dvdt(dim, i) = -9.8
+        if ( Config%gravity_w ) then
+            forall (i=1:ntotal) dvdt(Field%dim, i) = -9.8
         end if
 
         !!! Boundary particle force and penalty anti-penetration force
@@ -35,7 +34,7 @@ contains
             n1 = 6
             n2 = 4
 
-            select case (nick)
+            select case (Project%nick)
             case ("shock_tube")
                 factor_s = 10
                 r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
@@ -66,7 +65,7 @@ contains
                     !!! Calculate the distance 'r' between particle i and j
                     dx(1) = P(i)%x(1) - P(j)%x(1)
                     dr = dx(1)*dx(1)
-                    do d = 2, dim
+                    do d = 2, Field%dim
                         dx(d) = P(i)%x(d) - P(j)%x(d)
                         dr = dr + dx(d)*dx(d)
                     end do
@@ -83,7 +82,7 @@ contains
                     !!! Calculate the distance 'r' between particle i and j
                     dx(1) = P(i)%x(1) - P(j)%x(1)
                     dr = dx(1)*dx(1)
-                    do d = 2, dim
+                    do d = 2, Field%dim
                         dx(d) = P(i)%x(d) - P(j)%x(d)
                         dr = dr + dx(d)*dx(d)
                     end do

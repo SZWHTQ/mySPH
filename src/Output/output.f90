@@ -1,11 +1,10 @@
 module output_m
-    use ctrl_dict, only: dim
+    use ctrl_dict, only: Project, Field
 
     implicit none
 
 contains
     subroutine output(index, Particles)
-        use parse_toml_m, only: out_path, vtk_path
         use sph
         ! use ctrl_dict,    only: write_vtk_w
         use tools_m,      only: to_string
@@ -20,7 +19,7 @@ contains
         integer i, j, k
 
         ntotal = size(Particles)
-        call allocateParticleList(this, ntotal, dim, size(Particles(1)%neighborList))
+        call allocateParticleList(this, ntotal, Field%dim, size(Particles(1)%neighborList))
         num = 0
         allocate(type_indice(-8:8, ntotal), source=0)
         do i = 1, ntotal
@@ -54,8 +53,8 @@ contains
                 k = type_indice(particleType, j)
                 this(j) = Particles(k)
             end do
-            call write_file(out_path//"/"//fileName//'.dat', this(1:num(particleType)))
-            call write_vtk(vtk_path//"/"//fileName//'.vtk',  this(1:num(particleType)))
+            call write_file(Project%out_path//"/"//fileName//'.dat', this(1:num(particleType)))
+            call write_vtk(Project%vtk_path//"/"//fileName//'.vtk',  this(1:num(particleType)))
             deallocate(fileName)
         end do
 
@@ -64,17 +63,17 @@ contains
     end subroutine output
 
     subroutine write_file(fileDir, Particles)
-        ! use ctrl_dict, only: write_dp_w
         use sph
         character(len=*), intent(in) :: fileDir
         type(Particle), intent(in) :: Particles(:)
         integer :: ntotal
-        integer i, d, dd
+        
+        integer i
 
         ntotal = size(Particles)
         open(11, file = fileDir)
 
-        select case (dim)
+        select case (Field%dim)
         case (1)
             write(11, 1001) "Index", "Type", "Status", "X", "V",        &
                             "Mass", "Density",                          &
@@ -145,7 +144,7 @@ contains
         write (11, "(A)") "DATASET UNSTRUCTURED_GRID"
         write (11, '(A, I0, A)') "POINTS ", ntotal, " double"
         do i = 1, ntotal
-            write(11, 1001) Particles(i)%x(:), (0.0, d = 1, 3-dim)
+            write(11, 1001) Particles(i)%x(:), (0.0, d = 1, 3-Field%dim)
         end do
         write (11, "(A, I0)") "POINT_DATA ", ntotal
 
@@ -201,14 +200,14 @@ contains
         !!! Write particle velocity
         write (11, "(A)") "VECTORS U double"
         do i = 1, ntotal
-            write(11, 1001) Particles(i)%v(:), (0.0, d = 1, 3-dim)
+            write(11, 1001) Particles(i)%v(:), (0.0, d = 1, 3-Field%dim)
         end do
 
         !!! Write particle stress
         write (11, "(A)") "TENSORS Stress double"
         do i = 1, ntotal
-            write(11, 1001) ((Particles(i)%Stress(d,dd),d=1,dim),dd=1,dim), &
-                            (0.0, d = 1, 9-dim**2)
+            write(11, 1001) ((Particles(i)%Stress(d,dd),d=1,Field%dim),dd=1,Field%dim), &
+                            (0.0, d = 1, 9-Field%dim**2)
         end do
 
     end subroutine write_vtk

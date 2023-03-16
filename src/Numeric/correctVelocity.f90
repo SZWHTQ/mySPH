@@ -1,7 +1,6 @@
 module corr_velo_m
-    use ctrl_dict, only: dim
+    use ctrl_dict, only: Project, Field
     use sph
-    use parse_toml_m, only: nick
     implicit none
 
 contains
@@ -10,7 +9,7 @@ contains
         real(8), intent(inout) :: aver_v(:, :)
         integer :: ntotal
         real(8) :: epsilon
-        real(8) :: dv(dim)
+        real(8) :: dv(Field%dim)
 
         integer i, j, k
 
@@ -21,7 +20,7 @@ contains
         parameter(epsilon = 0.3)
 
         ntotal = size(P)
-        forall(i=1:dim, j=1:ntotal) aver_v(i, j) = 0._8
+        forall(i=1:Field%dim, j=1:ntotal) aver_v(i, j) = 0._8
 
         do i = 1, ntotal
             do k = 1, P(i)%neighborNum

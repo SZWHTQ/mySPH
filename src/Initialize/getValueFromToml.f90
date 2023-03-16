@@ -1,15 +1,9 @@
 module parse_toml_m
-    use ctrl_dict
+    use ctrl_dict, only: Config, Field, Project
     use tomlf, only: toml_table, get_value, toml_parse
     use tools_m, only: create_directory, ESC
     implicit none
     private
-
-    character(:), allocatable, public :: in_path      !! Input  Directory
-    character(:), allocatable, public :: out_path     !! Output Directory
-    character(:), allocatable, public :: vtk_path     !! Output Directory
-    character(:), allocatable, public :: project_name !! Current Project Name
-    character(:), allocatable, public :: nick
 
     public  :: fetch_control_value
 contains
@@ -36,25 +30,25 @@ contains
             stop
         case (1)
             call getarg(1, buffer)
-            allocate(in_path, source=trim(adjustl(buffer)))
-            inquire(file=in_path//"/sph.toml", exist=alive)
+            allocate(Project%in_path, source=trim(adjustl(buffer)))
+            inquire(file=Project%in_path//"/sph.toml", exist=alive)
             if ( .not. alive ) then
                 write(*, "(A)") ESC//"[31m"
                 write(*,*) "Target 'sph.toml' does not exist."
-                write(*,*) "File path: "//in_path//"/sph.toml"
+                write(*,*) "File path: "//Project%in_path//"/sph.toml"
                 write(*, "(A)", advance="no") ESC//"[0m"
                 stop
             end if
         case default
             do i = 1, argument_num
                 call getarg(i, buffer)
-                allocate(in_path, source=trim(adjustl(buffer)))
-                inquire(file=in_path//"/sph.toml", exist=alive)
+                allocate(Project%in_path, source=trim(adjustl(buffer)))
+                inquire(file=Project%in_path//"/sph.toml", exist=alive)
                 if ( alive ) then
                     flag = .true.
                     exit
                 else
-                    deallocate(in_path)
+                    deallocate(Project%in_path)
                     cycle
                 end if
             end do
@@ -69,11 +63,11 @@ contains
                 stop
             end if
         end select
-        out_path = in_path//"/output"
-        vtk_path = in_path//"/vtk"
+        Project%out_path = Project%in_path//"/output"
+        Project%vtk_path = Project%in_path//"/vtk"
 
-        call create_directory(out_path)
-        call create_directory(vtk_path)
+        call create_directory(Project%out_path)
+        call create_directory(Project%vtk_path)
 
     end subroutine get_project_dir_from_command_line
 
@@ -81,77 +75,75 @@ contains
         !$ use omp_lib
         type(toml_table), allocatable :: sph_file
         type(toml_table), pointer :: subtable
-        integer :: kpair
         integer :: file_unit
 #ifdef _OPENMP
         character(len=512) :: buffer
 #endif
 
-        open (newunit=file_unit, file=in_path//"/sph.toml", status='old')
+        open (newunit=file_unit, file=Project%in_path//"/sph.toml", status='old')
         call toml_parse(sph_file, file_unit)
         close (file_unit)
 
-        call get_value(sph_file, 'name', project_name, 'untitled')
-        call get_value(sph_file, 'nick', nick,         'unknown')
+        call get_value(sph_file, 'name', Project%project_name, 'untitled')
+        call get_value(sph_file, 'nick', Project%nick,         'unknown')
         write(*,*) ESC//"[32m"
 #ifndef _WIN32
-        write(*, "(A)") "╭"//repeat("─", 11 + len(project_name))//"╮"
-        write(*, "(A)") "│ Project: "//project_name//" │"
-        write(*, "(A)") "╰"//repeat("─", 11 + len(project_name))//"╯"
+        write(*, "(A)") "╭"//repeat("─", 11 + len(Project%project_name))//"╮"
+        write(*, "(A)") "│ Project: "//Project%project_name//" │"
+        write(*, "(A)") "╰"//repeat("─", 11 + len(Project%project_name))//"╯"
 #else
-        write(*, "(A)") "|"//repeat("-", 11 + len(project_name))//"|"
-        write(*, "(A)") "| Project: "//project_name//" |"
-        write(*, "(A)") "|"//repeat("-", 11 + len(project_name))//"|"
+        write(*, "(A)") "|"//repeat("-", 11 + len(Project%project_name))//"|"
+        write(*, "(A)") "| Project: "//Project%project_name//" |"
+        write(*, "(A)") "|"//repeat("-", 11 + len(Project%project_name))//"|"
 #endif
         write(*,*) ESC//"[0m"
 
 
         call get_value(sph_file, 'Parameter', subtable)
 
-        call get_value(subtable, 'DIM',    dim)
-        call get_value(subtable, 'maxN',   maxn,   5000)
-        call get_value(subtable, 'ntotal', ntotal      )
-        call get_value(subtable, 'kPair',  kpair,  20  )
-        max_interaction = kpair * maxn
+        call get_value(subtable, 'DIM',    Field%dim)
+        call get_value(subtable, 'maxN',   Field%maxn,   5000)
+        call get_value(subtable, 'ntotal', Field%ntotal      )
+        call get_value(subtable, 'kPair',  Field%pairNum,  20  )
 
-        call get_value(subtable, 'SPH',  pa_sph, 2)
-        call get_value(subtable, 'NNPS', nnps,   1)
-        call get_value(subtable, 'SKF',  skf,    1)
-        call get_value(subtable, 'SLE',  sle,    0)
+        call get_value(subtable, 'SPH',  Config%pa_sph, 2)
+        call get_value(subtable, 'NNPS', Config%nnps,   1)
+        call get_value(subtable, 'SKF',  Config%skf,    1)
+        call get_value(subtable, 'SLE',  Config%sle,    0)
 
-        write(*, "(A, I0)") " >> Nearest Neighbor Particle Search Method: ", nnps
-        write(*, "(A, I0)") " >> Smoothing Kernel Function: ",   skf
-        write(*, "(A, I0)") " >> Smoothing Length Estimation: ", sle
+        write(*, "(A, I0)") " >> Nearest Neighbor Particle Search Method: ", Config%nnps
+        write(*, "(A, I0)") " >> Smoothing Kernel Function: ",   Config%skf
+        write(*, "(A, I0)") " >> Smoothing Length Estimation: ", Config%sle
 
-        call get_value(subtable, 'monitorParticle', monitor_particle, 1   )
-        call get_value(subtable, 'printInterval',   print_interval,   100 )
-        call get_value(subtable, 'saveInterval',    save_interval,    500 )
-        call get_value(subtable, 'deltaT',          delta_t,    dble(5e-4))
-        call get_value(subtable, 'maxTimeStep',     max_time_step,    1000)
+        call get_value(subtable, 'monitorParticle', Config%monitor_particle, 1   )
+        call get_value(subtable, 'printInterval',   Config%print_interval,   100 )
+        call get_value(subtable, 'saveInterval',    Config%save_interval,    500 )
+        call get_value(subtable, 'deltaT',          Config%delta_t,    dble(5e-4))
+        call get_value(subtable, 'maxTimeStep',     Config%max_time_step,    1000)
 
-        write(*,"(A, I0)") " >> Maximal Time Steps: ", max_time_step
+        write(*,"(A, I0)") " >> Maximal Time Steps: ", Config%max_time_step
 
 
-        call get_value(subtable, 'printStatistics',     print_statistics_w, .true. )
-        call get_value(subtable, 'summationDensity',    sum_density_w,      .true. )
-        call get_value(subtable, 'averageVelocity',     aver_velocity_w,    .false.)
-        call get_value(subtable, 'readInitialFile',     read_ini_file_W,    .false.)
-        call get_value(subtable, 'dummyParticle',       dummy_parti_w,      .false.)
-        call get_value(subtable, 'dpInput',             dp_input,           .false.)
-        call get_value(subtable, 'viscosity',           viscosity_w,        .false.)
-        call get_value(subtable, 'externalForce',       ex_force_w,         .false.)
-        call get_value(subtable, 'gravity',             gravity_w,          .false.)
-        call get_value(subtable, 'artificialViscosity', arti_visc_w,        .false.)
-        call get_value(subtable, 'artificialHeat',      arti_heat_w,        .false.)
-        call get_value(subtable, 'normalizeDensity',    norm_dens_w,        .false.)
-        call get_value(subtable, 'DSPH',                DSPH_w,             .false.)
+        call get_value(subtable, 'printStatistics',     Config%print_statistics_w, .true. )
+        call get_value(subtable, 'summationDensity',    Config%sum_density_w,      .true. )
+        call get_value(subtable, 'averageVelocity',     Config%aver_velocity_w,    .false.)
+        call get_value(subtable, 'readInitialFile',     Config%read_ini_file_W,    .false.)
+        call get_value(subtable, 'dummyParticle',       Config%dummy_parti_w,      .false.)
+        call get_value(subtable, 'dpInput',             Config%dp_input,           .false.)
+        call get_value(subtable, 'viscosity',           Config%viscosity_w,        .false.)
+        call get_value(subtable, 'externalForce',       Config%ex_force_w,         .false.)
+        call get_value(subtable, 'gravity',             Config%gravity_w,          .false.)
+        call get_value(subtable, 'artificialViscosity', Config%arti_visc_w,        .false.)
+        call get_value(subtable, 'artificialHeat',      Config%arti_heat_w,        .false.)
+        call get_value(subtable, 'normalizeDensity',    Config%norm_dens_w,        .false.)
+        ! call get_value(subtable, 'DSPH',                Config%DSPH_w,             .false.)
 
-        call get_value(subtable, 'symmetry', nsym, 0)
+        ! call get_value(subtable, 'symmetry', Config%nsym, 0)
 
-        call get_value(subtable, 'waterEOS', eos_water_form, 2)
+        call get_value(subtable, 'waterEOS', Config%eos_water_form, 2)
 
-        if ( dummy_parti_w .or. gravity_w ) then
-            ex_force_w = .true.
+        if ( Config%dummy_parti_w .or. Config%gravity_w ) then
+            Config%ex_force_w = .true.
         end if
 
 
@@ -160,27 +152,27 @@ contains
 #ifdef _OPENMP
         call getenv('OMP_NUM_THREADS', buffer)
         if ( trim(buffer)/="" ) then
-            read(buffer, *) nthreads
-            call get_value(subtable, 'OMP_NUM_THREADS', nthreads, 1*nthreads)
+            read(buffer, *) Config%nthreads
+            call get_value(subtable, 'OMP_NUM_THREADS', Config%nthreads, 1*Config%nthreads)
         else
-            call get_value(subtable, 'OMP_NUM_THREADS', nthreads, 1)
+            call get_value(subtable, 'OMP_NUM_THREADS', Config%nthreads, 1)
         end if
-        if ( nthreads == 0 ) then
+        if ( Config%nthreads == 0 ) then
             if ( trim(buffer)/="" ) then
-                read(buffer, *) nthreads
+                read(buffer, *) Config%nthreads
             else
-                nthreads = omp_get_num_procs()
+                Config%nthreads = omp_get_num_procs()
             end if
         end if
-        write(*, "(A, I0)") " >> Number of Threads: ", nthreads
+        write(*, "(A, I0)") " >> Number of Threads: ", Config%nthreads
 #endif
         write(*,*)
 
         call get_value(sph_file, 'postProcess', subtable)
 
-        call get_value(subtable, 'writeDummyParticle',     write_dp_w,      .true.)
-        call get_value(subtable, 'writeVTKfile',           write_vtk_w,     .true.)
-        call get_value(subtable, 'writeDummyParticle2VTK', write_dp_vtk_w,  .true.)
+        call get_value(subtable, 'writeDummyParticle',     Config%write_dp_w,      .true.)
+        call get_value(subtable, 'writeVTKfile',           Config%write_vtk_w,     .true.)
+        call get_value(subtable, 'writeDummyParticle2VTK', Config%write_dp_vtk_w,  .true.)
 
         nullify (subtable)
 
@@ -196,9 +188,9 @@ contains
         close (file_unit)
 
         call get_value(access_file, 'access', subtable)
-        call get_value(subtable, 'Path',  in_path,  './data/input')     !! Default Input  Dir
-        out_path = in_path//"/output"
-        vtk_path = in_path//"/vtk"
+        call get_value(subtable, 'Path',  Project%in_path,  './data/input')     !! Default Input  Dir
+        Project%out_path = Project%in_path//"/output"
+        Project%vtk_path = Project%in_path//"/vtk"
 
         nullify (subtable)
 

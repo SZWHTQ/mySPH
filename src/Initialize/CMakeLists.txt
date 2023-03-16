@@ -4,7 +4,6 @@ list(
     APPEND srcs
     "${dir}/controlDict.f90"
     "${dir}/getValueFromToml.f90"
-    "${dir}/allocateMemory.f90"
     "${dir}/input.f90"
     "${dir}/SPH.f90"
 )

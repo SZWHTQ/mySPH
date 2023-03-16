@@ -1,4 +1,5 @@
 module boundary_condition_m
+    use ctrl_dict
     use sph
     use geometry_m
     implicit none

@@ -1,6 +1,6 @@
 module he_m
     use ctrl_dict, only: Project
-    use sph
+    use sph,       only: Particle
     implicit none
     private
     real(8), private :: D = 6930

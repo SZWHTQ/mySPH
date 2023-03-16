@@ -1,5 +1,5 @@
 module divergence_m
-    use sph
+    use sph, only: Particle
     implicit none
 
 contains

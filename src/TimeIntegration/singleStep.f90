@@ -2,24 +2,24 @@
 subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     use, intrinsic :: iso_fortran_env, only: err => error_unit
     !$ use omp_lib
-    use ctrl_dict, only: Config, Field
+    use ctrl_dict,          only: Config, Field
     use time_integration_m, only: Update
-    use tools_m, only: to_string
-    use sph
-    use nnps_m
-    use density_m
-    use visc_m
-    use divergence_m
-    use in_force_m
-    use arti_visc_m
-    use ex_force_m
-    use hsml_m
-    use arti_heat_m
-    use corr_velo_m
-    use dummy_part_m
-    use he_m
-    use decompose_m
-    use area_m
+    use tools_m,            only: to_string
+    use sph,                only: Particle, allocateNeighborList
+    use nnps_m,             only: search_particles, print_statistics
+    use density_m,          only: sum_density, con_density, con_density_riemann, sum_density_dsph
+    use visc_m,             only: viscosity
+    use divergence_m,       only: divergence
+    use in_force_m,         only: in_force
+    use arti_visc_m,        only: arti_visc
+    use ex_force_m,         only: ex_force
+    use hsml_m,             only: h_upgrade
+    use arti_heat_m,        only: arti_heat
+    use corr_velo_m,        only: aver_velo
+    use dummy_part_m,       only: gen_dummy_particle
+    use he_m,               only: detonation_wave
+    use decompose_m,        only: decompose
+    use area_m,             only: calculate_area
     ! use boundary_condition_m
     implicit none
     integer,        intent(in)    :: ntotal

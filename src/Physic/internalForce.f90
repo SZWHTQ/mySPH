@@ -1,7 +1,7 @@
 #include "../macro.h"
 module in_force_m
     use ctrl_dict, only: Config, Field
-    use sph
+    use sph,       only: Particle
     ! use boundary_condition_m
 
     implicit none

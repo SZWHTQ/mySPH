@@ -1,6 +1,6 @@
 module corr_velo_m
     use ctrl_dict, only: Project, Field
-    use sph
+    use sph,       only: Particle
     implicit none
 
 contains

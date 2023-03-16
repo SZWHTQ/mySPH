@@ -1,6 +1,6 @@
 module hsml_m
     use ctrl_dict, only: Field
-    use sph
+    use sph,       only: Particle
     implicit none
 
 contains

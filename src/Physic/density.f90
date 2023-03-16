@@ -1,6 +1,6 @@
 module density_m
     use ctrl_dict, only: Config, Field
-    use sph
+    use sph,       only: Particle
     use kernel_m,  only: kernel
 
     implicit none

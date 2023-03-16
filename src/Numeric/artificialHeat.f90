@@ -1,5 +1,5 @@
 module arti_heat_m
-    use sph
+    use sph, only: Particle
     implicit none
 
 contains

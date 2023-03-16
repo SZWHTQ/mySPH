@@ -1,6 +1,6 @@
 module arti_visc_m
     use ctrl_dict, only: Field, Project
-    use sph
+    use sph,       only: Particle
     implicit none
 
 contains

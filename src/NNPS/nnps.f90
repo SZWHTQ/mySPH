@@ -2,7 +2,7 @@
 module nnps_m
     use, intrinsic :: iso_fortran_env, only: err => error_unit
     use ctrl_dict, only: Config, Field
-    use sph
+    use sph,       only: Particle
     use kernel_m,  only: kernel
     use tools_m,   only: to_string, round, print_error, print_warning, ESC
     implicit none

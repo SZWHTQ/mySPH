@@ -4,7 +4,7 @@ module sph
     private
 
     type, public :: Particle
-        integer :: Type, status
+        integer :: Type, State
         real(8), allocatable :: x(:), v(:)
         real(8) :: Mass, Density
         real(8) :: Pressure, InternalEnergy, SoundSpeed, SmoothingLength, KineticViscocity
@@ -58,7 +58,7 @@ contains
         write(fmt, "(A, 3(I0, A))") "(2(I8), 2X", N, "(ES15.7e0, 2X), "  &
                                 // "I0, 2X, ", P%neighborNum, "(I0, 2X)", &
                                 P%neighborNum + P%neighborNum * dim, "(ES15.7e0, 2X))"
-        write(unit, fmt) P%Type, P%status,                           &
+        write(unit, fmt) P%Type, P%State,                           &
                          P%x, P%v, P%Mass, P%Density,                &
                          P%Pressure, P%InternalEnergy, P%SoundSpeed, &
                          P%SmoothingLength, P%KineticViscocity,      &
@@ -67,7 +67,7 @@ contains
                          P%neighborNum, P%neighborList, P%w, P%dwdx
 #else
         write(fmt, "(A, 3(I0, A))") "(2(I8), 2X, ", N, "(ES15.7e0, 2X))"
-        write(unit, fmt) P%Type, P%status,                          &
+        write(unit, fmt) P%Type, P%State,                          &
                          P%x, P%v, P%Mass, P%Density,                &
                          P%Pressure, P%InternalEnergy, P%SoundSpeed, &
                          P%SmoothingLength, P%KineticViscocity,      &
@@ -89,7 +89,7 @@ contains
         dim = size(P%x)
 
 #if WRITE_NEIGHBOR_INFO
-        read(unit, *) P%Type, P%status,                          &
+        read(unit, *) P%Type, P%State,                          &
                       P%x, P%v, P%Mass, P%Density,                &
                       P%Pressure, P%InternalEnergy, P%SoundSpeed, &
                       P%SmoothingLength, P%KineticViscocity,      &
@@ -97,7 +97,7 @@ contains
                       ((P%Stress(i, j), j=1, dim), i=1, dim),     &
                       P%neighborNum, P%neighborList, P%w, P%dwdx
 #else
-        read(unit, *) P%Type, P%status,                          &
+        read(unit, *) P%Type, P%State,                          &
                       P%x, P%v, P%Mass, P%Density,                &
                       P%Pressure, P%InternalEnergy, P%SoundSpeed, &
                       P%SmoothingLength, P%KineticViscocity,      &
@@ -117,7 +117,7 @@ contains
         !$omp parallel do private(i)
         do i = 1, ParticleNum
             Particles(i)%Type               = 0
-            Particles(i)%status             = 0
+            Particles(i)%State             = 0
             Particles(i)%Mass               = 0.0_8
             Particles(i)%Density            = 0.0_8
             Particles(i)%Pressure           = 0.0_8

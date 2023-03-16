@@ -75,7 +75,7 @@ contains
 
         select case (Field%dim)
         case (1)
-            write(11, 1001) "Index", "Type", "Status", "X", "V",        &
+            write(11, 1001) "Index", "Type", "State", "X", "V",        &
                             "Mass", "Density",                          &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
                             "SmoothingLength", "KineticViscocity",      &
@@ -88,7 +88,7 @@ contains
             1001 format(3(A8), 11(A17))
 
         case (2)
-            write(11, 1002) "Index", "Type", "Status",                  &
+            write(11, 1002) "Index", "Type", "State",                  &
                             "X", "Y", "U", "V",                         &
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
@@ -103,7 +103,7 @@ contains
             1002 format(3(A8), 17(A17))
 
         case (3)
-            write(11, 1003) "Index", "Type", "Status",                  &
+            write(11, 1003) "Index", "Type", "State",                  &
                             "X", "Y", "Z", "U", "V", "W",               &
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &

@@ -197,7 +197,9 @@ contains
                                 P(j)%neighborNum = P(j)%neighborNum + 1
 #if CHECK_NEIGHBOR_NUM
                                 if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
-                                    write(*,*) i, j, P([i,j])%neighborNum, kpair
+                                    write(err,"(A)",advance="no") ESC//"[31m"
+                                    write(err,*) i, j, P([i,j])%neighborNum, kpair
+                                    write(err,"(A)",advance="no") ESC//"[0m"
                                     error stop "Too many neighbors"
                                 end if
 #endif
@@ -326,7 +328,9 @@ contains
                         P(j)%neighborNum = P(j)%neighborNum + 1
 #if CHECK_NEIGHBOR_NUM
                         if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
-                            write(*,*) i, j, P([i,j])%neighborNum, kpair
+                            write(err,"(A)",advance="no") ESC//"[31m"
+                            write(err,*) i, j, P([i,j])%neighborNum, kpair
+                            write(err,"(A)",advance="no") ESC//"[0m"
                             error stop "Too many neighbors"
                         end if
 #endif

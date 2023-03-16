@@ -136,11 +136,6 @@ contains
         call get_value(subtable, 'artificialViscosity', Config%arti_visc_w,        .false.)
         call get_value(subtable, 'artificialHeat',      Config%arti_heat_w,        .false.)
         call get_value(subtable, 'normalizeDensity',    Config%norm_dens_w,        .false.)
-        ! call get_value(subtable, 'DSPH',                Config%DSPH_w,             .false.)
-
-        ! call get_value(subtable, 'symmetry', Config%nsym, 0)
-
-        call get_value(subtable, 'waterEOS', Config%eos_water_form, 2)
 
         if ( Config%dummy_parti_w .or. Config%gravity_w ) then
             Config%ex_force_w = .true.

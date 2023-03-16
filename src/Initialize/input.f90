@@ -324,7 +324,7 @@ contains
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 1e8
-                P(k)%Type           = 6
+                P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 P(k)%x(:)            = water_origin + [i-1, j-1] * delta
             end do
@@ -336,12 +336,12 @@ contains
             do j = 1, water_n(2)
                 k = ntotal + (i-1) * water_n(2) + j
                 P(k)%x(:) = [tnt_origin(1), water_origin(2)] + [i-1, j-1] * delta
-                P(k)%Density   = 1000
-                P(k)%Mass  = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure     = 0
-                P(k)%InternalEnergy     = 1e8
-                P(k)%Type = 6
-                P(k)%SmoothingLength  = 1.5 * sum(delta)/2
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 1e8
+                P(k)%Type            = 6
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
             end do
         end do
         ntotal = k
@@ -351,12 +351,12 @@ contains
             do j = 1, water_n(2)
                 k = ntotal + (i-1) * water_n(2) + j
                 P(k)%x(:) = [tnt_origin(1), water_origin(2)] + [0._8, length(2)] + [i-1, 1-j] * delta
-                P(k)%Density   = 1000
-                P(k)%Mass  = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure     = 0
-                P(k)%InternalEnergy     = 1e8
-                P(k)%Type = 6
-                P(k)%SmoothingLength  = 1.5 * sum(delta)/2
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 1e8
+                P(k)%Type            = 6
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
             end do
         end do
         ntotal = k
@@ -366,12 +366,12 @@ contains
             do j = 1, water_n(2)*2 + int(tnt_length(2)/delta(2)+1)
                 k = ntotal + (i-1) * (water_n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
                 P(k)%x(:) = [tnt_origin(1)+tnt_length(1)+delta(1), water_origin(2)] + [i-1, j-1] * delta
-                P(k)%Density   = 1000
-                P(k)%Mass  = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure     = 0
-                P(k)%InternalEnergy     = 1e8
-                P(k)%Type = 6
-                P(k)%SmoothingLength  = 1.5 * sum(delta)/2
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 1e8
+                P(k)%Type            = 6
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
             end do
         end do
         ntotal = k
@@ -382,11 +382,11 @@ contains
             do j = 1, tnt_n(2)
                 k = ntotal + (i-1) * tnt_n(2) + j
                 P(k)%x(:) = tnt_origin + [i-1, j-1] * tnt_delta
-                P(k)%Density   = 1630
-                P(k)%Mass  = P(k)%Density * tnt_delta(1)*tnt_delta(2)
-                P(k)%Pressure     = 0
-                P(k)%InternalEnergy     = 4.29e6
-                P(k)%Type = 5
+                P(k)%Density          = 1630
+                P(k)%Mass             = P(k)%Density * tnt_delta(1)*tnt_delta(2)
+                P(k)%Pressure         = 0
+                P(k)%InternalEnergy   = 4.29e6
+                P(k)%Type             = 5
                 P(k)%SmoothingLength  = 1.5 * sum(tnt_delta)/2
             end do
         end do

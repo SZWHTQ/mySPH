@@ -27,8 +27,6 @@ module ctrl_dict
         integer :: nnps    !! Indicator Variables for the Nearest Neighbor Particle Search (NNPS)
         integer :: sle     !! Indicator Variables for Smooth Length Estimation
         integer :: skf     !! Indicator Variables for Smooth Kernel Function
-        !!! Equation of State
-        integer :: eos_water_form  !! EOS of Water
         !!! Control Parameters
         logical :: sum_density_w    !! Whether to use Density Summation Method
         logical :: aver_velocity_w  !! Whether to use Speed Averaging Method
@@ -61,13 +59,13 @@ module ctrl_dict
 
     type Field_t
         !!! Physical Field Variables
-        integer :: dim                    !! Dimension
-        integer :: maxn                   !! Maximum Number of Particles
+        integer :: dim    !! Dimension
+        integer :: maxn   !! Maximum Number of Particles
         integer :: ntotal
-        real(8) :: tau_ba                 !! Viscous shear force
+        ! real(8) :: tau_ba !! Viscous shear force
 
         !!! Particle Interaction Variables
-        integer :: pairNum           !! Maximum Allowed Number of Interacting Pairs
+        integer :: pairNum !! Maximum Allowed Number of Interacting Pairs
 
     end type Field_t
     type(Field_t), public :: Field

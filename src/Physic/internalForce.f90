@@ -56,16 +56,16 @@ contains
                         do d = 1, Field%dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
                             do dd = 1, Field%dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
                                 edot(d, dd, i) = edot(d, dd, i) &
-                                    + P(j)%Mass/P(j)%Density            &
+                                    + P(j)%Mass/P(j)%Density    &
                                     * dv(d) * P(i)%dwdx(dd, k)
                                 edot(dd, d, i) = edot(dd, d, i) &
-                                    + P(j)%Mass/P(j)%Density            &
+                                    + P(j)%Mass/P(j)%Density    &
                                     * dv(dd) * P(i)%dwdx(d, k)
                                 if ( d == dd ) then !! δii = 1, δij = 0
                                     do ddd = 1, Field%dim
                                         edot(d, d, i) = edot(d, d, i) &
                                             - 2._8 / 3                &
-                                            * P(j)%Mass/P(j)%Density          &
+                                            * P(j)%Mass/P(j)%Density  &
                                             * dv(ddd) * P(i)%dwdx(ddd, k)
                                     end do
                                 end if !! d == dd

@@ -181,7 +181,7 @@ contains
                 do ycell = minxcell(2), maxxcell(2) !! Loop over all cells at y direction
                     do xcell = minxcell(1), maxxcell(1) !! Loop over all cells at x direction
                         j = grid(xcell, ycell, zcell) !! Fetch Particle j from grid
-                        do while ( j > i .and. P(j)%State /= -1 .and. P(j)%State /= 2) !! Loop over all fluid and buffer particles in cell
+                        do while ( j > i .and. P(j)%State == 0 ) !! Loop over all fluid and buffer particles in cell
                             !!! Calculate distance between particle i and j
                             dx(1) = P(i)%x(1) - P(j)%x(1)
                             dr = dx(1)*dx(1)

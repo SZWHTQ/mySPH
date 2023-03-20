@@ -1,4 +1,4 @@
-module boundary_condition_m
+module bc_m
     use ctrl_dict, only: Project, Config, Field
     use sph,       only: Particle
     use geometry_m
@@ -6,6 +6,7 @@ module boundary_condition_m
 
     private
 
+    public :: gen_non_reflecting_bc, calc_nrbc_property
 contains
     subroutine gen_non_reflecting_bc(ntotal, Particles)
         integer, intent(inout) :: ntotal
@@ -13,7 +14,7 @@ contains
 
         select case (Project%nick)
         case ("undex_chamber")
-            call gen_undex_chamber_bc(ntotal, Particles)
+            call gen_undex_chamber_nrbc(ntotal, Particles)
         end select
 
     end subroutine gen_non_reflecting_bc
@@ -118,19 +119,21 @@ contains
                 Particles(i - nghost)%neighborNum = 1
                 Particles(i - nghost)%neighborList(1) = i
             end do
-        else
-            do i = 1, ntotal
-                point = point_t(Particles(i)%x, 0)
+            write(*,*) nghost, nbuffer
+        else !! entry_count /= 1
+            N = ntotal
+            do i = 1, N
+                point = point
                 if ( Particles(i)%State == 0 ) then !! Fluid Particle
                     if ( BufferDomainContain(point) ) then
                         !! Fluid Particle converts to Buffer Particle
                         Particles(i)%State = 1
                         nghost = nghost + 1
-                        Particles(ntotal+nbuffer+nghost)%x &
-                            = calcGhostPosition(point_t(Particles(i)%x, 0))
-                        Particles(ntotal+nbuffer+nghost)%State = 2
+                        k = ntotal+nbuffer+nghost
+                        Particles(k)%x = calcGhostPosition(point)
+                        Particles(k)%State = 2
                         Particles(i)%neighborNum = 1
-                        Particles(i)%neighborList(1) = ntotal+nbuffer+nghost
+                        Particles(i)%neighborList(1) = k
                     end if !! BufferDomainContain(point)
                 else if ( Particles(i)%State == 1 ) then !! Buffer Particle
                     if ( .not. BufferDomainContain(point) ) then
@@ -141,18 +144,17 @@ contains
                             !! Add a new buffer particle
                             !! nbuffer increases for total particle number increased
                             nbuffer = nbuffer + 1
-                            k = getFixedPointIndex(point)
-                            Particles(ntotal+nbuffer+nghost)%x = Particles(i)%x        &
-                                - ( dot_product( (Particles(i)%x - fixedPoints(:, k)), &
-                                                  normal(:, k) ) + dx * layer )        &
-                                * normal(:, k)
-                            Particles(ntotal+nbuffer+nghost)%State = 1
+                            k = ntotal+nbuffer+nghost
+                            Particles(k)%x = newBufferParticlePosition(point)
+                            Particles(k)%State = 1
+
                             nghost = nghost + 1
-                            Particles(ntotal+nbuffer+nghost)%x &
-                                = calcGhostPosition(point_t(Particles(i)%x, 0))
-                            Particles(ntotal+nbuffer+nghost)%State = 2
-                            Particles(ntotal+nbuffer+nghost - 1)%neighborNum = 1
-                            Particles(ntotal+nbuffer+nghost - 1)%neighborList(1) = ntotal+nbuffer+nghost
+                            k = ntotal+nbuffer+nghost
+                            Particles(k)%x &
+                                = calcGhostPosition(point)
+                            Particles(k)%State = 2
+                            Particles(k-1)%neighborNum = 1
+                            Particles(k-1)%neighborList(1) = k
                         else !! Fluid Domain do not contain particle i
                             Particles(i)%State = -1
                             Particles(Particles(i)%neighborList(1))%State = -1
@@ -160,28 +162,28 @@ contains
                     end if !! .not. BufferDomainContain(point)
                 end if !! Particles(i)%State == 1, Buffer Particle
             end do !! i
-    
+
             ntotal = ntotal + nbuffer + nghost
-        end if
+        end if !! entry_count == 1
 
     contains
-        pure logical function BufferDomainContain(x) result(contain)
-            type(point_t), intent(in) :: x
+        pure logical function BufferDomainContain(P) result(contain)
+            type(point_t), intent(in) :: P
 
-            contain = ( AllDomain%contain(x) ) .and. &
-                      ( .not. (FluidDomain%contain(x)) )
+            contain = ( AllDomain%contain(P) ) .and. &
+                      ( .not. (FluidDomain%contain(P)) )
 
         end function BufferDomainContain
 
-        pure integer function getFixedPointIndex(x) result(index)
-            type(point_t), intent(in) :: x
+        pure integer function getFixedPointIndex(P) result(index)
+            type(point_t), intent(in) :: P
             real(8) :: distance, minDistance
             integer iter
 
             minDistance = huge(0._8)
             index = 0
             do iter = 1, 4
-                distance = norm2(x%center - fixedPoints(:, i))
+                distance = norm2(P%center - fixedPoints(:, i))
                 if ( distance < minDistance ) then
                     minDistance = distance
                     index = iter
@@ -190,14 +192,27 @@ contains
 
         end function getFixedPointIndex
 
-        pure function calcGhostPosition(x) result(ghostPosition)
-            type(point_t), intent(in) :: x
-            real(8) :: ghostPosition(2)
+        pure function newBufferParticlePosition(P) result(bufferPosition)
+            type(point_t), intent(in) :: P
+            real(8) :: bufferPosition(Field%dim)
             integer :: index
 
-            index = getFixedPointIndex(x)
-            ghostPosition = x%center                                     &
-                + 2 * ( dot_product( (fixedPoints(:, index) - x%center), &
+            index = getFixedPointIndex(P)
+            bufferPosition = P%center                                &
+                - ( dot_product( (P%center - fixedPoints(:, index)), &
+                                  normal(:, index) ) + dx * layer )  &
+                * normal(:, index)
+
+        end function newBufferParticlePosition
+
+        pure function calcGhostPosition(P) result(ghostPosition)
+            type(point_t), intent(in) :: P
+            real(8) :: ghostPosition(Field%dim)
+            integer :: index
+
+            index = getFixedPointIndex(P)
+            ghostPosition = P%center                                     &
+                + 2 * ( dot_product( (fixedPoints(:, index) - P%center), &
                                       normal(:, index)) )                &
                     * normal(:, index)
 
@@ -206,54 +221,59 @@ contains
     end subroutine gen_undex_chamber_nrbc
 
     subroutine calc_undex_chamber_nrbc_property(Particles)
+        use tools_m, only: dyadic_product
         type(Particle), intent(inout) :: Particles(:)
         integer :: ntotal
-        type(point_t) :: point
-        type(Particle) :: ghostParticle
-        real(8), dimension(2, 4) :: fixedPoints, normal
-        logical :: first_entry = .true.
-        real(8) :: dx
-        save fixedPoints, first_entry, dx
+        real(8), allocatable :: v(:, :)
 
-        integer i
-
-        allocate(ghostParticle%x(2), ghostParticle%v(2))
-        if ( first_entry ) then
-            dx = abs(Particles(2)%x(1) - Particles(1)%x(1))
-
-            !! Left
-            fixedPoints(:, 1) = [real(8) :: -0.5, -0.5] &
-                - [real(8) :: 0.5, 0]                   &
-                - [real(8) :: dx / 2, 0]
-            normal(:, 1) = [1, 0]
-
-            !! Bottom
-            fixedPoints(:, 2) = [real(8) :: -0.5, -0.5] &
-                - [real(8) :: 0, 0.5]                   &
-                - [real(8) :: 0, dx / 2]
-            normal(:, 2) = [0, 1]
-
-            !! Right
-            fixedPoints(:, 3) = [real(8) :: -0.5, -0.5] &
-                + [real(8) :: 0.5, 0]                   &
-                + [real(8) :: dx / 2, 0]
-            normal(:, 3) = [-1, 0]
-
-            !! Top
-            fixedPoints(:, 4) = [real(8) :: -0.5, -0.5] &
-                + [real(8) :: 0, 0.5]                   &
-                + [real(8) :: 0, dx / 2]
-            normal(:, 4) = [0, -1]
-
-            first_entry = .false.
-        end if
+        integer i, d, g
 
         ntotal = size(Particles)
+        allocate(v(Field%dim, ntotal))
+        do i = 1, ntotal
+            v(:, i) = Particles(i)%v(:)
+        end do
         do i = 1, ntotal
             if ( Particles(i)%State /= 1 ) cycle
-            point = point_t(Particles(i)%x, 0)
+            g = Particles(i)%neighborList(1)
+            do d = 1, Field%dim
+                Particles(i)%v(d) = solveBufferProperty(Particles(i)%x, Particles(g), v(d, :))
+            end do
+            Particles(i)%Mass = Particles(1)%Mass
+            Particles(i)%Density = solveBufferProperty(Particles(i)%x, Particles(g), Particles(:)%Density)
+            Particles(i)%Pressure = solveBufferProperty(Particles(i)%x, Particles(g), Particles(:)%Pressure)
+            Particles(i)%InternalEnergy = solveBufferProperty(Particles(i)%x, Particles(g), Particles(:)%InternalEnergy)
+            Particles(i)%SoundSpeed = solveBufferProperty(Particles(i)%x, Particles(g), Particles(:)%SoundSpeed)
         end do
+
+    contains
+        function solveBufferProperty(coor, ghost, Property) result(bufferProperty)
+            real(8), intent(in) :: coor(:)
+            type(Particle), intent(in) :: ghost
+            real(8), intent(in) :: Property(:)
+            real(8), allocatable :: A(:,:), Solve(:), h(:)
+            real(8) :: bufferProperty
+            integer :: m, flag
+
+            integer j, l
+
+            m = Field%dim + 1
+            allocate(A(m, m), Solve(m), h(m), source=0._8)
+            do j = 1, ghost%neighborNum
+                l = ghost%neighborList(j)
+                associate (aux => [ghost%w(l), ghost%dwdx(:, l)] &
+                    * Particles(l)%Mass/Particles(l)%Density)
+                A = A + dyadic_product(aux, [1._8, Particles(l)%x-ghost%x])
+                Solve = Solve + aux * Property(l)
+                end associate
+            end do
+
+            call DGESV(m,1, A,m, h, Solve,m, flag)
+
+            bufferProperty = Solve(1) + dot_product((coor - ghost%x), Solve(2:m))
+            
+        end function solveBufferProperty
 
     end subroutine calc_undex_chamber_nrbc_property
 
-end module boundary_condition_m
+end module bc_m

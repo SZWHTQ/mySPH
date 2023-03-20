@@ -73,10 +73,15 @@ elseif(NOT LOCAL_TOMLF)
     )
 endif(LOCAL_TOMLF)
 
+target_link_libraries(
+    mySPH-lib
+    blas
+    lapack
+)
 
 add_executable(
-    mySPH
-    src/main.f90
+    ${PROJECT_NAME}
+    "src/main.f90"
 )
 
 target_link_libraries(

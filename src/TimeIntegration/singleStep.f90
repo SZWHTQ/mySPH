@@ -20,9 +20,9 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     use he_m,               only: detonation_wave
     use decompose_m,        only: decompose
     use area_m,             only: calculate_area
-    ! use boundary_condition_m
+    use bc_m,               only: gen_non_reflecting_bc, calc_nrbc_property
     implicit none
-    integer,        intent(in)    :: ntotal
+    integer,        intent(inout)    :: ntotal
     integer,        intent(inout) :: ndummy
     type(Particle), intent(inout) :: Particles(:)
     type(Update),   intent(inout) :: Delta(:)
@@ -50,6 +50,8 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     !!! Positions of dummy (boundary) particles
     if ( Config%dummy_parti_w ) call gen_dummy_particle(ndummy, Particles(1:ntotal))
 
+    if ( Config%open_boundary_w) call gen_non_reflecting_bc(ntotal, Particles(1:ntotal))
+
 #ifdef _OPENMP
     Config%chunkSize = (ntotal+ndummy) / Config%nthreads
 #endif
@@ -58,6 +60,8 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     ! write(*,*) niac
     call search_particles(Config%nnps, Particles(1:ntotal+ndummy))
     ! write(*,*) niac
+
+    if ( Config%open_boundary_w) call calc_nrbc_property(Particles(1:ntotal))
 
     !!! Density approximation or change rate
     select case (Config%pa_sph)

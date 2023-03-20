@@ -20,6 +20,7 @@ summationDensity    = false
 artificialViscosity = true
 # gravity = true
 normalizeDensity    = true
+openBoundary        = true
 
 [Parallel]
 OMP_NUM_THREADS = 6

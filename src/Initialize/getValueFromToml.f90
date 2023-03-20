@@ -136,6 +136,7 @@ contains
         call get_value(subtable, 'artificialViscosity', Config%arti_visc_w,        .false.)
         call get_value(subtable, 'artificialHeat',      Config%arti_heat_w,        .false.)
         call get_value(subtable, 'normalizeDensity',    Config%norm_dens_w,        .false.)
+        call get_value(subtable, 'openBoundary',        Config%open_boundary_w,    .false.)
 
         if ( Config%dummy_parti_w .or. Config%gravity_w ) then
             Config%ex_force_w = .true.

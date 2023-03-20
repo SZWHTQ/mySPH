@@ -9,6 +9,38 @@ module tools_m
     integer, private :: fdigit = 0
 
 contains
+    pure function kronecker_product(a, b) result(c)
+        real(8), intent(in) :: a(:,:), b(:,:)
+        real(8) :: c(size(a,1)*size(b,1), size(a,2)*size(b,2))
+        integer :: i, j, k, l
+
+        c = 0
+        do i = 1, size(a,1)
+            do j = 1, size(a,2)
+                do k = 1, size(b,1)
+                do l = 1, size(b,2)
+                    c((i-1)*size(b,1)+k, (j-1)*size(b,2)+l) = a(i,j)*b(k,l)
+                end do
+                end do
+            end do
+        end do
+
+    end function kronecker_product
+
+    pure function dyadic_product(a,b) result(c)
+        implicit none
+        real(8), intent(in) :: a(:), b(:)
+        real(8) :: c(size(a),size(b))
+        integer :: i, j
+
+        do i = 1, size(a)
+            do j = 1, size(b)
+                c(i,j) = a(i) * b(j)
+            end do
+        end do
+
+    end function dyadic_product
+
     pure function to_string(var) result(str)
         implicit none
         class(*),     intent(in)  :: var
@@ -147,7 +179,7 @@ contains
                     info = "Directory already exists: "//trim(adjustl(buffer))
                 end if
             end if
-    
+
             deallocate(buffer)
 
     end subroutine create_directory

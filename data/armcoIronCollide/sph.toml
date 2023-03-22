@@ -51,7 +51,7 @@ viscosity           = true # Must be true for Solid
 # gravity             = true
 artificialViscosity = true
 # artificialHeat      = true
-averageVelocity     = true
+# averageVelocity     = true
 # normalizeDensity    = true
 
 

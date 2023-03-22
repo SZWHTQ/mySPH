@@ -235,9 +235,9 @@ contains
     contains
     pure logical function judge(iState, jState) result(iflag)
         integer, intent(in) :: iState, jState
-    
+
         iflag = jState == 0 .or. (iState == 0 .and. jState == 1)
-        
+
     end function judge
     end subroutine link_list_search
 

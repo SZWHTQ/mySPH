@@ -7,6 +7,7 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     use tools_m,            only: to_string
     use sph,                only: Particle, allocateNeighborList
     use nnps_m,             only: search_particles, print_statistics
+    use BGGS_m,             only: BGGS
     use density_m,          only: sum_density, con_density, con_density_riemann, sum_density_dsph
     use visc_m,             only: viscosity
     use divergence_m,       only: divergence
@@ -57,7 +58,8 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
 #endif
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length
-    call search_particles(Config%nnps, Particles(1:ntotal+ndummy))
+    ! call search_particles(Config%nnps, Particles(1:ntotal+ndummy))
+    call BGGS(Particles(1:ntotal+ndummy), Particles(1:ntotal+ndummy), skipItsSelf=.true.)
 
     if ( Config%open_boundary_w) call calc_nrbc_property(Particles(1:ntotal))
 

@@ -25,7 +25,7 @@ module time_integration_m
 contains
     subroutine time_integration(ntotal, P)
         ! use ctrl_dict, only: Config
-        integer, intent(in) :: ntotal
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
     
         call leap_frog(ntotal, P)
@@ -38,7 +38,7 @@ contains
         use cour_num_m
         use output_m
         implicit none
-        integer, intent(in) :: ntotal
+        integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         integer :: ndummy = 0
         type(Update), allocatable :: Prev(:), Delta(:)

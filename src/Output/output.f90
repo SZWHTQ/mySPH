@@ -78,7 +78,7 @@ contains
             write(11, 1001) "Index", "Type", "State", "X", "V",        &
                             "Mass", "Density",                          &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "KineticViscocity",      &
+                            "SmoothingLength", "Viscocity",      &
                             "DivDistance",                              &
                             "StressXX"
             do i = 1, ntotal
@@ -92,7 +92,7 @@ contains
                             "X", "Y", "U", "V",                         &
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "KineticViscocity",      &
+                            "SmoothingLength", "Viscocity",      &
                             "DivDistance",                              &
                             "StressXX", "StressXY",                     &
                             "StressYX", "StressYY"
@@ -108,7 +108,7 @@ contains
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
                             "SmoothingLength",                          &
-                            "KineticViscocity", "DivDistance",          &
+                            "Viscocity", "DivDistance",          &
                             "StressXX", "StressXY", "StressXZ",         &
                             "StressYX", "StressYY", "StressYZ",         &
                             "StressZX", "StressZY", "StressZZ"
@@ -177,10 +177,17 @@ contains
         end do
 
         !!! Write particle type
-        write (11, "(A)") "SCALARS ParticleType int 1"
+        write (11, "(A)") "SCALARS Type int 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
             write (11, "(I0)") Particles(i)%Type
+        end do
+
+        !!! Write particle type
+        write (11, "(A)") "SCALARS State int 1"
+        write (11, "(A)") "LOOKUP_TABLE DEFAULT"
+        do i = 1, ntotal
+            write (11, "(I0)") Particles(i)%State
         end do
 
         !!! Write particle smoothed length

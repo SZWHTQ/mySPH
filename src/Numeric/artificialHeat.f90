@@ -20,6 +20,7 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, k, q_i, q_j, q_ij, hsml_ij, rho_ij, aux)
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
 

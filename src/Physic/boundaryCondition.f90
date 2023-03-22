@@ -17,6 +17,8 @@ contains
             call gen_undex_chamber_nrbc(ntotal, Particles)
         end select
 
+        call shrink(ntotal, Particles)
+
     end subroutine gen_non_reflecting_bc
 
     subroutine calc_nrbc_property(Particles)
@@ -39,7 +41,7 @@ contains
         real(8), dimension(2, 4) :: fixedPoints, normal
         integer :: entry_count = 0
         real(8) :: dx
-        save FluidDomain, fixedPoints, entry_count, dx
+        save FluidDomain, AllDomain, fixedPoints, entry_count, dx
 
         integer :: N, layer = 4
         integer i, k, l
@@ -48,39 +50,35 @@ contains
         nghost = 0
         entry_count = entry_count + 1
         if ( entry_count == 1 ) then
-            dx = abs(Particles(2)%x(1) - Particles(1)%x(1))
+            dx = abs(Particles(2)%x(1) - Particles(2)%x(2))
             FluidDomain = rectangle_t(   &
-                [real(8) :: -0.5, -0.5], &
-                [real(8) ::  1.0,  1.0], &
+                [real(8) :: 0, 0], &
+                [real(8) :: 1, 1], &
                 0 )
             AllDomain = rectangle_t(     &
-                [real(8) :: -0.5, -0.5], &
-                ([real(8) :: 1.0,  1.0]  &
+                [real(8) ::  0, 0], &
+                ([real(8) :: 1, 1]  &
                     + 2 * layer * dx)  , &
                 0 )
 
             !! Left
             fixedPoints(:, 1) = FluidDomain%center        &
-                - [real(8) :: FluidDomain%length(1)/2, 0] &
-                - [real(8) :: dx, 0] / 2
+                - [real(8) :: FluidDomain%length(1)/2, 0]
             normal(:, 1) = [1, 0]
 
             !! Bottom
             fixedPoints(:, 2) = FluidDomain%center        &
-                - [real(8) :: 0, FluidDomain%length(2)/2] &
-                - [real(8) :: 0, dx] / 2
+                - [real(8) :: 0, FluidDomain%length(2)/2]
             normal(:, 2) = [0, 1]
 
             !! Right
             fixedPoints(:, 3) = FluidDomain%center        &
-                + [real(8) :: FluidDomain%length(1)/2, 0] &
-                + [real(8) :: dx, 0] / 2
+                + [real(8) :: FluidDomain%length(1)/2, 0]
             normal(:, 3) = [-1, 0]
 
             !! Top
             fixedPoints(:, 4) = FluidDomain%center        &
-                + [real(8) :: 0, FluidDomain%length(2)/2] &
-                + [real(8) :: 0, dx] / 2
+                + [real(8) :: 0, FluidDomain%length(2)/2]
             normal(:, 4) = [0, -1]
 
             !!! This N is for particles' number in each layer
@@ -91,39 +89,41 @@ contains
                     nbuffer = nbuffer + 1
                     Particles(ntotal+nbuffer)%x = [-0.5,  0.5] + [- l, 1 - i] * dx
                     Particles(ntotal+nbuffer)%State = 1
+                    Particles(ntotal+nbuffer)%Type  = 6
                 end do
                 !! Bottom
                 do i = 1, N
                     nbuffer = nbuffer + 1
                     Particles(ntotal+nbuffer)%x = [-0.5, -0.5] + [1 + i, - l] * dx
                     Particles(ntotal+nbuffer)%State = 1
+                    Particles(ntotal+nbuffer)%Type  = 6
                 end do
                 !! Right
                 do i = 1, N
                     nbuffer = nbuffer + 1
                     Particles(ntotal+nbuffer)%x = [ 0.5, -0.5] + [  l, 1 + i] * dx
                     Particles(ntotal+nbuffer)%State = 1
+                    Particles(ntotal+nbuffer)%Type  = 6
                 end do
                 !! Top
                 do i = 1, N
                     nbuffer = nbuffer + 1
                     Particles(ntotal+nbuffer)%x = [ 0.5,  0.5] + [1 - i,   l] * dx
                     Particles(ntotal+nbuffer)%State = 1
+                    Particles(ntotal+nbuffer)%Type  = 6
                 end do
             end do
             nghost = nbuffer
             do i = ntotal + nbuffer + 1, ntotal + nbuffer + nghost
-                Particles(i)%x &
-                    = calcGhostPosition(point_t(Particles(i - nghost)%x, 0))
+                Particles(i)%x = calcGhostPosition(point_t(Particles(i - nghost)%x, 0))
                 Particles(i)%State = 2
                 Particles(i - nghost)%neighborNum = 1
                 Particles(i - nghost)%neighborList(1) = i
             end do
-            write(*,*) nghost, nbuffer
         else !! entry_count /= 1
             N = ntotal
             do i = 1, N
-                point = point
+                point = point_t(Particles(i)%x, 0)
                 if ( Particles(i)%State == 0 ) then !! Fluid Particle
                     if ( BufferDomainContain(point) ) then
                         !! Fluid Particle converts to Buffer Particle
@@ -141,19 +141,21 @@ contains
                             !! Buffer Particle converts to Fluid Particle
                             Particles(i)%State = 0
                             Particles(Particles(i)%neighborList(1))%State = -1
+
                             !! Add a new buffer particle
                             !! nbuffer increases for total particle number increased
                             nbuffer = nbuffer + 1
                             k = ntotal+nbuffer+nghost
                             Particles(k)%x = newBufferParticlePosition(point)
                             Particles(k)%State = 1
-
+                            Particles(k)%Type  = Particles(i)%Type
+                            !! Add a new ghost particle
                             nghost = nghost + 1
                             k = ntotal+nbuffer+nghost
-                            Particles(k)%x &
-                                = calcGhostPosition(point)
+                            Particles(k)%x = calcGhostPosition(point)
                             Particles(k)%State = 2
                             Particles(k-1)%neighborNum = 1
+                            Particles(k-1)%neighborList = 0
                             Particles(k-1)%neighborList(1) = k
                         else !! Fluid Domain do not contain particle i
                             Particles(i)%State = -1
@@ -163,8 +165,9 @@ contains
                 end if !! Particles(i)%State == 1, Buffer Particle
             end do !! i
 
-            ntotal = ntotal + nbuffer + nghost
         end if !! entry_count == 1
+
+        ntotal = ntotal + nbuffer + nghost
 
     contains
         pure logical function BufferDomainContain(P) result(contain)
@@ -183,7 +186,7 @@ contains
             minDistance = huge(0._8)
             index = 0
             do iter = 1, 4
-                distance = norm2(P%center - fixedPoints(:, i))
+                distance = norm2(P%center - fixedPoints(:, iter))
                 if ( distance < minDistance ) then
                     minDistance = distance
                     index = iter
@@ -244,6 +247,7 @@ contains
             Particles(i)%Pressure = solveBufferProperty(Particles(i)%x, Particles(g), Particles(:)%Pressure)
             Particles(i)%InternalEnergy = solveBufferProperty(Particles(i)%x, Particles(g), Particles(:)%InternalEnergy)
             Particles(i)%SoundSpeed = solveBufferProperty(Particles(i)%x, Particles(g), Particles(:)%SoundSpeed)
+            Particles(i)%divergenceVelocity = solveBufferProperty(Particles(i)%x, Particles(g), Particles(:)%divergenceVelocity)
         end do
 
     contains
@@ -261,7 +265,7 @@ contains
             allocate(A(m, m), Solve(m), h(m), source=0._8)
             do j = 1, ghost%neighborNum
                 l = ghost%neighborList(j)
-                associate (aux => [ghost%w(l), ghost%dwdx(:, l)] &
+                associate (aux => [ghost%w(j), ghost%dwdx(:, j)] &
                     * Particles(l)%Mass/Particles(l)%Density)
                 A = A + dyadic_product(aux, [1._8, Particles(l)%x-ghost%x])
                 Solve = Solve + aux * Property(l)
@@ -275,5 +279,34 @@ contains
         end function solveBufferProperty
 
     end subroutine calc_undex_chamber_nrbc_property
+
+    subroutine shrink(ntotal, Particles)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: Particles(:)
+        type(Particle) :: P
+
+        integer i, j
+
+        i = 1
+        j = ntotal
+        do while( i <= j )
+            do while( i <= j .and. Particles(i)%State /= -1 )
+                i = i + 1
+            end do
+            do while( i <= j .and. Particles(j)%State == -1 )
+                j = j - 1
+            end do
+            if ( i < j ) then
+                P = Particles(i)
+                Particles(i) = Particles(j)
+                Particles(j) = P
+                i = i + 1
+                j = j - 1
+            end if
+        end do
+
+        ntotal = j
+        
+    end subroutine shrink
 
 end module bc_m

@@ -7,7 +7,7 @@ module sph
         integer :: Type, State
         real(8), allocatable :: x(:), v(:)
         real(8) :: Mass, Density
-        real(8) :: Pressure, InternalEnergy, SoundSpeed, SmoothingLength, KineticViscocity
+        real(8) :: Pressure, InternalEnergy, SoundSpeed, SmoothingLength, Viscocity
         real(8) :: divergencePosition, divergenceVelocity
         real(8), allocatable :: Stress(:, :)
         integer :: neighborNum
@@ -61,7 +61,7 @@ contains
         write(unit, fmt) P%Type, P%State,                           &
                          P%x, P%v, P%Mass, P%Density,                &
                          P%Pressure, P%InternalEnergy, P%SoundSpeed, &
-                         P%SmoothingLength, P%KineticViscocity,      &
+                         P%SmoothingLength, P%Viscocity,      &
                          P%divergencePosition,                       &
                          ((P%Stress(i, j), j=1, dim), i=1, dim),     &
                          P%neighborNum, P%neighborList, P%w, P%dwdx
@@ -70,7 +70,7 @@ contains
         write(unit, fmt) P%Type, P%State,                          &
                          P%x, P%v, P%Mass, P%Density,                &
                          P%Pressure, P%InternalEnergy, P%SoundSpeed, &
-                         P%SmoothingLength, P%KineticViscocity,      &
+                         P%SmoothingLength, P%Viscocity,      &
                          P%divergencePosition,                       &
                          ((P%Stress(i, j), j=1, dim), i=1, dim)
 #endif
@@ -92,7 +92,7 @@ contains
         read(unit, *) P%Type, P%State,                          &
                       P%x, P%v, P%Mass, P%Density,                &
                       P%Pressure, P%InternalEnergy, P%SoundSpeed, &
-                      P%SmoothingLength, P%KineticViscocity,      &
+                      P%SmoothingLength, P%Viscocity,      &
                       P%divergencePosition,                       &
                       ((P%Stress(i, j), j=1, dim), i=1, dim),     &
                       P%neighborNum, P%neighborList, P%w, P%dwdx
@@ -100,7 +100,7 @@ contains
         read(unit, *) P%Type, P%State,                          &
                       P%x, P%v, P%Mass, P%Density,                &
                       P%Pressure, P%InternalEnergy, P%SoundSpeed, &
-                      P%SmoothingLength, P%KineticViscocity,      &
+                      P%SmoothingLength, P%Viscocity,      &
                       P%divergencePosition,                       &
                       ((P%Stress(i, j), j=1, dim), i=1, dim)
 #endif
@@ -117,14 +117,14 @@ contains
         !$omp parallel do private(i)
         do i = 1, ParticleNum
             Particles(i)%Type               = 0
-            Particles(i)%State             = 0
+            Particles(i)%State              = 0
             Particles(i)%Mass               = 0.0_8
             Particles(i)%Density            = 0.0_8
             Particles(i)%Pressure           = 0.0_8
             Particles(i)%InternalEnergy     = 0.0_8
             Particles(i)%SoundSpeed         = 0.0_8
             Particles(i)%SmoothingLength    = 0.0_8
-            Particles(i)%KineticViscocity   = 0.0_8
+            Particles(i)%Viscocity   = 0.0_8
             Particles(i)%divergencePosition = 0.0_8
             Particles(i)%divergenceVelocity = 0.0_8
             allocate(Particles(i)%x(Dim), Particles(i)%v(Dim), source=0.0_8)
@@ -144,6 +144,7 @@ contains
 
         !$omp parallel do private(i)
         do i = 1, size(Particles)
+            if ( Particles(i)%State /= 0 ) cycle
             Particles(i)%neighborNum = 0
             if ( allocated(Particles(i)%neighborList) ) then
                 deallocate(Particles(i)%neighborList)

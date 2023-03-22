@@ -39,12 +39,13 @@ contains
 #endif
 
         !!! Dynamic viscosity
-        if ( Config%viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%KineticViscocity)
+        if ( Config%viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%Viscocity)
 
 
         if ( Config%viscosity_w ) then
                 !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux)
                 do i = 1, ntotal !! All particles
+                    if ( P(i)%State /= 0 ) cycle
                 !!! Calculate SPH sum for Strain Rate Tensor of Fluid
                 !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
 #if SOLID
@@ -104,12 +105,13 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, aux, aver_edot, j, k, d, dd, ddd)
         do i = 1, ntotal !! All particles
+            if ( P(i)%State /= 0 ) cycle
 #if SOLID
         if ( abs(P(i)%Type) < 8 ) then !! Fluid
 #endif
             !!! Viscous entropy Tds/dt = 1/2 eta/rho εab•εab
             if ( Config%viscosity_w ) then
-                tdsdt(i) = 0.5_8 * P(i)%KineticViscocity / P(i)%Density &
+                tdsdt(i) = 0.5_8 * P(i)%Viscocity / P(i)%Density &
                          * sum(edot(:, :, i)**2)
             end if
 
@@ -158,7 +160,7 @@ contains
                 !!! Deviatoric Stress Rate Tensor
                 do d = 1, Field%dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
                     do dd = 1, Field%dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
-                        dSdt(d, dd, i) = 2 * P(i)%KineticViscocity * aver_edot(d, dd)
+                        dSdt(d, dd, i) = 2 * P(i)%Viscocity * aver_edot(d, dd)
                         do ddd = 1, Field%dim
                             dSdt(d, dd, i) = dSdt(d, dd, i) + &
                                 Shear(d, ddd, i) * rdot(dd, ddd, i) &
@@ -201,8 +203,8 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                  &
                             + P(j)%Mass                            &
                             * ( - aux * P(i)%dwdx(:, k)            &
-                                + matmul(  P(i)%KineticViscocity*edot(:, :, i)  &
-                                         + P(j)%KineticViscocity*edot(:, :, j), &
+                                + matmul(  P(i)%Viscocity*edot(:, :, i)  &
+                                         + P(j)%Viscocity*edot(:, :, j), &
                                          P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy
@@ -220,6 +222,7 @@ contains
         case (2)
             !$OMP PARALLEL DO PRIVATE(i, j, k, aux)
             do i = 1, ntotal  !! All particles
+                if ( P(i)%State /= 0 ) cycle
                 if ( abs(P(i)%Type) < 8 ) then !! Fluid
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
@@ -231,8 +234,8 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                                                 &
                             + P(j)%Mass                                                         &
                             * ( - aux * P(i)%dwdx(:, k)                                         &
-                                + matmul(  P(i)%KineticViscocity*edot(:, :, i)/P(i)%Density**2  &
-                                         + P(j)%KineticViscocity*edot(:, :, j)/P(j)%Density**2, &
+                                + matmul(  P(i)%Viscocity*edot(:, :, i)/P(i)%Density**2  &
+                                         + P(j)%Viscocity*edot(:, :, j)/P(j)%Density**2, &
                                          P(i)%dwdx(:, k)) )
 
                         !!! Conservation of Energy
@@ -301,8 +304,8 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                                 &
                             + P(j)%Mass                                         &
                             * ( - aux * P(i)%dwdx(:, k)                         &
-                                + matmul(  P(i)%KineticViscocity*edot(:, :, i)  &
-                                         + P(j)%KineticViscocity*edot(:, :, j), &
+                                + matmul(  P(i)%Viscocity*edot(:, :, i)  &
+                                         + P(j)%Viscocity*edot(:, :, j), &
                                          P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy

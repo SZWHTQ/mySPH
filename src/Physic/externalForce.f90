@@ -57,6 +57,7 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, k, d, dx, dr, r, pe)
         do i = 1, ntotal !! All particles
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum !! All neighbors
                 j = P(i)%neighborList(k)
 

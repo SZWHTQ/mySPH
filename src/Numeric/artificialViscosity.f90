@@ -52,6 +52,7 @@ contains
         !!! Calculate SPH sum for artificial viscous
         !$OMP PARALLEL DO PRIVATE(i, j, k, dx, dv, xv, hsml_ij, rho_ij, c_ij, phi_ij, PI_ij)
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 

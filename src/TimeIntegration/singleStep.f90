@@ -22,7 +22,7 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     use area_m,             only: calculate_area
     use bc_m,               only: gen_non_reflecting_bc, calc_nrbc_property
     implicit none
-    integer,        intent(inout)    :: ntotal
+    integer,        intent(inout) :: ntotal
     integer,        intent(inout) :: ndummy
     type(Particle), intent(inout) :: Particles(:)
     type(Update),   intent(inout) :: Delta(:)
@@ -50,16 +50,14 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     !!! Positions of dummy (boundary) particles
     if ( Config%dummy_parti_w ) call gen_dummy_particle(ndummy, Particles(1:ntotal))
 
-    if ( Config%open_boundary_w) call gen_non_reflecting_bc(ntotal, Particles(1:ntotal))
+    if ( Config%open_boundary_w) call gen_non_reflecting_bc(ntotal, Particles)
 
 #ifdef _OPENMP
     Config%chunkSize = (ntotal+ndummy) / Config%nthreads
 #endif
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length
-    ! write(*,*) niac
     call search_particles(Config%nnps, Particles(1:ntotal+ndummy))
-    ! write(*,*) niac
 
     if ( Config%open_boundary_w) call calc_nrbc_property(Particles(1:ntotal))
 
@@ -115,8 +113,14 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then
         !!! Statistics for the interaction
         if (Config%print_statistics_w) then
-            write(*,*) ">> Statistics: Dummy particles:"
-            write(*,*) "   Number of dummy particles: ", to_string(ndummy)
+            if ( Config%dummy_parti_w ) then
+                write(*,*) ">> Statistics: Dummy Particles:"
+                write(*,*) "   Number of dummy particles: ", to_string(ndummy)
+            end if
+            if ( Config%open_boundary_w ) then
+                write(*,*) ">> Statistics: Particles Number:"
+                write(*,*) "   Number of particles: ", to_string(ntotal)
+            end if
             call print_statistics(Particles(1:ntotal+ndummy))
         end if
             

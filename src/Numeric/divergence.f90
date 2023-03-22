@@ -18,6 +18,7 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, k)
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 P(i)%divergencePosition = P(i)%divergencePosition &

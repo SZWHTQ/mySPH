@@ -119,6 +119,9 @@ contains
                    cell_num(Field%dim), ghsmlx(Field%dim)
         real(8) :: dr, r, dx(Field%dim), grid_max_coor(Field%dim), grid_min_coor(Field%dim)
         real(8) :: scale
+
+        ! logical :: flag
+
         integer :: i, j, d, scale_k
 
         select case (Config%skf)
@@ -149,7 +152,7 @@ contains
             grid_max_coor = grid_max_coor + (scale - 1) * d
             grid_min_coor = grid_min_coor - (scale - 1) * d
         end associate
-        
+
         !!! initialize grid:
         maxhsml = maxval(P%SmoothingLength)
         call initialize_grid(ntotal, maxhsml, grid, cell_num, ghsmlx, grid_max_coor, grid_min_coor)
@@ -181,39 +184,43 @@ contains
                 do ycell = minxcell(2), maxxcell(2) !! Loop over all cells at y direction
                     do xcell = minxcell(1), maxxcell(1) !! Loop over all cells at x direction
                         j = grid(xcell, ycell, zcell) !! Fetch Particle j from grid
-                        do while ( j > i .and. P(j)%State == 0 ) !! Loop over all fluid and buffer particles in cell
-                            !!! Calculate distance between particle i and j
-                            dx(1) = P(i)%x(1) - P(j)%x(1)
-                            dr = dx(1)*dx(1)
-                            do d = 2, Field%dim
-                                dx(d) = P(i)%x(d) - P(j)%x(d)
-                                dr = dr + dx(d)*dx(d)
-                            end do
-                            r = sqrt(dr)
-                            mhsml = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
-                            if (r < mhsml * scale_k) then
-                                !!! Neighbor particle ant tottal neighbor number for each particle
-                                !$OMP CRITICAL
-                                P(i)%neighborNum = P(i)%neighborNum + 1
-                                P(j)%neighborNum = P(j)%neighborNum + 1
+                        do while ( j > 0 .and. j /= i )
+                            if ( judge(P(i)%State, P(j)%State) ) then
+                                !!! Calculate distance between particle i and j
+                                dx(1) = P(i)%x(1) - P(j)%x(1)
+                                dr = dx(1)*dx(1)
+                                do d = 2, Field%dim
+                                    dx(d) = P(i)%x(d) - P(j)%x(d)
+                                    dr = dr + dx(d)*dx(d)
+                                end do
+                                r = sqrt(dr)
+                                mhsml = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
+                                if (r < mhsml * scale_k) then
+                                    !!! Neighbor particle ant tottal neighbor number for each particle
+                                    !$OMP CRITICAL
+                                    P(i)%neighborNum = P(i)%neighborNum + 1
+                                    ! if ( P(j)%State == 0 ) P(j)%neighborNum = P(j)%neighborNum + 1
 #if CHECK_NEIGHBOR_NUM
-                                if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
-                                    write(err,"(A)",advance="no") ESC//"[31m"
-                                    write(err,*) i, j, P([i,j])%neighborNum, kpair
-                                    write(err,"(A)",advance="no") ESC//"[0m"
-                                    error stop "Too many neighbors"
-                                end if
+                                    if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
+                                        write(err,"(A)",advance="no") ESC//"[31m"
+                                        write(err,*) i, j, P([i,j])%neighborNum, kpair
+                                        write(err,"(A)",advance="no") ESC//"[0m"
+                                        error stop "Too many neighbors"
+                                    end if
 #endif
-                                P(i)%neighborList(P(i)%neighborNum) = j
-                                P(j)%neighborList(P(j)%neighborNum) = i
-                                !!! Kernel and derivations of kernel
-                                call kernel(r, dx, mhsml, this_w, this_dwdx)
-                                P(i)%w(P(i)%neighborNum) = this_w
-                                P(j)%w(P(j)%neighborNum) = this_w
-                                P(i)%dwdx(:, P(i)%neighborNum) = this_dwdx
-                                P(j)%dwdx(:, P(j)%neighborNum) = -this_dwdx
-                                !$OMP END CRITICAL
-                            end if !! r < mhsml * scale_k   
+                                    P(i)%neighborList(P(i)%neighborNum) = j
+                                    ! if ( P(j)%State == 0 ) P(j)%neighborList(P(j)%neighborNum) = i
+                                    !!! Kernel and derivations of kernel
+                                    call kernel(r, dx, mhsml, this_w, this_dwdx)
+                                    P(i)%w(P(i)%neighborNum) = this_w
+                                    P(i)%dwdx(:, P(i)%neighborNum) = this_dwdx
+                                    ! if ( P(j)%State == 0 ) then
+                                    !     P(j)%w(P(j)%neighborNum) = this_w
+                                    !     P(j)%dwdx(:, P(j)%neighborNum) = -this_dwdx
+                                    ! end if
+                                    !$OMP END CRITICAL
+                                end if !! r < mhsml * scale_k
+                            end if
                             j = cell_data(j)
                         end do !! j
                     end do !! xcell
@@ -225,6 +232,13 @@ contains
         deallocate(grid)
         deallocate(cell_index, cell_data)
 
+    contains
+    pure logical function judge(iState, jState) result(iflag)
+        integer, intent(in) :: iState, jState
+    
+        iflag = jState == 0 .or. (iState == 0 .and. jState == 1)
+        
+    end function judge
     end subroutine link_list_search
 
     subroutine tree_search(P)

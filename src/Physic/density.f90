@@ -26,6 +26,7 @@ contains
         if ( Config%norm_dens_w ) then
             !$OMP PARALLEL DO PRIVATE(i, self, hv)
             do i = 1, ntotal
+                if ( P(i)%State /= 0 ) cycle
                 if ( P(i)%divergencePosition < 1.5 ) then
                     call kernel(dble(0), 1*hv, P(i)%SmoothingLength, self, hv)
                     wi(i) = P(i)%Mass / P(i)%Density * self
@@ -37,6 +38,7 @@ contains
         if ( Config%norm_dens_w ) then
             !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:wi)
             do i = 1, ntotal
+                if ( P(i)%State /= 0 ) cycle
                 if ( P(i)%divergencePosition < 1.5 ) then
                     do k = 1, P(i)%neighborNum
                         j = P(i)%neighborList(k)
@@ -50,6 +52,7 @@ contains
         !!! Secondly, calculate the rho integration over the space
         !$OMP PARALLEL DO PRIVATE(i, self, hv)
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             call kernel(dble(0), 1*hv, P(i)%SmoothingLength, self, hv)
             P(i)%Density = P(i)%Mass * self
         end do
@@ -58,6 +61,7 @@ contains
         !!! Calculate SPH sum for rho:
         ! !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:rho)
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 P(i)%Density = P(i)%Density + P(j)%Mass * P(i)%w(k)
@@ -69,6 +73,7 @@ contains
         if ( Config%norm_dens_w ) then
             !$OMP PARALLEL DO PRIVATE(i)
             do i = 1, ntotal
+                if ( P(i)%State /= 0 ) cycle
                 if ( P(i)%divergencePosition < 1.5 ) then
                     P(i)%Density = P(i)%Density / wi(i)
                 end if
@@ -95,6 +100,7 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:drhodt)
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 drhodt(i) = drhodt(i) &
@@ -125,6 +131,7 @@ contains
         e_ij = 0
 
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
 
@@ -168,6 +175,7 @@ contains
 
         !!! Firstly, calculate the integration of the kernel over the space
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             call kernel(dble(0), 1*hv, P(i)%SmoothingLength, self, hv)
             wi(i) = P(i)%mass/P(i)%Density * self
         end do
@@ -180,6 +188,7 @@ contains
         s = 0
 
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 wi(i) = wi(i) + P(j)%Mass/P(j)%Density * P(i)%w(k)
@@ -196,11 +205,13 @@ contains
 
         !!! Secondly, calculate the rho integration over the space
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             call kernel(dble(0), 1*hv, P(i)%SmoothingLength, self, hv)
             P(i)%Density = P(i)%mass * self
         end do
 
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 s = dc_point(i)
@@ -214,6 +225,7 @@ contains
 
         !!! Thirdly, calculate the normalized rho, rho = Σrho / Σw
         do i = 1, ntotal
+            if ( P(i)%State /= 0 ) cycle
             P(i)%Density = P(i)%Density / wi(i)
         end do
 

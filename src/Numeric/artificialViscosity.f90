@@ -40,8 +40,8 @@ contains
             beta  = 10
             psi   = 0.1
         case("taylor_rod")
-            alpha = 0.5
-            beta  = 0.5
+            alpha = 1
+            beta  = 1
             psi   = 0.1
         case default
             alpha = 1

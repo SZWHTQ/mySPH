@@ -1,7 +1,7 @@
 module BGGS_m
     use ctrl_dict, only: Field, Config
-    use SPH, only: Particle
-    use kernel_m, only: kernel
+    use SPH,       only: Particle
+    use kernel_m,  only: kernel
     implicit none
     private
 
@@ -12,12 +12,11 @@ module BGGS_m
 
     type grid_t
         type(cell_t), allocatable :: grid(:, :, :)
-        integer, allocatable :: cellNum(:)     !! Number of grid cells
-        real(8), allocatable :: maxCoor(:), &
-                                minCoor(:)     !! Maximum and minium grid cell coordinates
+        integer, allocatable :: cellNum(:)             !! Number of grid cells
+        real(8), allocatable :: maxCoor(:), minCoor(:) !! Maximum and minium grid cell coordinates
     contains
         procedure :: initialize => initialize
-        procedure :: localize   => localize
+        procedure :: locate     => locate
     end type grid_t
 
     real(8), parameter :: GMR = 1.2 !! Grid Magnification Ratio
@@ -26,13 +25,13 @@ module BGGS_m
     public :: BGGS
 
 contains
-    pure function localize(self, p) result(cell)
+    pure function locate(self, p) result(cell)
         use tools_m, only: to_string
         class(grid_t),  intent(in) :: self
         type(Particle), intent(in) :: p
         integer, allocatable :: cell(:)
 
-        integer i, d
+        integer d
 
         allocate( cell(Field%dim), source = 0)
 
@@ -40,13 +39,13 @@ contains
             if ((p%x(d) > self%maxCoor(d)) .or. (p%x(d) < self%minCoor(d))) then
                 error stop "particle out of range"
             else
-                cell(d) = int( ( (p%x(d) - self%minCoor(d))          &
+                cell(d) = int( ( (p%x(d) - self%minCoor(d))       &
                             / (self%maxCoor(d)-self%minCoor(d)) ) &
                             * self%cellNum(d) + 1 )
             end if
         end do
 
-    end function localize
+    end function locate
 
     pure subroutine initialize(self, Particles)
         class(grid_t), intent(inout) :: self
@@ -83,7 +82,7 @@ contains
                     allocate( self%grid(d, 1, 1)%particleList(n), source = 0 )
                 end do
                 do i = 1, ntotal
-                    cell = self%localize(Particles(i))
+                    cell = self%locate(Particles(i))
                     self%grid(cell(1), 1, 1)%numParticles &
                         = self%grid(cell(1), 1, 1)%numParticles + 1
                     if ( self%grid(cell(1), 1, 1)%numParticles <= n ) then
@@ -107,7 +106,7 @@ contains
                     end do
                 end do
                 do i = 1, ntotal
-                    cell = self%localize(Particles(i))
+                    cell = self%locate(Particles(i))
                     self%grid(cell(1), cell(2), 1)%numParticles &
                         = self%grid(cell(1), cell(2), 1)%numParticles + 1
                     if ( self%grid(cell(1), cell(2), 1)%numParticles <= n ) then
@@ -134,7 +133,7 @@ contains
                     end do
                 end do
                 do i = 1, ntotal
-                    cell = self%localize(Particles(i))
+                    cell = self%locate(Particles(i))
                     self%grid(cell(1), cell(2), cell(3))%numParticles &
                         = self%grid(cell(1), cell(2), cell(3))%numParticles + 1
                     if ( self%grid(cell(1), cell(2), cell(3))%numParticles <= n ) then
@@ -188,7 +187,7 @@ contains
         !$OMP PRIVATE(dx, dr, r, mhsml)                            &
         !$OMP SCHEDULE(dynamic, Config%chunkSize)
         do i = 1, numTargets
-            cell = Grid%localize(Targets(i))
+            cell = Grid%locate(Targets(i))
             cellNumPerHSML = int( Targets(i)%SmoothingLength &
                 / ((Grid%maxCoor - Grid%minCoor)             &
                     / Grid%cellNum) + 1 )

@@ -51,10 +51,8 @@ contains
         type(Particle), intent(in) :: Particles(:)
         integer, allocatable :: cell(:)
         integer :: ntotal
-        logical :: firstEntry = .true.
 
-        integer i, d, dd, ddd, n, maxn
-        save firstEntry, n
+        integer i, d, dd, ddd, n
 
         ntotal = size(Particles)
         allocate( self%maxCoor(Field%dim), source =-huge(0._8) )
@@ -77,7 +75,7 @@ contains
             case (1)
                 self%cellNum(1) = min((ntotal)/NPG + 1, 1000)
                 allocate( self%grid(self%cellNum(1), 1, 1 ) )
-                if ( firstEntry ) n = (ntotal / product(self%cellNum)) + 1
+                n = (ntotal / product(self%cellNum)) + 1
                 do d = 1, self%cellNum(1)
                     self%grid(d, 1, 1)%numParticles = 0
                     allocate( self%grid(d, 1, 1)%particleList(n), source = 0 )
@@ -93,16 +91,13 @@ contains
                         self%grid(cell(1), 1, 1)%particleList &
                             = [self%grid(cell(1), 1, 1)%particleList, i]
                     end if
-                    if ( self%grid(cell(1), 1, 1)%numParticles > n ) then
-                        maxn = self%grid(cell(1), 1, 1)%numParticles
-                    end if
                 end do
             case (2)
                 self%cellNum(1) = min(int(((ntotal) * delta(1) &
                                 / (delta(2)*NPG))**(1._8/2) ) + 1, 1000)
                 self%cellNum(2) = min(int(self%cellNum(1)*delta(2)/delta(1)) + 1, 1000)
                 allocate( self%grid(self%cellNum(1), self%cellNum(2), 1 ) )
-                if ( firstEntry ) n = (ntotal / product(self%cellNum)) + 1
+                n = (ntotal / product(self%cellNum)) + 1
                 do d = 1, self%cellNum(1)
                     do dd = 1, self%cellNum(2)
                         self%grid(d, dd, 1)%numParticles = 0
@@ -120,9 +115,6 @@ contains
                         self%grid(cell(1), cell(2), 1)%particleList &
                             = [self%grid(cell(1), cell(2), 1)%particleList, i]
                     end if
-                    if ( self%grid(cell(1), cell(2), 1)%numParticles > n ) then
-                        maxn = self%grid(cell(1), cell(2), 1)%numParticles
-                    end if
                 end do
             case (3)
                 self%cellNum(1) = min(int(((ntotal) * delta(1) * delta(1) &
@@ -130,7 +122,7 @@ contains
                 self%cellNum(2) = min(int(self%cellNum(1) * delta(2) / delta(1)) + 1, 1000)
                 self%cellNum(3) = min(int(self%cellNum(1) * delta(3) / delta(1)) + 1, 1000)
                 allocate( self%grid(self%cellNum(1), self%cellNum(2), self%cellNum(3)) )
-                if ( firstEntry ) n = (ntotal / product(self%cellNum)) + 1
+                n = (ntotal / product(self%cellNum)) + 1
                 do d = 1, self%cellNum(1)
                     do dd = 1, self%cellNum(2)
                         do ddd = 1, self%cellNum(3)
@@ -150,14 +142,9 @@ contains
                         self%grid(cell(1), cell(2), cell(3))%particleList &
                             = [self%grid(cell(1), cell(2), cell(3))%particleList, i]
                     end if
-                    if ( self%grid(cell(1), cell(2), cell(3))%numParticles > n ) then
-                        maxn = self%grid(cell(1), cell(2), cell(3))%numParticles
-                    end if
                 end do
             end select
         end associate
-
-        n = maxn
 
     end subroutine initialize
 

@@ -165,12 +165,12 @@ contains
             grid(cell(1), cell(2), cell(3)) = i
         end do
 
-        !$OMP PARALLEL DO PRIVATE(i, j, d, cell, xcell, ycell, zcell, minxcell, maxxcell, dx, dr, r, mhsml, this_w, this_dwdx) &
-        !$OMP SHARED(grid, cell_index, cell_data, P, ghsmlx, cell_num) &
+        !$OMP PARALLEL DO PRIVATE(i, j, d, cell, xcell, ycell, zcell)          &
+        !$OMP PRIVATE(minxcell, maxxcell, dx, dr, r, mhsml, this_w, this_dwdx) &
+        !$OMP SHARED(grid, cell_index, cell_data, P, ghsmlx, cell_num)          &
         !$OMP SCHEDULE(dynamic, Config%chunkSize)
         !!! determine interaction parameters:
         do i = 1, ntotal - 1 !! loop over all particles but the last one
-            if ( P(i)%State == -1 .or. P(i)%State == 1 ) cycle !! skip deactivated particles and buffer particles
             !!! determine range of grid to go through:
             maxxcell(:) = 1
             minxcell(:) = 1
@@ -184,7 +184,7 @@ contains
                 do ycell = minxcell(2), maxxcell(2) !! Loop over all cells at y direction
                     do xcell = minxcell(1), maxxcell(1) !! Loop over all cells at x direction
                         j = grid(xcell, ycell, zcell) !! Fetch Particle j from grid
-                        do while ( j > 0 .and. j /= i )
+                        do while ( j > i )
                             if ( judge(P(i)%State, P(j)%State) ) then
                                 !!! Calculate distance between particle i and j
                                 dx(1) = P(i)%x(1) - P(j)%x(1)
@@ -199,7 +199,7 @@ contains
                                     !!! Neighbor particle ant tottal neighbor number for each particle
                                     !$OMP CRITICAL
                                     P(i)%neighborNum = P(i)%neighborNum + 1
-                                    ! if ( P(j)%State == 0 ) P(j)%neighborNum = P(j)%neighborNum + 1
+                                    P(j)%neighborNum = P(j)%neighborNum + 1
 #if CHECK_NEIGHBOR_NUM
                                     if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
                                         write(err,"(A)",advance="no") ESC//"[31m"
@@ -209,15 +209,13 @@ contains
                                     end if
 #endif
                                     P(i)%neighborList(P(i)%neighborNum) = j
-                                    ! if ( P(j)%State == 0 ) P(j)%neighborList(P(j)%neighborNum) = i
+                                    P(j)%neighborList(P(j)%neighborNum) = i
                                     !!! Kernel and derivations of kernel
                                     call kernel(r, dx, mhsml, this_w, this_dwdx)
                                     P(i)%w(P(i)%neighborNum) = this_w
+                                    P(j)%w(P(j)%neighborNum) = this_w
                                     P(i)%dwdx(:, P(i)%neighborNum) = this_dwdx
-                                    ! if ( P(j)%State == 0 ) then
-                                    !     P(j)%w(P(j)%neighborNum) = this_w
-                                    !     P(j)%dwdx(:, P(j)%neighborNum) = -this_dwdx
-                                    ! end if
+                                    P(j)%dwdx(:, P(j)%neighborNum) = -this_dwdx
                                     !$OMP END CRITICAL
                                 end if !! r < mhsml * scale_k
                             end if

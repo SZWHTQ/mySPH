@@ -58,8 +58,7 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
 #endif
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length
-    ! call search_particles(Config%nnps, Particles(1:ntotal+ndummy))
-    call BGGS(Particles(1:ntotal+ndummy), Particles(1:ntotal+ndummy), skipItsSelf=.true.)
+    call search_particles(Config%nnps, Particles(1:ntotal+ndummy))
 
     if ( Config%open_boundary_w) call calc_nrbc_property(Particles(1:ntotal))
 

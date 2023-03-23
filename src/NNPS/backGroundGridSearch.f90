@@ -53,7 +53,7 @@ contains
         integer :: ntotal
         logical :: firstEntry = .true.
 
-        integer i, d, dd, ddd, n
+        integer i, d, dd, ddd, n, maxn
         save firstEntry, n
 
         ntotal = size(Particles)
@@ -94,7 +94,7 @@ contains
                             = [self%grid(cell(1), 1, 1)%particleList, i]
                     end if
                     if ( self%grid(cell(1), 1, 1)%numParticles > n ) then
-                        n = self%grid(cell(1), 1, 1)%numParticles
+                        maxn = self%grid(cell(1), 1, 1)%numParticles
                     end if
                 end do
             case (2)
@@ -121,7 +121,7 @@ contains
                             = [self%grid(cell(1), cell(2), 1)%particleList, i]
                     end if
                     if ( self%grid(cell(1), cell(2), 1)%numParticles > n ) then
-                        n = self%grid(cell(1), cell(2), 1)%numParticles
+                        maxn = self%grid(cell(1), cell(2), 1)%numParticles
                     end if
                 end do
             case (3)
@@ -151,11 +151,13 @@ contains
                             = [self%grid(cell(1), cell(2), cell(3))%particleList, i]
                     end if
                     if ( self%grid(cell(1), cell(2), cell(3))%numParticles > n ) then
-                        n = self%grid(cell(1), cell(2), cell(3))%numParticles
+                        maxn = self%grid(cell(1), cell(2), cell(3))%numParticles
                     end if
                 end do
             end select
         end associate
+
+        n = maxn
 
     end subroutine initialize
 

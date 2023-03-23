@@ -1,6 +1,6 @@
 module bc_m
     use ctrl_dict, only: Project, Config, Field
-    use sph,       only: Particle
+    use sph,       only: Particle, allocateParticleList
     use geometry_m
     implicit none
 
@@ -35,6 +35,7 @@ contains
     subroutine gen_undex_chamber_nrbc(ntotal, Particles)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
+        type(Particle), allocatable :: Buffers(:), Ghosts(:)
         integer :: nbuffer, nghost
         type(rectangle_t) :: FluidDomain, AllDomain
         type(point_t) :: point
@@ -114,6 +115,7 @@ contains
                 end do
             end do
             nghost = nbuffer
+            call allocateParticleList(Ghosts, nghost, Field%dim, Field%pairNum)
             do i = ntotal + nbuffer + 1, ntotal + nbuffer + nghost
                 Particles(i)%x = calcGhostPosition(point_t(Particles(i - nghost)%x, 0))
                 Particles(i)%State = 2

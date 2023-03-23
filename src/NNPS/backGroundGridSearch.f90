@@ -1,7 +1,6 @@
 module BGGS_m
     use ctrl_dict, only: Field, Config
     use SPH,       only: Particle
-    use kernel_m,  only: kernel
     implicit none
     private
 
@@ -47,13 +46,15 @@ contains
 
     end function locate
 
-    pure subroutine initialize(self, Particles)
+    subroutine initialize(self, Particles)
         class(grid_t), intent(inout) :: self
         type(Particle), intent(in) :: Particles(:)
         integer, allocatable :: cell(:)
         integer :: ntotal
+        logical :: firstEntry = .true.
 
         integer i, d, dd, ddd, n
+        save firstEntry, n
 
         ntotal = size(Particles)
         allocate( self%maxCoor(Field%dim), source =-huge(0._8) )
@@ -76,7 +77,7 @@ contains
             case (1)
                 self%cellNum(1) = min((ntotal)/NPG + 1, 1000)
                 allocate( self%grid(self%cellNum(1), 1, 1 ) )
-                n = (ntotal / product(self%cellNum)) + 1
+                if ( firstEntry ) n = (ntotal / product(self%cellNum)) + 1
                 do d = 1, self%cellNum(1)
                     self%grid(d, 1, 1)%numParticles = 0
                     allocate( self%grid(d, 1, 1)%particleList(n), source = 0 )
@@ -92,13 +93,16 @@ contains
                         self%grid(cell(1), 1, 1)%particleList &
                             = [self%grid(cell(1), 1, 1)%particleList, i]
                     end if
+                    if ( self%grid(cell(1), 1, 1)%numParticles > n ) then
+                        n = self%grid(cell(1), 1, 1)%numParticles
+                    end if
                 end do
             case (2)
                 self%cellNum(1) = min(int(((ntotal) * delta(1) &
                                 / (delta(2)*NPG))**(1._8/2) ) + 1, 1000)
                 self%cellNum(2) = min(int(self%cellNum(1)*delta(2)/delta(1)) + 1, 1000)
                 allocate( self%grid(self%cellNum(1), self%cellNum(2), 1 ) )
-                n = (ntotal / product(self%cellNum)) + 1
+                if ( firstEntry ) n = (ntotal / product(self%cellNum)) + 1
                 do d = 1, self%cellNum(1)
                     do dd = 1, self%cellNum(2)
                         self%grid(d, dd, 1)%numParticles = 0
@@ -116,6 +120,9 @@ contains
                         self%grid(cell(1), cell(2), 1)%particleList &
                             = [self%grid(cell(1), cell(2), 1)%particleList, i]
                     end if
+                    if ( self%grid(cell(1), cell(2), 1)%numParticles > n ) then
+                        n = self%grid(cell(1), cell(2), 1)%numParticles
+                    end if
                 end do
             case (3)
                 self%cellNum(1) = min(int(((ntotal) * delta(1) * delta(1) &
@@ -123,7 +130,7 @@ contains
                 self%cellNum(2) = min(int(self%cellNum(1) * delta(2) / delta(1)) + 1, 1000)
                 self%cellNum(3) = min(int(self%cellNum(1) * delta(3) / delta(1)) + 1, 1000)
                 allocate( self%grid(self%cellNum(1), self%cellNum(2), self%cellNum(3)) )
-                n = (ntotal / product(self%cellNum)) + 1
+                if ( firstEntry ) n = (ntotal / product(self%cellNum)) + 1
                 do d = 1, self%cellNum(1)
                     do dd = 1, self%cellNum(2)
                         do ddd = 1, self%cellNum(3)
@@ -143,6 +150,9 @@ contains
                         self%grid(cell(1), cell(2), cell(3))%particleList &
                             = [self%grid(cell(1), cell(2), cell(3))%particleList, i]
                     end if
+                    if ( self%grid(cell(1), cell(2), cell(3))%numParticles > n ) then
+                        n = self%grid(cell(1), cell(2), cell(3))%numParticles
+                    end if
                 end do
             end select
         end associate
@@ -150,11 +160,12 @@ contains
     end subroutine initialize
 
     subroutine BGGS(Targets, Sources, skipItsSelf)
+        use kernel_m, only: kernel
         type(Particle), intent(inout) :: Targets(:)
         type(Particle), intent(in)    :: Sources(:)
         logical, intent(in), optional :: skipItsSelf
         type(grid_t) :: Grid
-        integer :: numTargets, numSources, numPairs
+        integer :: numTargets, numPairs
         integer :: scale_k
         integer :: maxCell(3), minCell(3)
         integer, allocatable :: cell(:), cellNumPerHSML(:)
@@ -173,7 +184,6 @@ contains
         end select
 
         numTargets = size(Targets)
-        numSources = size(Sources)
         numPairs   = size(Targets(1)%neighborList)
 
         allocate( cell(Field%dim), source = 0 )

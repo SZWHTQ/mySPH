@@ -116,8 +116,8 @@ contains
             end do
             nghost = nbuffer
             call allocateParticleList(Ghosts, nghost, Field%dim, Field%pairNum)
-            do i = ntotal + nbuffer + 1, ntotal + nbuffer + nghost
-                Particles(i)%x = calcGhostPosition(point_t(Particles(i - nghost)%x, 0))
+            do i = 1, nghost
+                Ghosts(i)%x = calcGhostPosition(point_t(Particles(ntotal + i)%x, 0))
                 Particles(i)%State = 2
                 Particles(i - nghost)%neighborNum = 1
                 Particles(i - nghost)%neighborList(1) = i

@@ -16,7 +16,7 @@ module sph
         real(8), allocatable :: dwdx(:, :)
     contains
         private
-        procedure, pass :: allocate => allocateParticle
+        procedure :: initialize => allocateParticle
         procedure, pass :: write => writeParticle
         procedure, pass :: read  => readParticle
         generic, public :: write(formatted) => write
@@ -26,15 +26,21 @@ module sph
     public :: allocateParticleList, allocateNeighborList
 
 contains
-    pure subroutine allocateParticle(P, Dim, PairNum)
-        class(Particle), intent(inout) :: P
+    pure subroutine allocateParticle(self, Dim, PairNum)
+        class(Particle), intent(inout) :: self
         integer, intent(in) :: Dim, PairNum
 
-        allocate(P%x(Dim), P%v(Dim), source=0.0_8)
-        allocate(P%Stress(Dim, Dim), source=0.0_8)
-        allocate(P%neighborList(PairNum), source=0)
-        allocate(P%w(PairNum), source=0.0_8)
-        allocate(P%dwdx(Dim, PairNum), source=0.0_8)
+        allocate(self%x(Dim), self%v(Dim), source=0.0_8)
+        allocate(self%Stress(Dim, Dim), source=0.0_8)
+        allocate(self%neighborList(PairNum), source=0)
+        allocate(self%w(PairNum), source=0.0_8)
+        allocate(self%dwdx(Dim, PairNum), source=0.0_8)
+        self%Type               = 0;     self%State              = 0
+        self%Mass               = 0.0_8; self%Density            = 0.0_8
+        self%Pressure           = 0.0_8; self%InternalEnergy     = 0.0_8
+        self%SoundSpeed         = 0.0_8; self%SmoothingLength    = 0.0_8
+        self%Viscocity          = 0.0_8
+        self%divergencePosition = 0.0_8; self%divergenceVelocity = 0.0_8
 
     end subroutine allocateParticle
 
@@ -109,30 +115,12 @@ contains
     subroutine allocateParticleList(Particles, ParticleNum, Dim, PairNum)
         type(Particle), allocatable, intent(inout) :: Particles(:)
         integer, intent(in) :: ParticleNum, Dim, PairNum
+        type(Particle) :: P
 
         integer i
 
-        allocate(Particles(ParticleNum))
-
-        !$omp parallel do private(i)
-        do i = 1, ParticleNum
-            Particles(i)%Type               = 0
-            Particles(i)%State              = 0
-            Particles(i)%Mass               = 0.0_8
-            Particles(i)%Density            = 0.0_8
-            Particles(i)%Pressure           = 0.0_8
-            Particles(i)%InternalEnergy     = 0.0_8
-            Particles(i)%SoundSpeed         = 0.0_8
-            Particles(i)%SmoothingLength    = 0.0_8
-            Particles(i)%Viscocity   = 0.0_8
-            Particles(i)%divergencePosition = 0.0_8
-            Particles(i)%divergenceVelocity = 0.0_8
-            allocate(Particles(i)%x(Dim), Particles(i)%v(Dim), source=0.0_8)
-            allocate(Particles(i)%Stress(Dim, Dim), source=0.0_8)
-        end do
-        !$omp end parallel do
-
-        call allocateNeighborList(Particles, Dim, PairNum)
+        call P%initialize(Dim, PairNum)
+        allocate(Particles(ParticleNum), source=P)
 
     end subroutine allocateParticleList
 

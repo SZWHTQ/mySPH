@@ -15,7 +15,6 @@ module sph
         real(8), allocatable :: w(:)
         real(8), allocatable :: dwdx(:, :)
     contains
-        private
         procedure :: initialize => allocateParticle
         procedure, pass :: write => writeParticle
         procedure, pass :: read  => readParticle
@@ -41,6 +40,7 @@ contains
         self%SoundSpeed         = 0.0_8; self%SmoothingLength    = 0.0_8
         self%Viscocity          = 0.0_8
         self%divergencePosition = 0.0_8; self%divergenceVelocity = 0.0_8
+        self%neighborNum        = 0
 
     end subroutine allocateParticle
 
@@ -132,19 +132,12 @@ contains
 
         !$omp parallel do private(i)
         do i = 1, size(Particles)
-            if ( Particles(i)%State /= 0 ) cycle
             Particles(i)%neighborNum = 0
-            if ( allocated(Particles(i)%neighborList) ) then
-                deallocate(Particles(i)%neighborList)
-            end if
+            if ( allocated(Particles(i)%neighborList) ) deallocate(Particles(i)%neighborList)
             allocate(Particles(i)%neighborList(PairNum), source=0)
-            if ( allocated(Particles(i)%w) ) then
-                deallocate(Particles(i)%w)
-            end if
+            if ( allocated(Particles(i)%w) ) deallocate(Particles(i)%w)
             allocate(Particles(i)%w(PairNum), source=0.0_8)
-            if ( allocated(Particles(i)%dwdx) ) then
-                deallocate(Particles(i)%dwdx)
-            end if
+            if ( allocated(Particles(i)%dwdx) ) deallocate(Particles(i)%dwdx)
             allocate(Particles(i)%dwdx(Dim, PairNum), source=0.0_8)
         end do
         !$omp end parallel do

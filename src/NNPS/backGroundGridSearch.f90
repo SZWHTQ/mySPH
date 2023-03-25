@@ -1,4 +1,4 @@
-module BGGS_m
+module APS_M
     use ctrl_dict, only: Field, Config
     use SPH,       only: Particle
     implicit none
@@ -232,4 +232,4 @@ contains
 
     end subroutine BGGS
 
-end module BGGS_m
+end module APS_M

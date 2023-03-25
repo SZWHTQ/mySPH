@@ -28,6 +28,7 @@ contains
             !!! dh/dt = (-1/dim)*(h/rho)*(drho/dt)
             !!! drho/dt = sum(m*dv*dwdx )
             do i = 1, ntotal
+                if ( P(i)%State /= 0 ) cycle
                 dhsmldt(i) = (P(i)%SmoothingLength/Field%dim)*P(i)%divergenceVelocity
                 P(i)%SmoothingLength  = P(i)%SmoothingLength + delta_t*dhsmldt(i)
                 if (P(i)%SmoothingLength <= 0) then

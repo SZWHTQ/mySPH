@@ -44,7 +44,7 @@
         }
     },
     "cmake.debugConfig": {
-        "args": ["../data/damBreak"],
+        "args": ["../data/undexChamber"],
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "latex-workshop.latex.autoBuild.run": "onSave",

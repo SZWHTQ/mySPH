@@ -1,23 +1,20 @@
 module hsml_m
-    use ctrl_dict, only: Field
+    use ctrl_dict, only: Field, Config
     use sph,       only: Particle
     implicit none
 
 contains
     !!! Subroutine to evolve smoothing length
-    subroutine h_upgrade(sle, delta_t, P)
-        integer, intent(in) :: sle
-        real(8), intent(in) :: delta_t
+    subroutine h_upgrade(ntotal, P)
+        integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        integer :: ntotal
         real(8) :: factor
         real(8), allocatable :: dhsmldt(:)
         integer i
 
-        ntotal = size(P)
         allocate(dhsmldt(ntotal))
 
-        select case (sle)
+        select case (Config%sle)
         case (0)
             !!! Keep smoothing length unchanged
             return
@@ -28,11 +25,10 @@ contains
             !!! dh/dt = (-1/dim)*(h/rho)*(drho/dt)
             !!! drho/dt = sum(m*dv*dwdx )
             do i = 1, ntotal
-                if ( P(i)%State /= 0 ) cycle
                 dhsmldt(i) = (P(i)%SmoothingLength/Field%dim)*P(i)%divergenceVelocity
-                P(i)%SmoothingLength  = P(i)%SmoothingLength + delta_t*dhsmldt(i)
+                P(i)%SmoothingLength  = P(i)%SmoothingLength + Config%delta_t*dhsmldt(i)
                 if (P(i)%SmoothingLength <= 0) then
-                    P(i)%SmoothingLength = P(i)%SmoothingLength - delta_t*dhsmldt(i)
+                    P(i)%SmoothingLength = P(i)%SmoothingLength - Config%delta_t*dhsmldt(i)
                 end if
             end do
         end select

@@ -81,21 +81,19 @@ contains
     end subroutine sum_density
 
     !!! Subroutine to calculate the density with SPH continuity approach
-    subroutine con_density(P, drhodt)
+    subroutine con_density(ntotal, P, drhodt)
+        integer, intent(in) :: ntotal
         type(Particle), intent(in) :: P(:)
-        integer :: ntotal
         real(8), intent(inout) :: drhodt(:)    !! Density change rate of each particle
 
         integer i, j, k
 
-        ntotal = size(P)
         do i = 1, ntotal
             drhodt(i) = 0
         end do
 
         !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:drhodt)
         do i = 1, ntotal
-            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 drhodt(i) = drhodt(i) &

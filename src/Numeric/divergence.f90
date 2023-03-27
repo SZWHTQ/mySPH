@@ -3,13 +3,11 @@ module divergence_m
     implicit none
 
 contains
-    subroutine divergence(P)
+    subroutine divergence(ntotal, P)
+        integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        integer :: ntotal
 
         integer i, j, k
-
-        ntotal = size(P)
 
         forall (i=1:ntotal)
             P(i)%divergencePosition = 0
@@ -18,7 +16,6 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, k)
         do i = 1, ntotal
-            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 P(i)%divergencePosition = P(i)%divergencePosition &

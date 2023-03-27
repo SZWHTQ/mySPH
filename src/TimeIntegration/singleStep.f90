@@ -1,5 +1,5 @@
 #include "../macro.h"
-subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
+subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear, dSdt)
     use, intrinsic :: iso_fortran_env, only: err => error_unit
     !$ use omp_lib
     use ctrl_dict,          only: Config, Field
@@ -7,7 +7,7 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     use tools_m,            only: to_string
     use sph,                only: Particle, allocateNeighborList
     use nnps_m,             only: search_particles, print_statistics
-    use APS_M,             only: BGGS !! Asymmetric Particle Search
+    use APS_M,              only: BGGS !! Asymmetric Particle Search
     use density_m,          only: sum_density, con_density, con_density_riemann, sum_density_dsph
     use visc_m,             only: viscosity
     use divergence_m,       only: divergence
@@ -24,11 +24,11 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     use bc_m,               only: gen_non_reflecting_bc
     implicit none
     integer,        intent(inout) :: ntotal
-    integer,        intent(inout) :: ndummy
+    integer,        intent(inout) :: ndummy, nbuffer
     type(Particle), intent(inout) :: Particles(:)
     type(Update),   intent(inout) :: Delta(:)
     real(8),        intent(inout) :: aver_v(:, :)
-    integer :: nbuffer, kpair, N
+    integer :: kpair, N
     real(8), dimension(Field%dim, Field%maxn) :: indvdt, exdvdt, avdvdt
     real(8), dimension(Field%maxn) :: indedt, avdedt, ahdedt
     ! real(8) :: area
@@ -62,17 +62,19 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
 #endif
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length
-    call search_particles(Config%nnps, Particles(1:N))
-
-    ! if ( Config%open_boundary_w) call calc_nrbc_property(Particles(1:ntotal))
+    if ( Config%open_boundary_w) then
+        call BGGS(Particles(1:ntotal+ndummy), Particles(1:N), skipItsSelf=.true.)
+    else
+        call search_particles(Config%nnps, Particles(1:N))
+    end if
 
     !!! Density approximation or change rate
     select case (Config%pa_sph)
     case (1, 2)
         if ( Config%sum_density_w ) then
-            call sum_density(Particles(1:N))
+            call sum_density(Particles)
         else
-            call con_density(Particles(1:N), Delta%Density)
+            call con_density(ntotal+ndummy, Particles, Delta%Density)
         end if
     case (3)
         call con_density_riemann(Particles(1:N), Delta%Density)
@@ -85,28 +87,28 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
 
     call detonation_wave(Config%i_time_step, Config%delta_t, Particles(1:ntotal))
 
-    call divergence(Particles(1:N))
+    call divergence(ntotal+ndummy, Particles)
 
     !!! Internal forces
 #if SOLID
-    call in_force(Particles(1:N), indvdt, indedt, Shear, dSdt)
+    call in_force(ntotal+ndummy, Particles, indvdt, indedt, Shear, dSdt)
 #else
-    call in_force(Particles(1:N), indvdt, indedt)
+    call in_force(ntotal+ndummy, Particles, indvdt, indedt)
 #endif
 
     !!! Artificial viscosity
-    if ( Config%arti_visc_w ) call arti_visc(Particles(1:N), avdvdt, avdedt)
+    if ( Config%arti_visc_w ) call arti_visc(ntotal+ndummy, Particles, avdvdt, avdedt)
 
     !!! External force
-    if ( Config%ex_force_w ) call ex_force(Particles(1:N), exdvdt)
+    if ( Config%ex_force_w ) call ex_force(ntotal+ndummy, Particles, exdvdt)
 
-    if ( Config%arti_heat_w ) call arti_heat(Particles(1:N), ahdedt)
+    if ( Config%arti_heat_w ) call arti_heat(ntotal+ndummy, Particles, ahdedt)
 
     !!! Calculating average velocity of each particle for avoiding penetration
-    if ( Config%aver_velocity_w ) call aver_velo(Particles(1:ntotal), aver_v)
+    if ( Config%aver_velocity_w ) call aver_velo(ntotal, Particles, aver_v)
 
     !!! Calculating the neighboring particles and updating HSML
-    call h_upgrade(Config%sle, Config%delta_t, Particles(1:ntotal))
+    call h_upgrade(ntotal, Particles(1:ntotal))
 
     !!! Convert velocity, force and energy to f and dfdt
     do i = 1, ntotal
@@ -149,16 +151,16 @@ subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
     end if
 
     kpair = maxval(Particles%neighborNum)
-    if ( kpair > Field%pairNum ) then
+    ! if ( kpair > Field%pairNum ) then
         call allocateNeighborList(Particles, Field%dim, kpair + 3)
-    else
-        do i = 1, size(Particles)
-            Particles(i)%neighborNum = 0
-            Particles(i)%neighborList = 0
-            Particles(i)%w = 0
-            Particles(i)%dwdx = 0
-        end do
-    end if
+    ! else
+    !     do i = 1, size(Particles)
+    !         Particles(i)%neighborNum = 0
+    !         Particles(i)%neighborList = 0
+    !         Particles(i)%w = 0
+    !         Particles(i)%dwdx = 0
+    !     end do
+    ! end if
 
     1001 format(A17, A14, 2(A15))
     1002 format(1X, 4(2X, ES13.6))

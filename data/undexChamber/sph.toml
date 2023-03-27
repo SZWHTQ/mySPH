@@ -10,10 +10,10 @@ NNPS   = 2
 SKF    = 1
 SLE    = 0
 deltaT = 5e-7
-printInterval = 100
-saveInterval  = 20
+printInterval = 1
+saveInterval  = 1
 maxTimeStep   = 5000
-monitorParticle = 1
+monitorParticle = 39961
 
 summationDensity    = false
 # dummyParticle       = true

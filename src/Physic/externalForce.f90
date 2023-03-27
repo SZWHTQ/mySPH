@@ -4,10 +4,10 @@ module ex_force_m
     implicit none
 
 contains
-    subroutine ex_force(P, dvdt)
+    subroutine ex_force(ntotal, P, dvdt)
+        integer, intent(in) :: ntotal
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:, :)
-        integer :: ntotal
         real(8) :: dx(Field%dim), dr, r
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
@@ -15,7 +15,6 @@ contains
 
         integer i, j, k, d
 
-        ntotal = size(P)
         forall (i=1:Field%dim, j=1:ntotal) dvdt(i, j) = 0
 
         !!! Consider gravity or not
@@ -57,7 +56,6 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, k, d, dx, dr, r, pe)
         do i = 1, ntotal !! All particles
-            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum !! All neighbors
                 j = P(i)%neighborList(k)
 

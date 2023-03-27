@@ -53,19 +53,22 @@ contains
                 k = type_indice(particleType, j)
                 this(j) = Particles(k)
             end do
-            call write_file(Project%out_path//"/"//fileName//'.dat', this(1:num(particleType)))
+            call write_file(Project%out_path//"/"//fileName//'.dat', this(1:num(particleType)), type_indice(particleType, :))
             call write_vtk(Project%vtk_path//"/"//fileName//'.vtk',  this(1:num(particleType)))
             deallocate(fileName)
         end do
+
+        ! call write_file(Project%out_path//"/"//to_string(index)//'.dat', Particles)
 
         deallocate(this, type_list, type_indice)
 
     end subroutine output
 
-    subroutine write_file(fileDir, Particles)
+    subroutine write_file(fileDir, Particles, index)
         use sph
         character(len=*), intent(in) :: fileDir
         type(Particle), intent(in) :: Particles(:)
+        integer, intent(in), optional :: index(:)
         integer :: ntotal
         
         integer i
@@ -75,45 +78,57 @@ contains
 
         select case (Field%dim)
         case (1)
-            write(11, 1001) "Index", "Type", "State", "X", "V",        &
+            write(11, 1001) "Index", "Type", "State", "X", "V",         &
                             "Mass", "Density",                          &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "Viscocity",      &
+                            "SmoothingLength", "Viscocity",             &
                             "DivDistance",                              &
                             "StressXX"
             do i = 1, ntotal
-                write(11, "(I8, $)") i
+                if ( present(index) ) then
+                    write(11, "(I8, $)") index(i)
+                else
+                    write(11, "(I8, $)") i
+                end if
                 write(11, "(DT)") Particles(i)
             end do
             1001 format(3(A8), 11(A17))
 
         case (2)
-            write(11, 1002) "Index", "Type", "State",                  &
+            write(11, 1002) "Index", "Type", "State",                   &
                             "X", "Y", "U", "V",                         &
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "Viscocity",      &
+                            "SmoothingLength", "Viscocity",             &
                             "DivDistance",                              &
                             "StressXX", "StressXY",                     &
                             "StressYX", "StressYY"
             do i = 1, ntotal
-                write(11, "(I8, $)") i
+                if ( present(index) ) then
+                    write(11, "(I8, $)") index(i)
+                else
+                    write(11, "(I8, $)") i
+                end if
                 write(11, "(DT)") Particles(i)
             end do
             1002 format(3(A8), 17(A17))
 
         case (3)
-            write(11, 1003) "Index", "Type", "State",                  &
+            write(11, 1003) "Index", "Type", "State",                   &
                             "X", "Y", "Z", "U", "V", "W",               &
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
                             "SmoothingLength",                          &
-                            "Viscocity", "DivDistance",          &
+                            "Viscocity", "DivDistance",                 &
                             "StressXX", "StressXY", "StressXZ",         &
                             "StressYX", "StressYY", "StressYZ",         &
                             "StressZX", "StressZY", "StressZZ"
             do i = 1, ntotal
-                write(11, "(I8, $)") i
+                if ( present(index) ) then
+                    write(11, "(I8, $)") index(i)
+                else
+                    write(11, "(I8, $)") i
+                end if
                 write(11, "(DT)") Particles(i)
             end do
             1003 format(3(A8), 24(A17))

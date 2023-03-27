@@ -45,22 +45,22 @@ contains
 
         entry_count = entry_count + 1
 
-        call temp%b%initialize(Field%dim, 1)
-        temp%b%neighborNum = 1
+        call temp%b%initialize(Field%dim, 0)
+        temp%b%neighborNum = 0
         call temp%g%initialize(Field%dim, Field%pairNum)
 
         if ( entry_count == 1 ) then
             nbuffer = 0
-            allocate(Buffers(4000), source=temp)
+            allocate(Buffers(10000), source=temp)
             dx = abs(Particles(2)%x(1) - Particles(2)%x(2))
-            FluidDomain = rectangle_t(   &
-                [real(8) :: 0, 0], &
-                [real(8) :: 1, 1], &
+            FluidDomain = rectangle_t( &
+                [real(8) :: 0, 0],     &
+                [real(8) :: 1, 1],     &
                 0 )
-            AllDomain = rectangle_t(     &
-                [real(8) ::  0, 0], &
-                ([real(8) :: 1, 1]  &
-                    + 2 * layer * dx)  , &
+            AllDomain = rectangle_t(   &
+                [real(8) ::  0, 0],    &
+                ([real(8) :: 1, 1]     &
+                    + 2 * layer * dx), &
                 0 )
 
             !! Left
@@ -83,6 +83,8 @@ contains
                 + [real(8) :: 0, FluidDomain%length(2)/2]
             normal(:, 4) = [0, -1]
 
+            FluidDomain%length = FluidDomain%length + 0.1 * dx
+
             !!! This N is for particles' number in each layer
             N = int(1 / dx) + 1
             do l = 1, layer
@@ -96,14 +98,14 @@ contains
                 !! Bottom
                 do i = 1, N
                     nbuffer = nbuffer + 1
-                    Buffers(nbuffer)%b%x = [-0.5, -0.5] + [1 + i, - l] * dx
+                    Buffers(nbuffer)%b%x = [-0.5, -0.5] + [i - 1, - l] * dx
                     Buffers(nbuffer)%b%State = 1
                     Buffers(nbuffer)%b%Type  = 6
                 end do
                 !! Right
                 do i = 1, N
                     nbuffer = nbuffer + 1
-                    Buffers(nbuffer)%b%x = [ 0.5, -0.5] + [  l, 1 + i] * dx
+                    Buffers(nbuffer)%b%x = [ 0.5, -0.5] + [  l, i - 1] * dx
                     Buffers(nbuffer)%b%State = 1
                     Buffers(nbuffer)%b%Type  = 6
                 end do
@@ -127,6 +129,7 @@ contains
                     nbuffer = nbuffer + 1
                     Buffers(nbuffer)%b%x = Particles(i)%x
                     Buffers(nbuffer)%b%State = 0
+                    Buffers(nbuffer)%b%Type = Particles(i)%Type
                 end if
             end do
             
@@ -137,7 +140,7 @@ contains
                         !! Buffer Particle converts to Fluid Particle
                         Buffers(i)%b%State = -1
                         ntotal = ntotal + 1
-                        Particles(ntotal)%x = Buffers(i)%b%x
+                        Particles(ntotal) = Buffers(i)%b
 
                         !! Add a new buffer particle
                         !! nbuffer increases for total particle number increased
@@ -155,15 +158,15 @@ contains
 
         end if !! entry_count == 1
 
-        call shrink(Particles, ntotal)
-        call bufferShrink(Buffers, nbuffer)
+        ! call shrink(Particles, ntotal)
+        ! call bufferShrink(Buffers, nbuffer)
         ! Buffers = [Buffers(1:nbuffer)]
 
         call allocateParticleList(Ghosts, nbuffer, Field%dim, Field%pairNum)
         do i = 1, nbuffer
             Ghosts(i)%x = Buffers(i)%g%x
         end do
-        call BGGS(Ghosts, Particles)
+        call BGGS(Ghosts, Particles(1:ntotal))
         do i = 1, nbuffer
             Buffers(i)%g = Ghosts(i)
         end do

@@ -3,10 +3,10 @@ module arti_heat_m
     implicit none
 
 contains
-    subroutine arti_heat(P, dedt)
+    subroutine arti_heat(ntotal, P, dedt)
+        integer, intent(in) :: ntotal
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dedt(:)
-        integer :: ntotal
         real(8), parameter :: alpha = 0.1_8
         real(8), parameter :: beta  = 1.0_8
         real(8), parameter :: psi   = 0.1_8
@@ -15,12 +15,10 @@ contains
         integer i, j, k
 
         !!! Calculate SPH sum for artificial heat conduction
-        ntotal = size(P)
         forall (i=1:ntotal) dedt(i)  = 0
 
         !$OMP PARALLEL DO PRIVATE(i, j, k, q_i, q_j, q_ij, hsml_ij, rho_ij, aux)
         do i = 1, ntotal
-            if ( P(i)%State /= 0 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
 

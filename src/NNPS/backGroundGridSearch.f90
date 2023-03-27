@@ -81,6 +81,7 @@ contains
                     allocate( self%grid(d, 1, 1)%particleList(n), source = 0 )
                 end do
                 do i = 1, ntotal
+                    if ( Particles(i)%State == -1 ) cycle
                     cell = self%locate(Particles(i))
                     self%grid(cell(1), 1, 1)%numParticles &
                         = self%grid(cell(1), 1, 1)%numParticles + 1
@@ -105,6 +106,7 @@ contains
                     end do
                 end do
                 do i = 1, ntotal
+                    if ( Particles(i)%State == -1 ) cycle
                     cell = self%locate(Particles(i))
                     self%grid(cell(1), cell(2), 1)%numParticles &
                         = self%grid(cell(1), cell(2), 1)%numParticles + 1
@@ -132,6 +134,7 @@ contains
                     end do
                 end do
                 do i = 1, ntotal
+                    if ( Particles(i)%State == -1 ) cycle
                     cell = self%locate(Particles(i))
                     self%grid(cell(1), cell(2), cell(3))%numParticles &
                         = self%grid(cell(1), cell(2), cell(3))%numParticles + 1
@@ -186,6 +189,7 @@ contains
         !$OMP PRIVATE(dx, dr, r, mhsml)                            &
         !$OMP SCHEDULE(dynamic, Config%chunkSize)
         do i = 1, numTargets
+            if ( Targets(i)%State == -1 ) cycle
             cell = Grid%locate(Targets(i))
             cellNumPerHSML = int( Targets(i)%SmoothingLength &
                 / ((Grid%maxCoor - Grid%minCoor)             &
@@ -201,6 +205,7 @@ contains
                     do xcell = minCell(1), maxCell(1)
                         do k = 1, Grid%grid(xcell, ycell, zcell)%numParticles
                             j = Grid%grid(xcell, ycell, zcell)%particleList(k)
+                            if ( Sources(j)%State == -1 ) cycle
                             if ( present(skipItsSelf) ) then
                                 if ( skipItsSelf .and. (i == j) ) cycle
                             end if ! present(skipItsSelf)
@@ -229,6 +234,7 @@ contains
                 end do !! ycell
             end do !! zcell
         end do !! i
+        !$OMP END PARALLEL DO
 
     end subroutine BGGS
 

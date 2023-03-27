@@ -10,10 +10,11 @@ module time_integration_m
     end type Update
 
     interface
-        subroutine single_step(ntotal, ndummy, Particles, Delta, aver_v, Shear, dSdt)
+        subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear, dSdt)
             import Particle, Update
             integer,        intent(in)    :: ntotal
             integer,        intent(inout) :: ndummy
+            integer,        intent(inout) :: nbuffer
             type(Particle), intent(inout) :: Particles(:)
             type(Update),   intent(inout) :: Delta(:)
             real(8),        intent(inout) :: aver_v(:, :)
@@ -40,7 +41,7 @@ contains
         implicit none
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        integer :: ndummy = 0
+        integer :: ndummy, nbuffer
         type(Update), allocatable :: Prev(:), Delta(:)
         real(8) :: aver_v(Field%dim, Field%maxn)
         real(8) :: time = 0
@@ -52,6 +53,8 @@ contains
 
         integer i, k
 
+        ndummy = 0
+        nbuffer = 0
         allocate(Prev(Field%maxn), Delta(Field%maxn))
         do i = 1, Field%maxn
             Prev(i)%Density = 0
@@ -126,9 +129,9 @@ contains
             end if
 
 #if SOLID
-            call single_step(ntotal, ndummy, P, Delta, aver_v, Shear, dSdt)
+            call single_step(ntotal, ndummy, nbuffer, P, Delta, aver_v, Shear, dSdt)
 #else
-            call single_step(ntotal, ndummy, P, Delta, aver_v)
+            call single_step(ntotal, ndummy, nbuffer, P, Delta, aver_v)
 #endif
 
             if ( Config%i_time_step == 1 ) then
@@ -151,6 +154,11 @@ contains
 #endif
                 end do
                 !$OMP END PARALLEL DO
+                if ( Config%open_boundary_w ) then
+                    do i = ntotal + 1, ntotal + ndummy
+                        P(i)%x(:) = P(i)%x(:) + Config%delta_t * P(i)%v(:)
+                    end do
+                end if
             else
                 max_courant = 0
                 !$OMP PARALLEL DO PRIVATE(i) REDUCTION(max:max_courant) REDUCTION(+:aver_courant)
@@ -174,13 +182,18 @@ contains
                     if ( cntemp > max_courant ) max_courant = cntemp
                 end do
                 !$OMP END PARALLEL DO
+                if ( Config%open_boundary_w ) then
+                    do i = ntotal + 1, ntotal + ndummy
+                        P(i)%x(:) = P(i)%x(:) + Config%delta_t * P(i)%v(:)
+                    end do
+                end if
                 aver_courant = aver_courant / ntotal
             end if
 
             time = time + Config%delta_t
 
             if (mod(Config%i_time_step, Config%save_interval) == 0) then
-                call output((Config%i_time_step/Config%save_interval), P(1:ntotal+ndummy))
+                call output((Config%i_time_step/Config%save_interval), P(1:ntotal+ndummy+nbuffer))
             end if
 
             if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then

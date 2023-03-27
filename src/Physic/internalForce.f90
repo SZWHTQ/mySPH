@@ -7,14 +7,14 @@ module in_force_m
     implicit none
 
 contains
-    subroutine in_force(P, dvdt, dedt, Shear, dSdt)
+    subroutine in_force(ntotal, P, dvdt, dedt, Shear, dSdt)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         use visc_m
         use eos_m
         !$ use omp_lib
+        integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8), intent(inout) :: dvdt(:, :), dedt(:)
-        integer :: ntotal
         real(8), allocatable :: tdsdt(:), edot(:, :, :)
         real(8) :: dv(Field%dim)
         real(8) :: rhoij, aux
@@ -27,7 +27,6 @@ contains
 #endif
         integer i, j, k, d, dd, ddd
 
-        ntotal = size(P)
         !!! Initialization of Strain Rate Tensor, velocity divergence,
         !!! viscous energy, internal energy, acceleration
         allocate(tdsdt(ntotal), source=0._8)
@@ -45,7 +44,6 @@ contains
         if ( Config%viscosity_w ) then
                 !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux)
                 do i = 1, ntotal !! All particles
-                    if ( P(i)%State /= 0 ) cycle
                 !!! Calculate SPH sum for Strain Rate Tensor of Fluid
                 !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
 #if SOLID
@@ -105,7 +103,6 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, aux, aver_edot, j, k, d, dd, ddd)
         do i = 1, ntotal !! All particles
-            if ( P(i)%State /= 0 ) cycle
 #if SOLID
         if ( abs(P(i)%Type) < 8 ) then !! Fluid
 #endif
@@ -222,7 +219,6 @@ contains
         case (2)
             !$OMP PARALLEL DO PRIVATE(i, j, k, aux)
             do i = 1, ntotal  !! All particles
-                if ( P(i)%State /= 0 ) cycle
                 if ( abs(P(i)%Type) < 8 ) then !! Fluid
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)

@@ -41,7 +41,7 @@ contains
         save Buffers, nbuffer
 
         integer :: layer = 4
-        integer i, k, l
+        integer i, l
 
         entry_count = entry_count + 1
 
@@ -64,22 +64,22 @@ contains
                 0 )
 
             !! Left
-            fixedPoints(:, 1) = FluidDomain%center        &
+            fixedPoints(:, 1) = FluidDomain%center &
                 - [real(8) :: FluidDomain%length(1)/2, 0]
             normal(:, 1) = [1, 0]
 
             !! Bottom
-            fixedPoints(:, 2) = FluidDomain%center        &
+            fixedPoints(:, 2) = FluidDomain%center &
                 - [real(8) :: 0, FluidDomain%length(2)/2]
             normal(:, 2) = [0, 1]
 
             !! Right
-            fixedPoints(:, 3) = FluidDomain%center        &
+            fixedPoints(:, 3) = FluidDomain%center &
                 + [real(8) :: FluidDomain%length(1)/2, 0]
             normal(:, 3) = [-1, 0]
 
             !! Top
-            fixedPoints(:, 4) = FluidDomain%center        &
+            fixedPoints(:, 4) = FluidDomain%center &
                 + [real(8) :: 0, FluidDomain%length(2)/2]
             normal(:, 4) = [0, -1]
 

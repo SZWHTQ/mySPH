@@ -151,8 +151,8 @@ contains
                 call mie_gruneisen_eos_of_solid(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             end select
 
-            do k = 1, P(i)%neighborNum
-                j = P(i)%neighborList(k)
+            ! do k = 1, P(i)%neighborNum
+                ! j = P(i)%neighborList(k)
 
                 !!! Deviatoric Stress Rate Tensor
                 do d = 1, Field%dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
@@ -165,7 +165,7 @@ contains
                         end do !!! ddd
                     end do !! dd
                 end do !! d
-            end do !! k
+            ! end do !! k
 
             do d = 1, Field%dim
                 do dd = 1, Field%dim

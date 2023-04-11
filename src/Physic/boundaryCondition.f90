@@ -12,46 +12,37 @@ module bc_m
 
     public :: gen_non_reflecting_bc
 contains
-    subroutine gen_non_reflecting_bc(ntotal, nbuffer, Particles)
+    subroutine gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
         integer, intent(inout) :: ntotal, nbuffer
-        type(Particle), intent(inout) :: Particles(:)
+        type(Particle), intent(inout) :: Particles(:), Buffers(:)
 
         select case (Project%nick)
         case ("undex_chamber")
-            call gen_undex_chamber_nrbc(ntotal, nbuffer, Particles)
+            call gen_undex_chamber_nrbc(ntotal, Particles, nbuffer, Buffers)
         end select
 
     end subroutine gen_non_reflecting_bc
 
     !!! Open Boundary Non-Reflecting Condition
-    subroutine gen_undex_chamber_nrbc(ntotal, N, Particles)
+    subroutine gen_undex_chamber_nrbc(ntotal, Particles, nbuffer, Buffers)
         use APS_M, only: BGGS
-        integer, intent(inout) :: ntotal
-        type(Particle), intent(inout) :: Particles(:)
-        integer, intent(inout) :: N !! nbuffer
-        type(Buffer_t), allocatable :: Buffers(:)
-        type(Buffer_t) :: temp
-        integer :: nbuffer
+        integer, intent(inout) :: ntotal, nbuffer
+        type(Particle), intent(inout) :: Particles(:), Buffers(:)
         type(Particle), allocatable :: Ghosts(:)
+        integer :: N
         type(rectangle_t) :: FluidDomain, AllDomain
         real(8), dimension(2, 4) :: fixedPoints, normal
         integer :: entry_count = 0
         real(8) :: dx
         save FluidDomain, AllDomain, fixedPoints, entry_count, dx
-        save Buffers, nbuffer
 
         integer :: layer = 4
         integer i, l
 
         entry_count = entry_count + 1
 
-        call temp%b%initialize(Field%dim, 0)
-        temp%b%neighborNum = 0
-        call temp%g%initialize(Field%dim, Field%pairNum)
-
         if ( entry_count == 1 ) then
             nbuffer = 0
-            allocate(Buffers(10000), source=temp)
             dx = abs(Particles(2)%x(1) - Particles(2)%x(2))
             FluidDomain = rectangle_t( &
                 [real(8) :: 0, 0],     &
@@ -91,67 +82,69 @@ contains
                 !! Left
                 do i = 1, N
                     nbuffer = nbuffer + 1
-                    Buffers(nbuffer)%b%x = [-0.5,  0.5] + [- l, 1 - i] * dx
-                    Buffers(nbuffer)%b%State = 1
-                    Buffers(nbuffer)%b%Type  = 6
+                    Buffers(nbuffer)%x = [-0.5,  0.5] + [- l, 1 - i] * dx
+                    Buffers(nbuffer)%State = 1
+                    Buffers(nbuffer)%Type  = 6
                 end do
                 !! Bottom
                 do i = 1, N
                     nbuffer = nbuffer + 1
-                    Buffers(nbuffer)%b%x = [-0.5, -0.5] + [i - 1, - l] * dx
-                    Buffers(nbuffer)%b%State = 1
-                    Buffers(nbuffer)%b%Type  = 6
+                    Buffers(nbuffer)%x = [-0.5, -0.5] + [i - 1, - l] * dx
+                    Buffers(nbuffer)%State = 1
+                    Buffers(nbuffer)%Type  = 6
                 end do
                 !! Right
                 do i = 1, N
                     nbuffer = nbuffer + 1
-                    Buffers(nbuffer)%b%x = [ 0.5, -0.5] + [  l, i - 1] * dx
-                    Buffers(nbuffer)%b%State = 1
-                    Buffers(nbuffer)%b%Type  = 6
+                    Buffers(nbuffer)%x = [ 0.5, -0.5] + [  l, i - 1] * dx
+                    Buffers(nbuffer)%State = 1
+                    Buffers(nbuffer)%Type  = 6
                 end do
                 !! Top
                 do i = 1, N
                     nbuffer = nbuffer + 1
-                    Buffers(nbuffer)%b%x = [ 0.5,  0.5] + [1 - i,   l] * dx
-                    Buffers(nbuffer)%b%State = 1
-                    Buffers(nbuffer)%b%Type  = 6
+                    Buffers(nbuffer)%x = [ 0.5,  0.5] + [1 - i,   l] * dx
+                    Buffers(nbuffer)%State = 1
+                    Buffers(nbuffer)%Type  = 6
                 end do
             end do !! l
             do i = 1, nbuffer
-                Buffers(i)%g%x = calcGhostPosition(Buffers(i)%b)
+                Ghosts(i)%x = calcGhostPosition(Buffers(i))
             end do
         else !! entry_count /= 1
+        ! end if !! entry_count == 1
 
             do i = 1, ntotal !! Fluid Particle
                 if ( BufferDomainContain(Particles(i)) ) then
                     !! Fluid Particle converts to Buffer Particle
                     Particles(i)%State = -1
                     nbuffer = nbuffer + 1
-                    Buffers(nbuffer)%b%x = Particles(i)%x
-                    Buffers(nbuffer)%b%State = 0
-                    Buffers(nbuffer)%b%Type = Particles(i)%Type
+                    Buffers(nbuffer)%x = Particles(i)%x
+                    Buffers(nbuffer)%State = 0
+                    Buffers(nbuffer)%Type = Particles(i)%Type
+                    Ghosts(nbuffer)%x = calcGhostPosition(Buffers(nbuffer))
                 end if
             end do
-            
+
             N = nbuffer
             do i = 1, N !! Buffer Particle
-                if ( .not. BufferDomainContain(Buffers(i)%b) ) then
-                    if ( FluidDomain%contain(point_t(Buffers(i)%b%x, 0)) ) then
+                if ( .not. BufferDomainContain(Buffers(i)) ) then
+                    if ( FluidDomain%contain(point_t(Buffers(i)%x, 0)) ) then
                         !! Buffer Particle converts to Fluid Particle
-                        Buffers(i)%b%State = -1
+                        Buffers(i)%State = -1
                         ntotal = ntotal + 1
-                        Particles(ntotal) = Buffers(i)%b
+                        Particles(ntotal) = Buffers(i)
 
                         !! Add a new buffer particle
                         !! nbuffer increases for total particle number increased
                         nbuffer = nbuffer + 1
-                        Buffers(nbuffer)%b%x = newBufferParticlePosition(Buffers(i)%b)
-                        Buffers(nbuffer)%b%State = 0
-                        Buffers(nbuffer)%b%Type  = Particles(ntotal)%Type
+                        Buffers(nbuffer)%x = newBufferParticlePosition(Buffers(i))
+                        Buffers(nbuffer)%State = 0
+                        Buffers(nbuffer)%Type  = Particles(ntotal)%Type
                         !! Add a new ghost particle
-                        Buffers(nbuffer)%g%x = calcGhostPosition(Buffers(nbuffer)%b)
+                        Ghosts(nbuffer)%x = calcGhostPosition(Buffers(nbuffer))
                     else !! Fluid Domain do not contain particle i
-                        Buffers(i)%b%State = -1
+                        Buffers(i)%State = -1
                     end if !! FluidDomain%contain(point)
                 end if
             end do
@@ -164,16 +157,16 @@ contains
 
         call allocateParticleList(Ghosts, nbuffer, Field%dim, Field%pairNum)
         do i = 1, nbuffer
-            Ghosts(i)%x = Buffers(i)%g%x
+            Ghosts(i)%SmoothingLength = 1.5 * dx
         end do
         call BGGS(Ghosts, Particles(1:ntotal))
         do i = 1, nbuffer
-            Buffers(i)%g = Ghosts(i)
+            Ghosts(i) = Ghosts(i)
         end do
 
         do i = 1, nbuffer
-            call solveBufferProperty(Buffers(i)%b, Buffers(i)%g, Particles)
-            Particles(ntotal + i) = Buffers(i)%b
+            call solveBufferProperty(Buffers(i), Ghosts(i), Particles)
+            Particles(ntotal + i) = Buffers(i)
         end do
 
         N = nbuffer
@@ -239,21 +232,25 @@ contains
     end subroutine gen_undex_chamber_nrbc
 
     subroutine solveBufferProperty(buffer, ghost, Particles)
-        use tools_m, only: dyadic_product
+        use tools_m,  only: dyadic_product
+        ! use kernel_m, only: kernel
         type(Particle), intent(inout) :: buffer
         type(Particle), intent(in)    :: ghost
         type(Particle), intent(in)    :: Particles(:)
         real(8), allocatable :: A(:,:), Solve(:, :), h(:)
+        ! real(8) :: wi
         integer :: m, flag
 
         integer j, l, d
 
         m = Field%dim + 1
         allocate(A(m, m), Solve(m, Field%dim+6), h(m), source=0._8)
+        h = 0
         do j = 1, ghost%neighborNum
             l = ghost%neighborList(j)
             associate (aux => [ghost%w(j), ghost%dwdx(:, j)] &
                 * Particles(l)%Mass/Particles(l)%Density)
+            h = h + aux * [1._8, Particles(l)%x-ghost%x]
             A = A + dyadic_product(aux, [1._8, Particles(l)%x-ghost%x])
             Solve(:, 1) = Solve(:, 1) + aux * Particles(l)%Mass
             Solve(:, 2) = Solve(:, 2) + aux * Particles(l)%Density
@@ -261,12 +258,18 @@ contains
             Solve(:, 4) = Solve(:, 4) + aux * Particles(l)%InternalEnergy
             Solve(:, 5) = Solve(:, 5) + aux * Particles(l)%SoundSpeed
             Solve(:, 6) = Solve(:, 6) + aux * Particles(l)%divergenceVelocity
-            do d = 1, Field%dim
-                Solve(:, d + 6) = Solve(:, 5+d) + aux * Particles(l)%v(d)
+            do d = 7, Field%dim + 6
+                Solve(:, d) = Solve(:, d) + aux * Particles(l)%v(d)
             end do
             end associate
         end do
 
+        Solve(1, :) = Solve(1, :) / h(1)
+        do d = 2, Field%dim + 1
+            Solve(d, :) = Solve(d, :) / h(d)
+        end do
+
+        h = 0
         do j = 1, Field%dim + 6
             call DGESV(m,1, A,m, h, Solve(:, j),m, flag)
         end do
@@ -312,33 +315,33 @@ contains
 
     end subroutine shrink
 
-    subroutine bufferShrink(Particles, ntotal)
-        type(Buffer_t), intent(inout) :: Particles(:)
-        integer, intent(inout) :: ntotal
-        type(Buffer_t) :: P
+    ! subroutine bufferShrink(Particles, ntotal)
+    !     type(Buffer_t), intent(inout) :: Particles(:)
+    !     integer, intent(inout) :: ntotal
+    !     type(Buffer_t) :: P
 
-        integer i, j
+    !     integer i, j
 
-        i = 1
-        j = ntotal
-        do while( i <= j )
-            do while( i <= j .and. Particles(i)%b%State /= -1 )
-                i = i + 1
-            end do
-            do while( i <= j .and. Particles(j)%b%State == -1 )
-                j = j - 1
-            end do
-            if ( i < j ) then
-                P = Particles(i)
-                Particles(i) = Particles(j)
-                Particles(j) = P
-                i = i + 1
-                j = j - 1
-            end if
-        end do
+    !     i = 1
+    !     j = ntotal
+    !     do while ( i <= j )
+    !         do while( i <= j .and. Particles(i)%State /= -1 )
+    !             i = i + 1
+    !         end do
+    !         do while( i <= j .and. Particles(j)%State == -1 )
+    !             j = j - 1
+    !         end do
+    !         if ( i < j ) then
+    !             P = Particles(i)
+    !             Particles(i) = Particles(j)
+    !             Particles(j) = P
+    !             i = i + 1
+    !             j = j - 1
+    !         end if
+    !     end do
 
-        ntotal = j
+    !     ntotal = j
 
-    end subroutine bufferShrink
+    ! end subroutine bufferShrink
 
 end module bc_m

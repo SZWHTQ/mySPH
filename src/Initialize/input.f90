@@ -511,7 +511,7 @@ contains
             do j = 1, Ny
                 k = (i-1) * Ny + j
                 P(k)%x(:)  = [solid_domain(1) + (i-0.5) * dx, &
-                            solid_domain(3) + (j-0.5) * dx]
+                              solid_domain(3) + (j-0.5) * dx]
                 P(k)%v(1)  = 0
                 P(k)%v(2)  = -221
                 P(k)%Density   = 7850

@@ -9,7 +9,7 @@ module time_integration_m
         real(8) :: Density, Energy
     end type Update
 
-    interface
+    interface single_step
         subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear, dSdt)
             import Particle, Update
             integer,        intent(in)    :: ntotal
@@ -21,7 +21,7 @@ module time_integration_m
             real(8),        intent(in),    optional :: Shear(:, :, :)
             real(8),        intent(inout), optional :: dSdt(:, :, :)
         end subroutine single_step
-    end interface
+    end interface single_step
 
 contains
     subroutine time_integration(ntotal, P)
@@ -54,7 +54,7 @@ contains
         integer i, k
 
         ndummy = 0
-        nbuffer = 0
+        nbuffer = 3500
         allocate(Prev(Field%maxn), Delta(Field%maxn))
         do i = 1, Field%maxn
             Prev(i)%Density = 0

@@ -5,7 +5,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     use ctrl_dict,          only: Config, Field
     use time_integration_m, only: Update
     use tools_m,            only: to_string
-    use sph,                only: Particle, allocateNeighborList
+    use sph,                only: Particle, allocateNeighborList, allocateParticleList
     use nnps_m,             only: search_particles, print_statistics
     use APS_M,              only: BGGS !! Asymmetric Particle Search
     use density_m,          only: sum_density, con_density, con_density_riemann, sum_density_dsph
@@ -37,8 +37,13 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     real(8), intent(in),    optional :: Shear(:, :, :)
     real(8), intent(inout), optional :: dSdt(:, :, :)
 #endif
+    type(Particle), allocatable :: Buffers(:)
 
     integer i
+
+#ifdef _OPENMP
+    Config%chunkSize = N / Config%nthreads
+#endif
 
     do i = 1, Field%maxn
         indvdt(:, i) = 0
@@ -52,14 +57,12 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     !!! Positions of dummy (boundary) particles
     if ( Config%dummy_parti_w ) call gen_dummy_particle(ndummy, Particles(1:ntotal))
 
+    call allocateParticleList(Buffers, nbuffer, Field%dim, 1)
     nbuffer = 0
-    if ( Config%open_boundary_w) call gen_non_reflecting_bc(ntotal, nbuffer, Particles)
+    if ( Config%open_boundary_w) call gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
 
     N = ntotal + ndummy + nbuffer
 
-#ifdef _OPENMP
-    Config%chunkSize = N / Config%nthreads
-#endif
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length
     if ( Config%open_boundary_w) then

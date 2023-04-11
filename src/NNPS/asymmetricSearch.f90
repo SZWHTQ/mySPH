@@ -18,7 +18,7 @@ module APS_M
         procedure :: locate     => locate
     end type grid_t
 
-    real(8), parameter :: GMR = 1.2 !! Grid Magnification Ratio
+    real(8), parameter :: GMR = 1.02 !! Grid Magnification Ratio
     integer, parameter :: NPG = 3   !! Number of particles Per Grid cell
 
     public :: BGGS
@@ -192,8 +192,8 @@ contains
             if ( Targets(i)%State == -1 ) cycle
             cell = Grid%locate(Targets(i))
             cellNumPerHSML = int( Targets(i)%SmoothingLength &
-                / ((Grid%maxCoor - Grid%minCoor)             &
-                    / Grid%cellNum) + 1 )
+                / (Grid%maxCoor - Grid%minCoor)              &
+                * Grid%cellNum ) + 1
             maxCell = 1
             minCell = 1
             do d = 1, Field%dim
@@ -216,8 +216,9 @@ contains
                                 dr = dr + dx(d) ** 2
                             end do !! d
                             r = dr ** 0.5
-                            mhsml = 0.5 * (Targets(i)%SmoothingLength &
-                                         + Sources(j)%SmoothingLength)
+                            ! mhsml = 0.5 * (Targets(i)%SmoothingLength &
+                            !              + Sources(j)%SmoothingLength)
+                            mhsml = Targets(i)%SmoothingLength
                             if ( r < mhsml * scale_k ) then
                                 Targets(i)%neighborNum = Targets(i)%neighborNum + 1
                                 if ( Targets(i)%neighborNum <= numPairs ) then

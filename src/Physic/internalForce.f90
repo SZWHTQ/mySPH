@@ -159,16 +159,16 @@ contains
                 end do !! dd
             end do !! d
 
-            ! do d = 1, Field%Dim
-            !     do dd = 1, Field%Dim
-            !         P(i)%Stress(d, dd) = Shear(d, dd, i)
-            !     end do
-            !     P(i)%Stress(d, d) = P(i)%Stress(d, d) - P(i)%Pressure
-            ! end do
-
             do d = 1, Field%Dim
-                P(i)%Stress(d, d) = Shear(d, d, i) - P(i)%Pressure
+                do dd = 1, Field%Dim
+                    P(i)%Stress(d, dd) = Shear(d, dd, i)
+                end do
+                P(i)%Stress(d, d) = P(i)%Stress(d, d) - P(i)%Pressure
             end do
+
+            ! do d = 1, Field%Dim
+            !     P(i)%Stress(d, d) = Shear(d, d, i) - P(i)%Pressure
+            ! end do
 
         end if !! Fluid or Solid
 #endif

@@ -8,7 +8,7 @@
     "fortran.linter.modOutput": "${workspaceFolder}/module/",
     "cmake.configureOnOpen": false,
     "cmake.configureArgs": [
-        "-DOMP=off",
+        "-DOMP=on",
         "-Wno-dev",
         "-DCMAKE_Fortran_COMPILER=gfortran",
     ],

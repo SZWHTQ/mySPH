@@ -41,10 +41,6 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     integer i
 
-#ifdef _OPENMP
-    Config%chunkSize = N / Config%nthreads
-#endif
-
     do i = 1, Field%Maxn
         indvdt(:, i) = 0
         indedt(i)    = 0
@@ -65,6 +61,10 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     end if
 
     N = ntotal + ndummy + nbuffer
+
+#ifdef _OPENMP
+    Config%chunkSize = N / Config%nthreads
+#endif
 
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length

@@ -43,11 +43,11 @@ contains
         type(Particle), intent(inout) :: P(:)
         integer :: ndummy, nbuffer
         type(Update), allocatable :: Prev(:), Delta(:)
-        real(8) :: aver_v(Field%dim, Field%maxn)
+        real(8) :: aver_v(Field%Dim, Field%Maxn)
         real(8) :: time = 0
         real(8) :: aver_courant = 0, max_courant = 0, cntemp
 #if SOLID
-        real(8), dimension(Field%dim, Field%dim, Field%maxn) :: Shear_prev, Shear, dSdt
+        real(8), dimension(Field%Dim, Field%Dim, Field%Maxn) :: Shear_prev, Shear, dSdt
         real(8) :: J2, SigmaY
 #endif
 
@@ -55,17 +55,17 @@ contains
 
         ndummy = 0
         nbuffer = 3500
-        allocate(Prev(Field%maxn), Delta(Field%maxn))
-        do i = 1, Field%maxn
+        allocate(Prev(Field%Maxn), Delta(Field%Maxn))
+        do i = 1, Field%Maxn
             Prev(i)%Density = 0
             Prev(i)%Energy  = 0
-            allocate(Prev(i)%Velocity(Field%dim), source=0._8)
+            allocate(Prev(i)%Velocity(Field%Dim), source=0._8)
             Delta(i)%Density = 0
             Delta(i)%Energy  = 0
-            allocate(Delta(i)%Velocity(Field%dim), source=0._8)
+            allocate(Delta(i)%Velocity(Field%Dim), source=0._8)
         end do
 
-        forall (i=1:Field%maxn)
+        forall (i=1:Field%Maxn)
             aver_v(:, i) = 0
 #if SOLID
             Shear_prev(:, :, i) = 0
@@ -198,7 +198,7 @@ contains
 
             if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then
                 write(*,1000) "Location", "Velocity", "Acceleration"
-                do i = 1, Field%dim
+                do i = 1, Field%Dim
                     write(*,1001) P(Config%monitor_particle)%x(i), &
                                   P(Config%monitor_particle)%v(i), &
                                   Delta(Config%monitor_particle)%Velocity(i)

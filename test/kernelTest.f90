@@ -28,7 +28,7 @@ program main
     "SPH",  "SPH diff",  "SPH Error",  "SPH diff Error", &
    "CSPH", "CSPH diff", "CSPH Error", "CSPH diff Error"
     do k = 1, 30
-        Field%dim = size(dx)
+        Field%Dim = size(dx)
         delta = 1./k
         hsml  = delta * 1
         m = (ntotal+1)/2

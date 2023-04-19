@@ -87,7 +87,7 @@ contains
         integer :: n_left
         integer i
 
-        if ( Field%dim /= 1 ) Field%dim = 1
+        if ( Field%Dim /= 1 ) Field%Dim = 1
 
         gamma = 1.4
         dx = 0.6 / ntotal * 5
@@ -128,7 +128,7 @@ contains
 
         integer i, j
 
-        if ( Field%dim /= 2 ) Field%dim = 2
+        if ( Field%Dim /= 2 ) Field%Dim = 2
 
         m = 41
         n = 41
@@ -170,7 +170,7 @@ contains
         real(8) :: rho0 = 1630, E0 = 4.29e6
         integer i
 
-        if ( Field%dim /= 1 ) Field%dim = 1
+        if ( Field%Dim /= 1 ) Field%Dim = 1
 
         space_x = 0.1 / ntotal
 
@@ -196,7 +196,7 @@ contains
         real(8) :: theta, rot(2, 2)
         integer i, j, k
 
-        if ( Field%dim /= 2 ) Field%dim = 2
+        if ( Field%Dim /= 2 ) Field%Dim = 2
 
         ntotal = nr * nt
 
@@ -246,7 +246,7 @@ contains
         real(8) :: theta, rot(2, 2)
         integer i, j, k, index
 
-        if ( Field%dim /= 2 ) Field%dim = 2
+        if ( Field%Dim /= 2 ) Field%Dim = 2
 
         ntotal = sum(nr) * nt
 
@@ -309,7 +309,7 @@ contains
         real(8) :: delta(2), tnt_delta(2)
         integer i, j, k
 
-        if ( Field%dim /= 2 )  Field%dim = 2
+        if ( Field%Dim /= 2 )  Field%Dim = 2
 
         delta = (length - tnt_length) / (water_n*2)
         tnt_delta = tnt_length / (tnt_n - 1)
@@ -507,9 +507,10 @@ contains
 
         Nx = floor((solid_domain(2) - solid_domain(1)) / dx)
         Ny = floor((solid_domain(4) - solid_domain(3)) / dx)
-        do i = 1, Nx
-            do j = 1, Ny
-                k = (i-1) * Ny + j
+        do j = 1, Ny
+            do i = 1, Nx
+                ! k = (i-1) * Ny + j
+                k = (j-1) * Nx + i
                 P(k)%x(:)  = [solid_domain(1) + (i-0.5) * dx, &
                               solid_domain(3) + (j-0.5) * dx]
                 P(k)%v(1)  = 0

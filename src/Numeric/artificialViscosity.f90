@@ -14,7 +14,7 @@ contains
                          !! To Avoid non-physical penetration
                          !! Shall be 10 in HE simulation
         real(8) :: psi   !! Parameter to avoid singularities
-        real(8) :: dx(Field%dim), dv(Field%dim)
+        real(8) :: dx(Field%Dim), dv(Field%Dim)
         real(8) :: xv, hsml_ij, rho_ij, c_ij, phi_ij, PI_ij
 
         integer i, j, k
@@ -39,7 +39,7 @@ contains
             beta  = 10
             psi   = 0.1
         case("taylor_rod")
-            alpha = 1
+            alpha = 0.5
             beta  = 1
             psi   = 0.1
         case default

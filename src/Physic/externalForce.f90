@@ -8,18 +8,18 @@ contains
         integer, intent(in) :: ntotal
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:, :)
-        real(8) :: dx(Field%dim), dr, r
+        real(8) :: dx(Field%Dim), dr, r
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
         logical, save :: first_entry = .true.
 
         integer i, j, k, d
 
-        forall (i=1:Field%dim, j=1:ntotal) dvdt(i, j) = 0
+        forall (i=1:Field%Dim, j=1:ntotal) dvdt(i, j) = 0
 
         !!! Consider gravity or not
         if ( Config%gravity_w ) then
-            forall (i=1:ntotal) dvdt(Field%dim, i) = -9.8
+            forall (i=1:ntotal) dvdt(Field%Dim, i) = -9.8
         end if
 
         !!! Boundary particle force and penalty anti-penetration force
@@ -64,7 +64,7 @@ contains
                     !!! Calculate the distance 'r' between particle i and j
                     dx(1) = P(i)%x(1) - P(j)%x(1)
                     dr = dx(1)*dx(1)
-                    do d = 2, Field%dim
+                    do d = 2, Field%Dim
                         dx(d) = P(i)%x(d) - P(j)%x(d)
                         dr = dr + dx(d)*dx(d)
                     end do
@@ -81,7 +81,7 @@ contains
                     !!! Calculate the distance 'r' between particle i and j
                     dx(1) = P(i)%x(1) - P(j)%x(1)
                     dr = dx(1)*dx(1)
-                    do d = 2, Field%dim
+                    do d = 2, Field%Dim
                         dx(d) = P(i)%x(d) - P(j)%x(d)
                         dr = dr + dx(d)*dx(d)
                     end do

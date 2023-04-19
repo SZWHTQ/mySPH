@@ -16,13 +16,14 @@ contains
         type(Particle), intent(inout) :: P(:)
         real(8), intent(inout) :: dvdt(:, :), dedt(:)
         real(8), allocatable :: tdsdt(:), edot(:, :, :)
-        real(8) :: dv(Field%dim)
+        real(8) :: dv(Field%Dim)
         real(8) :: rhoij, aux
-        real(8) :: Z_l, Z_r, v_l, v_r, v_ij, e_ij(Field%dim), v_star(Field%dim), p_star
+        real(8) :: Z_l, Z_r, v_l, v_r, v_ij, e_ij(Field%Dim), v_star(Field%Dim), p_star
 #if SOLID
         ! integer :: solid_num
         real(8), intent(in),    optional :: Shear(:, :, :)
         real(8), intent(inout), optional :: dSdt(:, :, :)
+        real(8) :: vab, vba
         real(8), allocatable :: rdot(:, :, :), aver_edot(:, :)
 #endif
         integer i, j, k, d, dd, ddd
@@ -30,11 +31,11 @@ contains
         !!! Initialization of Strain Rate Tensor, velocity divergence,
         !!! viscous energy, internal energy, acceleration
         allocate(tdsdt(ntotal), source=0._8)
-        allocate(edot(Field%dim, Field%dim, ntotal), source=0._8)
+        allocate(edot(Field%Dim, Field%Dim, ntotal), source=0._8)
 
 #if SOLID
-        allocate(rdot(Field%dim, Field%dim, ntotal), source=0._8)
-        allocate(aver_edot(Field%dim, Field%dim), source=0._8)
+        allocate(rdot(Field%Dim, Field%Dim, ntotal), source=0._8)
+        allocate(aver_edot(Field%Dim, Field%Dim), source=0._8)
 #endif
 
         !!! Dynamic viscosity
@@ -42,7 +43,7 @@ contains
 
 
         if ( Config%viscosity_w ) then
-                !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux)
+                !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux, vab, vba)
                 do i = 1, ntotal !! All particles
                 !!! Calculate SPH sum for Strain Rate Tensor of Fluid
                 !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
@@ -52,8 +53,8 @@ contains
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
                         dv = P(j)%v(:) - P(i)%v(:)
-                        do d = 1, Field%dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
-                            do dd = 1, Field%dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
+                        do d = 1, Field%Dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
+                            do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
                                 edot(d, dd, i) = edot(d, dd, i) &
                                     + P(j)%Mass/P(j)%Density    &
                                     * dv(d) * P(i)%dwdx(dd, k)
@@ -61,7 +62,7 @@ contains
                                     + P(j)%Mass/P(j)%Density    &
                                     * dv(dd) * P(i)%dwdx(d, k)
                                 if ( d == dd ) then !! δii = 1, δij = 0
-                                    do ddd = 1, Field%dim
+                                    do ddd = 1, Field%Dim
                                         edot(d, d, i) = edot(d, d, i) &
                                             - 2._8 / 3                &
                                             * P(j)%Mass/P(j)%Density  &
@@ -79,18 +80,13 @@ contains
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
                             dv = P(j)%v(:) - P(i)%v(:)
-                            do d = 1, Field%dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
-                                do dd = 1, Field%dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
-                                    associate (vab => &
-                                        P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k))
-                                    associate (vba => &
-                                        P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k))
-                                        edot(d, dd, i) = edot(d, dd, i) &
-                                            + 0.5 * (vab + vba)
-                                        rdot(d, dd, i) = rdot(d, dd, i) &
-                                            + 0.5 * (vab - vba)
-                                    end associate
-                                    end associate
+                            do d = 1, Field%Dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
+                                do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
+                                    vab = P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k)
+                                    vba = P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k)
+
+                                    edot(d, dd, i) = edot(d, dd, i) + 0.5 * (vab + vba)
+                                    rdot(d, dd, i) = rdot(d, dd, i) + 0.5 * (vab - vba)
                                 end do !! dd
                             end do !! d
                     end do !! k
@@ -134,13 +130,13 @@ contains
         else if ( present(Shear) ) then !! Solid
 
             aux = 0
-            do d = 1, Field%dim
+            do d = 1, Field%Dim
                 aux = aux + edot(d, d, i)
             end do
             aux = aux / 3
 
             aver_edot = edot(:, :, i) !! Strain Rate Tensor of Solid
-            do d = 1, Field%dim
+            do d = 1, Field%Dim
                 aver_edot(d, d) = aver_edot(d, d) - aux
             end do
 
@@ -151,27 +147,27 @@ contains
                 call mie_gruneisen_eos_of_solid(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             end select
 
-            ! do k = 1, P(i)%neighborNum
-                ! j = P(i)%neighborList(k)
+            !!! Deviatoric Stress Rate Tensor
+            do d = 1, Field%Dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
+                do dd = 1, Field%Dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
+                    dSdt(d, dd, i) = 2 * P(i)%Viscocity * aver_edot(d, dd)
+                    do ddd = 1, Field%Dim
+                        dSdt(d, dd, i) = dSdt(d, dd, i) + &
+                            Shear(d, ddd, i) * rdot(dd, ddd, i) &
+                          + Shear(dd, ddd, i) * rdot(d, ddd, i)
+                    end do !!! ddd
+                end do !! dd
+            end do !! d
 
-                !!! Deviatoric Stress Rate Tensor
-                do d = 1, Field%dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
-                    do dd = 1, Field%dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
-                        dSdt(d, dd, i) = 2 * P(i)%Viscocity * aver_edot(d, dd)
-                        do ddd = 1, Field%dim
-                            dSdt(d, dd, i) = dSdt(d, dd, i) + &
-                                Shear(d, ddd, i) * rdot(dd, ddd, i) &
-                              + Shear(dd, ddd, i) * rdot(d, ddd, i)
-                        end do !!! ddd
-                    end do !! dd
-                end do !! d
-            ! end do !! k
+            ! do d = 1, Field%Dim
+            !     do dd = 1, Field%Dim
+            !         P(i)%Stress(d, dd) = Shear(d, dd, i)
+            !     end do
+            !     P(i)%Stress(d, d) = P(i)%Stress(d, d) - P(i)%Pressure
+            ! end do
 
-            do d = 1, Field%dim
-                do dd = 1, Field%dim
-                    P(i)%Stress(d, dd) = Shear(d, dd, i)
-                end do
-                P(i)%Stress(d, d) = P(i)%Stress(d, d) - P(i)%Pressure
+            do d = 1, Field%Dim
+                P(i)%Stress(d, d) = Shear(d, d, i) - P(i)%Pressure
             end do
 
         end if !! Fluid or Solid
@@ -244,8 +240,8 @@ contains
                     do k = 1, P(i)%neighborNum
                         j = P(i)%neighborList(k)
 
-                        do d = 1, Field%dim
-                            do dd = 1, Field%dim
+                        do d = 1, Field%Dim
+                            do dd = 1, Field%Dim
                                 !!! Conservation of Momentum
                                 dvdt(d, i) = dvdt(d, i) &
                                     + P(j)%Mass * ( P(i)%Stress(d, dd) / P(i)%Density**2   &

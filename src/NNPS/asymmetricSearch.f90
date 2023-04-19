@@ -32,9 +32,9 @@ contains
 
         integer d
 
-        allocate( cell(Field%dim), source = 0)
+        allocate( cell(Field%Dim), source = 0)
 
-        do d = 1, Field%dim
+        do d = 1, Field%Dim
             if ((p%x(d) > self%maxCoor(d)) .or. (p%x(d) < self%minCoor(d))) then
                 error stop "particle out of range"
             else
@@ -55,13 +55,13 @@ contains
         integer i, d, dd, ddd, n
 
         ntotal = size(Particles)
-        allocate( self%maxCoor(Field%dim), source =-huge(0._8) )
-        allocate( self%minCoor(Field%dim), source = huge(0._8) )
-        allocate( self%cellNum(Field%dim), source = 0 )
-        allocate( cell(Field%dim), source = 0 )
+        allocate( self%maxCoor(Field%Dim), source =-huge(0._8) )
+        allocate( self%minCoor(Field%Dim), source = huge(0._8) )
+        allocate( self%cellNum(Field%Dim), source = 0 )
+        allocate( cell(Field%Dim), source = 0 )
 
         do i = 1, ntotal
-            do d = 1, Field%dim
+            do d = 1, Field%Dim
                 if ( Particles(i)%x(d) > self%maxCoor(d) ) self%maxCoor(d) = Particles(i)%x(d)
                 if ( Particles(i)%x(d) < self%minCoor(d) ) self%minCoor(d) = Particles(i)%x(d)
             end do
@@ -71,7 +71,7 @@ contains
             self%maxCoor = self%maxCoor + (GMR - 1) * delta
             self%minCoor = self%minCoor - (GMR - 1) * delta
             !!! number of grid cells in x-, y- and z-direction:
-            select case (Field%dim)
+            select case (Field%Dim)
             case (1)
                 self%cellNum(1) = min((ntotal)/NPG + 1, 1000)
                 allocate( self%grid(self%cellNum(1), 1, 1 ) )
@@ -178,9 +178,9 @@ contains
         numTargets = size(Targets)
         numPairs   = size(Targets(1)%neighborList)
 
-        allocate( cell(Field%dim), source = 0 )
-        allocate( cellNumPerHSML(Field%dim), source = 0 )
-        allocate( dx(Field%dim), source = 0._8 )
+        allocate( cell(Field%Dim), source = 0 )
+        allocate( cellNumPerHSML(Field%Dim), source = 0 )
+        allocate( dx(Field%Dim), source = 0._8 )
 
         call Grid%initialize(Sources)
 
@@ -196,7 +196,7 @@ contains
                 * Grid%cellNum ) + 1
             maxCell = 1
             minCell = 1
-            do d = 1, Field%dim
+            do d = 1, Field%Dim
                 maxCell(d) = min(cell(d) + cellNumPerHSML(d), Grid%cellNum(d))
                 minCell(d) = max(cell(d) - cellNumPerHSML(d), 1)
             end do
@@ -211,7 +211,7 @@ contains
                             end if ! present(skipItsSelf)
                             dx = Targets(i)%x(1) - Sources(j)%x(1)
                             dr = dx(1) ** 2
-                            do d = 2, Field%dim
+                            do d = 2, Field%Dim
                                 dx(d) = Targets(i)%x(d) - Sources(j)%x(d)
                                 dr = dr + dx(d) ** 2
                             end do !! d

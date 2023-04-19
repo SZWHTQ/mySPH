@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 
 # set(CMAKE_SYSTEM_NAME Generic)
 
-set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Debug)
 
 project(
     "mySPH"
@@ -25,7 +25,7 @@ endif()
 
 set(OMP OFF CACHE BOOL "Enable OpenMP")
 if(OMP)
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -lgomp -fopenmp")
     message(STATUS "OpenMP enabled")
 else(OMP)
     message(STATUS "OpenMP disabled")

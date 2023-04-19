@@ -50,9 +50,9 @@ contains
         ! include "mpif.h"
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal, kpair
-        real(8) :: this_w, this_dwdx(Field%dim)
+        real(8) :: this_w, this_dwdx(Field%Dim)
         integer :: scale_k
-        real(8) :: dx(Field%dim), dr, r, mhsml
+        real(8) :: dx(Field%Dim), dr, r, mhsml
 
         integer i, j, d !! Loop variables
 
@@ -77,7 +77,7 @@ contains
                 ! r  = norm2(dx)
                 dx(1) = P(i)%x(1) - P(j)%x(1)
                 dr = dx(1)*dx(1)
-                do d = 2, Field%dim
+                do d = 2, Field%Dim
                     dx(d) = P(i)%x(d) - P(j)%x(d)
                     dr = dr + dx(d)*dx(d)
                 end do
@@ -110,14 +110,14 @@ contains
         use back_ground_grid_m
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal, kpair
-        real(8) :: this_w, this_dwdx(Field%dim)
+        real(8) :: this_w, this_dwdx(Field%Dim)
         real(8) :: maxhsml, mhsml
         integer, allocatable   :: grid(:, :, :)
         integer, allocatable   :: cell_index(:, :), cell_data(:)
         integer :: cell(3), xcell, ycell, zcell, &
                    minxcell(3), maxxcell(3), &
-                   cell_num(Field%dim), ghsmlx(Field%dim)
-        real(8) :: dr, r, dx(Field%dim), grid_max_coor(Field%dim), grid_min_coor(Field%dim)
+                   cell_num(Field%Dim), ghsmlx(Field%Dim)
+        real(8) :: dr, r, dx(Field%Dim), grid_max_coor(Field%Dim), grid_min_coor(Field%Dim)
         real(8) :: scale
 
         ! logical :: flag
@@ -142,7 +142,7 @@ contains
         grid_max_coor(:) = -huge(0._8)
         grid_min_coor(:) =  huge(0._8)
         do i = 1, ntotal
-            do d = 1, Field%dim
+            do d = 1, Field%Dim
                 if ( P(i)%x(d) > grid_max_coor(d) ) grid_max_coor(d) = P(i)%x(d)
                 if ( P(i)%x(d) < grid_min_coor(d) ) grid_min_coor(d) = P(i)%x(d)
             end do
@@ -167,14 +167,14 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, d, cell, xcell, ycell, zcell)          &
         !$OMP PRIVATE(minxcell, maxxcell, dx, dr, r, mhsml, this_w, this_dwdx) &
-        !$OMP SHARED(grid, cell_index, cell_data, P, ghsmlx, cell_num)          &
+        !$OMP SHARED(grid, cell_index, cell_data, P, ghsmlx, cell_num)         &
         !$OMP SCHEDULE(dynamic, Config%chunkSize)
         !!! determine interaction parameters:
         do i = 1, ntotal - 1 !! loop over all particles but the last one
             !!! determine range of grid to go through:
             maxxcell(:) = 1
             minxcell(:) = 1
-            do d = 1, Field%dim
+            do d = 1, Field%Dim
                 maxxcell(d) = min(cell_index(d, i) + ghsmlx(d), cell_num(d))
                 minxcell(d) = max(cell_index(d, i) - ghsmlx(d), 1)
             end do
@@ -189,7 +189,7 @@ contains
                                 !!! Calculate distance between particle i and j
                                 dx(1) = P(i)%x(1) - P(j)%x(1)
                                 dr = dx(1)*dx(1)
-                                do d = 2, Field%dim
+                                do d = 2, Field%Dim
                                     dx(d) = P(i)%x(d) - P(j)%x(d)
                                     dr = dr + dx(d)*dx(d)
                                 end do
@@ -245,14 +245,14 @@ contains
         use geometry_m
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal, kpair
-        real(8) :: this_w, this_dwdx(Field%dim)
+        real(8) :: this_w, this_dwdx(Field%Dim)
         real(8) :: mhsml
         class(geometry_t), allocatable :: domain, range
         type(tree_t)      :: tree
         type(link_list_t) :: found
         class(*), allocatable :: j
-        real(8) :: scale, min(Field%dim), max(Field%dim), length(Field%dim)
-        real(8) :: dx(Field%dim), dr, r
+        real(8) :: scale, min(Field%Dim), max(Field%Dim), length(Field%Dim)
+        real(8) :: dx(Field%Dim), dr, r
         integer :: scale_k
         logical :: flag
         integer i, k, d
@@ -275,7 +275,7 @@ contains
         min = huge(0._8)
         max = -huge(0._8)
         do i = 1, ntotal
-            do d = 1, Field%dim
+            do d = 1, Field%Dim
                 if ( P(i)%x(d) > max(d) ) then
                     max(d) = P(i)%x(d)
                 end if
@@ -285,7 +285,7 @@ contains
             end do
         end do
         length = scale * (max - min)
-        select case (Field%dim)
+        select case (Field%Dim)
         case (1)
             domain = line_t((min+max)/2, length(1), 0)
         case (2)
@@ -311,7 +311,7 @@ contains
         ! !$OMP SHARED(P) &
         ! !$OMP SCHEDULE(dynamic, chunkSize)
         do i = 1, ntotal - 1
-            select case (Field%dim)
+            select case (Field%Dim)
             case (1)
                 range = line_t(P(i)%x(:), scale_k*P(i)%SmoothingLength*2, 0)
             case (2)
@@ -330,7 +330,7 @@ contains
                         mhsml = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
                         dx(1) = P(i)%x(1) - P(j)%x(1)
                         dr = dx(1) * dx(1)
-                        do d = 2, Field%dim
+                        do d = 2, Field%Dim
                             dx(d) = P(i)%x(d) - P(j)%x(d)
                             dr = dr + dx(d)*dx(d)
                         end do

@@ -101,8 +101,8 @@ contains
 
         call get_value(sph_file, 'Parameter', subtable)
 
-        call get_value(subtable, 'DIM',    Field%dim)
-        call get_value(subtable, 'maxN',   Field%maxn,   5000)
+        call get_value(subtable, 'DIM',    Field%Dim)
+        call get_value(subtable, 'maxN',   Field%Maxn,   5000)
         call get_value(subtable, 'ntotal', Field%ntotal      )
         call get_value(subtable, 'kPair',  Field%pairNum,  20  )
 

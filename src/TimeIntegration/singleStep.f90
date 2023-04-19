@@ -29,8 +29,8 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     type(Update),   intent(inout) :: Delta(:)
     real(8),        intent(inout) :: aver_v(:, :)
     integer :: kpair, N
-    real(8), dimension(Field%dim, Field%maxn) :: indvdt, exdvdt, avdvdt
-    real(8), dimension(Field%maxn) :: indedt, avdedt, ahdedt
+    real(8), dimension(Field%Dim, Field%Maxn) :: indvdt, exdvdt, avdvdt
+    real(8), dimension(Field%Maxn) :: indedt, avdedt, ahdedt
     ! real(8) :: area
     ! integer :: number, index(maxn)
 #if SOLID
@@ -45,7 +45,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     Config%chunkSize = N / Config%nthreads
 #endif
 
-    do i = 1, Field%maxn
+    do i = 1, Field%Maxn
         indvdt(:, i) = 0
         indedt(i)    = 0
         exdvdt(:, i) = 0
@@ -57,9 +57,12 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     !!! Positions of dummy (boundary) particles
     if ( Config%dummy_parti_w ) call gen_dummy_particle(ndummy, Particles(1:ntotal))
 
-    call allocateParticleList(Buffers, nbuffer, Field%dim, 1)
-    nbuffer = 0
-    if ( Config%open_boundary_w) call gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
+    if ( Config%open_boundary_w) then
+        call allocateParticleList(Buffers, nbuffer, Field%Dim, 1)
+        call gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
+    else
+        nbuffer = 0
+    end if
 
     N = ntotal + ndummy + nbuffer
 
@@ -147,23 +150,23 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
         write(*,*) ">> Information for particle ", to_string(Config%monitor_particle)
         write(*,1001) "Internal a ", "Artificial a", "External a", "Total a"
-        do i = 1, Field%dim
+        do i = 1, Field%Dim
             write(*,1002) indvdt(i, Config%monitor_particle), avdvdt(i, Config%monitor_particle), &
                           exdvdt(i, Config%monitor_particle), Delta(Config%monitor_particle)%Velocity(i)
         end do
     end if
 
     kpair = maxval(Particles%neighborNum)
-    ! if ( kpair > Field%pairNum ) then
-        call allocateNeighborList(Particles, Field%dim, kpair + 3)
-    ! else
-    !     do i = 1, size(Particles)
-    !         Particles(i)%neighborNum = 0
-    !         Particles(i)%neighborList = 0
-    !         Particles(i)%w = 0
-    !         Particles(i)%dwdx = 0
-    !     end do
-    ! end if
+    if ( kpair > Field%pairNum ) then
+        call allocateNeighborList(Particles, Field%Dim, kpair + 3)
+    else
+        do i = 1, size(Particles)
+            Particles(i)%neighborNum = 0
+            Particles(i)%neighborList = 0
+            Particles(i)%w = 0
+            Particles(i)%dwdx = 0
+        end do
+    end if
 
     1001 format(A17, A14, 2(A15))
     1002 format(1X, 4(2X, ES13.6))

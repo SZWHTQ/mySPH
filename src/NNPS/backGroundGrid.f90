@@ -18,13 +18,13 @@ contains
 
         associate( d=>(grid_max_coor(:) - grid_min_coor(:)) )
             !!! number of grid cells in x-, y- and z-direction:
-            if (Field%dim == 1) then
+            if (Field%Dim == 1) then
                 cell_num(1) = min((ntotal)/nppg + 1, 1000)
-            else if (Field%dim == 2) then
+            else if (Field%Dim == 2) then
                 cell_num(1) = min(int(((ntotal) * d(1) &
                                 / (d(2)*nppg))**(1._8/2) )   + 1, 1000)
                 cell_num(2) = min(int(cell_num(1)*d(2)/d(1)) + 1, 1000)
-            else if (Field%dim == 3) then
+            else if (Field%Dim == 3) then
                 cell_num(1) = min(int(((ntotal) * d(1) * d(1) &
                                 / (d(2) * d(3) * nppg))**(1._8/3))+ 1, 1000)
                 cell_num(2) = min(int(cell_num(1) * d(2) / d(1))  + 1, 1000)
@@ -35,7 +35,7 @@ contains
         end associate
 
         !!! Initialize grid
-        select case(Field%dim)
+        select case(Field%Dim)
         case (1)
             allocate( grid(cell_num(1),          1,           1 ), source=0 )
         case (2)
@@ -60,7 +60,7 @@ contains
 
         cell(:) = 1
 
-        do d = 1, Field%dim
+        do d = 1, Field%Dim
             if ((coor(d) > grid_max_coor(d)) .or. (coor(d) < grid_min_coor(d))) then
                 write(*,*) ' >> error: particle out of range'
                 write(*,*) "   Time Step:"//to_string(Config%i_time_step)

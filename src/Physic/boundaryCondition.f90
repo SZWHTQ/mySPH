@@ -26,6 +26,7 @@ contains
     !!! Open Boundary Non-Reflecting Condition
     subroutine gen_undex_chamber_nrbc(ntotal, Particles, nbuffer, Buffers)
         use APS_M, only: BGGS
+        use eos_m, only: mie_gruneisen_eos_of_water
         integer, intent(inout) :: ntotal, nbuffer
         type(Particle), intent(inout) :: Particles(:), Buffers(:)
         type(Particle), allocatable :: Ghosts(:)
@@ -83,33 +84,35 @@ contains
                 do i = 1, N
                     nbuffer = nbuffer + 1
                     Buffers(nbuffer)%x = [-0.5,  0.5] + [- l, 1 - i] * dx
-                    Buffers(nbuffer)%State = 1
-                    Buffers(nbuffer)%Type  = 6
                 end do
                 !! Bottom
                 do i = 1, N
                     nbuffer = nbuffer + 1
                     Buffers(nbuffer)%x = [-0.5, -0.5] + [i - 1, - l] * dx
-                    Buffers(nbuffer)%State = 1
-                    Buffers(nbuffer)%Type  = 6
                 end do
                 !! Right
                 do i = 1, N
                     nbuffer = nbuffer + 1
                     Buffers(nbuffer)%x = [ 0.5, -0.5] + [  l, i - 1] * dx
-                    Buffers(nbuffer)%State = 1
-                    Buffers(nbuffer)%Type  = 6
                 end do
                 !! Top
                 do i = 1, N
                     nbuffer = nbuffer + 1
                     Buffers(nbuffer)%x = [ 0.5,  0.5] + [1 - i,   l] * dx
-                    Buffers(nbuffer)%State = 1
-                    Buffers(nbuffer)%Type  = 6
                 end do
             end do !! l
             do i = 1, nbuffer
+                !! Buffer Particles Fluid Property
+                Buffers(i)%State = 1
+                Buffers(i)%Density = 1000
+                Buffers(i)%Mass = Buffers(nbuffer)%Density * dx**2
+                Buffers(i)%InternalEnergy = 1e8
+                call mie_gruneisen_eos_of_water(1d3, 1d8, Buffers(i)%Pressure)
+                Buffers(i)%Type  = 6
+                Buffers(i)%SmoothingLength = 1.5 * dx
+
                 Ghosts(i)%x = calcGhostPosition(Buffers(i))
+                Ghosts(i)%SmoothingLength = 1.5 * dx
             end do
         else !! entry_count /= 1
         ! end if !! entry_count == 1
@@ -123,6 +126,7 @@ contains
                     Buffers(nbuffer)%State = 0
                     Buffers(nbuffer)%Type = Particles(i)%Type
                     Ghosts(nbuffer)%x = calcGhostPosition(Buffers(nbuffer))
+                    Ghosts(nbuffer)%SmoothingLength = 1.5 * dx
                 end if
             end do
 
@@ -143,6 +147,7 @@ contains
                         Buffers(nbuffer)%Type  = Particles(ntotal)%Type
                         !! Add a new ghost particle
                         Ghosts(nbuffer)%x = calcGhostPosition(Buffers(nbuffer))
+                        Ghosts(nbuffer)%SmoothingLength = 1.5 * dx
                     else !! Fluid Domain do not contain particle i
                         Buffers(i)%State = -1
                     end if !! FluidDomain%contain(point)
@@ -155,14 +160,9 @@ contains
         ! call bufferShrink(Buffers, nbuffer)
         ! Buffers = [Buffers(1:nbuffer)]
 
-        call allocateParticleList(Ghosts, nbuffer, Field%dim, Field%pairNum)
-        do i = 1, nbuffer
-            Ghosts(i)%SmoothingLength = 1.5 * dx
-        end do
+        call allocateParticleList(Ghosts, nbuffer, Field%Dim, Field%pairNum)
+
         call BGGS(Ghosts, Particles(1:ntotal))
-        do i = 1, nbuffer
-            Ghosts(i) = Ghosts(i)
-        end do
 
         do i = 1, nbuffer
             call solveBufferProperty(Buffers(i), Ghosts(i), Particles)
@@ -177,7 +177,7 @@ contains
             type(point_t) :: point
             integer :: err
 
-            allocate(point%center(Field%dim), source=0._8, stat=err)
+            allocate(point%center(Field%Dim), source=0._8, stat=err)
             if ( err /= 0 ) error stop "BufferDomainContain: allocate point%center failed"
             point = point_t(P%x, 0)
             contain = ( AllDomain%contain(point) ) .and. &
@@ -205,7 +205,7 @@ contains
 
         pure function newBufferParticlePosition(P) result(bufferPosition)
             type(Particle), intent(in) :: P
-            real(8) :: bufferPosition(Field%dim)
+            real(8) :: bufferPosition(Field%Dim)
             integer :: index
 
             index = getFixedPointIndex(P)
@@ -218,7 +218,7 @@ contains
 
         pure function calcGhostPosition(P) result(ghostPosition)
             type(Particle), intent(in) :: P
-            real(8) :: ghostPosition(Field%dim)
+            real(8) :: ghostPosition(Field%Dim)
             integer :: index
 
             index = getFixedPointIndex(P)
@@ -243,8 +243,8 @@ contains
 
         integer j, l, d
 
-        m = Field%dim + 1
-        allocate(A(m, m), Solve(m, Field%dim+6), h(m), source=0._8)
+        m = Field%Dim + 1
+        allocate(A(m, m), Solve(m, Field%Dim+6), h(m), source=0._8)
         h = 0
         do j = 1, ghost%neighborNum
             l = ghost%neighborList(j)
@@ -258,19 +258,19 @@ contains
             Solve(:, 4) = Solve(:, 4) + aux * Particles(l)%InternalEnergy
             Solve(:, 5) = Solve(:, 5) + aux * Particles(l)%SoundSpeed
             Solve(:, 6) = Solve(:, 6) + aux * Particles(l)%divergenceVelocity
-            do d = 7, Field%dim + 6
+            do d = 7, Field%Dim + 6
                 Solve(:, d) = Solve(:, d) + aux * Particles(l)%v(d)
             end do
             end associate
         end do
 
         Solve(1, :) = Solve(1, :) / h(1)
-        do d = 2, Field%dim + 1
+        do d = 2, Field%Dim + 1
             Solve(d, :) = Solve(d, :) / h(d)
         end do
 
         h = 0
-        do j = 1, Field%dim + 6
+        do j = 1, Field%Dim + 6
             call DGESV(m,1, A,m, h, Solve(:, j),m, flag)
         end do
 
@@ -280,7 +280,7 @@ contains
         buffer%InternalEnergy     = Solve(1, 4) + dot_product((buffer%x - ghost%x), Solve(2:m, 4))
         buffer%SoundSpeed         = Solve(1, 5) + dot_product((buffer%x - ghost%x), Solve(2:m, 5))
         buffer%divergenceVelocity = Solve(1, 6) + dot_product((buffer%x - ghost%x), Solve(2:m, 6))
-        do d = 1, Field%dim
+        do d = 1, Field%Dim
             buffer%v(d) = Solve(1, d + 6) + dot_product((buffer%x - ghost%x), Solve(2:m, d + 6))
         end do
 

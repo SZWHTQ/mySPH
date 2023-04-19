@@ -20,12 +20,12 @@ contains
             return
         case (1)
             factor = 2._8
-            forall (i=1:ntotal) P(i)%SmoothingLength = factor*(P(i)%Mass/P(i)%Density)**(1._8/Field%dim)
+            forall (i=1:ntotal) P(i)%SmoothingLength = factor*(P(i)%Mass/P(i)%Density)**(1._8/Field%Dim)
         case (2)
             !!! dh/dt = (-1/dim)*(h/rho)*(drho/dt)
             !!! drho/dt = sum(m*dv*dwdx )
             do i = 1, ntotal
-                dhsmldt(i) = (P(i)%SmoothingLength/Field%dim)*P(i)%divergenceVelocity
+                dhsmldt(i) = (P(i)%SmoothingLength/Field%Dim)*P(i)%divergenceVelocity
                 P(i)%SmoothingLength  = P(i)%SmoothingLength + Config%delta_t*dhsmldt(i)
                 if (P(i)%SmoothingLength <= 0) then
                     P(i)%SmoothingLength = P(i)%SmoothingLength - Config%delta_t*dhsmldt(i)

@@ -43,14 +43,14 @@ contains
         dwdx = 0
 
         !!! Calculate factor alpha_d
-        if (Field%dim == 1) then
+        if (Field%Dim == 1) then
             factor = 1.0_8 / (hsml)
-        else if (Field%dim == 2) then
+        else if (Field%Dim == 2) then
             factor = 15._8 / (7._8*PI*hsml**2)
-        else if (Field%dim == 3) then
+        else if (Field%Dim == 3) then
             factor = 3.0_8 / (2._8*PI*hsml**3)
         ! else
-        !     call print_error(Field%dim, "Unsupported Dimension", type="value")
+        !     call print_error(Field%Dim, "Unsupported Dimension", type="value")
         !     error stop "at subroutine cubic_spline_function"
         end if
 
@@ -85,10 +85,10 @@ contains
         dwdx = 0
 
         !!! Calculate factor alpha_d
-        if (1 <= Field%dim .and. Field%dim <= 3) then ! NOTE: Var "dim" is an integer
-            factor = 1.0_8 / (sqrt(PI)*hsml)**Field%dim
+        if (1 <= Field%Dim .and. Field%Dim <= 3) then ! NOTE: Var "dim" is an integer
+            factor = 1.0_8 / (sqrt(PI)*hsml)**Field%Dim
         ! else
-        !     call print_error(Field%dim, "Unsupported Dimension", type="value")
+        !     call print_error(Field%Dim, "Unsupported Dimension", type="value")
         !     error stop "at subroutine gauss_kernel_function"
         end if
 
@@ -120,15 +120,15 @@ contains
         dwdx = 0
 
         !!! Calculate factor alpha_d
-        if (Field%dim == 1) then
+        if (Field%Dim == 1) then
             factor = 1.0_8 / (120._8*hsml)
-        else if (Field%dim == 2) then
+        else if (Field%Dim == 2) then
             factor = 7.0_8 / (478._8*PI*hsml**2)
-        else if (Field%dim == 3) then
+        else if (Field%Dim == 3) then
             factor = 1.0_8 / (120._8*PI*hsml**3)
             ! factor = 3.0_8 / (359._8*PI*hsml**3) !! Chap.3 P90
         ! else
-        !     call print_error(Field%dim, "Unsupported Dimension", type="value")
+        !     call print_error(Field%Dim, "Unsupported Dimension", type="value")
         !     error stop "at subroutine quintic_kernel_function"
         end if
 

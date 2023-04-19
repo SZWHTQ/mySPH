@@ -11,7 +11,7 @@ contains
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal
         real(8) :: self
-        real(8) :: hv(Field%dim)
+        real(8) :: hv(Field%Dim)
         real(8), allocatable :: wi(:)  !! Integration of the kernel itself
         integer i, j, k
 
@@ -113,7 +113,7 @@ contains
         real(8), intent(inout) :: drhodt(:)    !! Density change rate of each particle
         real(8) :: Z_l, Z_r, v_l, v_r
         real(8) :: v_ij
-        real(8) :: v_star(Field%dim), e_ij(Field%dim)
+        real(8) :: v_star(Field%Dim), e_ij(Field%Dim)
         integer i, j, k
 
         ntotal = size(P)
@@ -151,7 +151,7 @@ contains
         type(Particle), intent(inout) :: P(:)
         integer :: ntotal
         real(8) :: self
-        real(8) :: hv(Field%dim)
+        real(8) :: hv(Field%Dim)
         real(8) :: rho_max, rho_min, criteria, ratio
         real(8), allocatable :: wi(:)  !! Integration of the kernel itself
         integer, allocatable :: dc_point(:)

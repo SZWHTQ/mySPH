@@ -15,7 +15,7 @@ program main
 
     call fetch_control_value()
 
-    call allocateParticleList(Particles, Field%maxn, Field%dim, Field%pairNum)
+    call allocateParticleList(Particles, Field%Maxn, Field%Dim, Field%pairNum)
 
     call input(ntotal, Particles)
 

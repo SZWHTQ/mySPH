@@ -9,7 +9,7 @@ contains
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: aver_v(:, :)
         real(8) :: epsilon
-        real(8) :: dv(Field%dim)
+        real(8) :: dv(Field%Dim)
 
         integer i, j, k
 
@@ -19,7 +19,7 @@ contains
         !!! the ε ≤ 0.3
         parameter(epsilon = 0.3)
 
-        forall(i=1:Field%dim, j=1:ntotal) aver_v(i, j) = 0._8
+        forall(i=1:Field%Dim, j=1:ntotal) aver_v(i, j) = 0._8
 
         do i = 1, ntotal
             do k = 1, P(i)%neighborNum

@@ -19,7 +19,7 @@ contains
         integer i, j, k
 
         ntotal = size(Particles)
-        call allocateParticleList(this, ntotal, Field%dim, size(Particles(1)%neighborList))
+        call allocateParticleList(this, ntotal, Field%Dim, size(Particles(1)%neighborList))
         num = 0
         allocate(type_indice(-8:8, ntotal), source=0)
         do i = 1, ntotal
@@ -76,7 +76,7 @@ contains
         ntotal = size(Particles)
         open(11, file = fileDir)
 
-        select case (Field%dim)
+        select case (Field%Dim)
         case (1)
             write(11, 1001) "Index", "Type", "State", "X", "V",         &
                             "Mass", "Density",                          &
@@ -159,7 +159,7 @@ contains
         write (11, "(A)") "DATASET UNSTRUCTURED_GRID"
         write (11, '(A, I0, A)') "POINTS ", ntotal, " double"
         do i = 1, ntotal
-            write(11, 1001) Particles(i)%x(:), (0.0, d = 1, 3-Field%dim)
+            write(11, 1001) Particles(i)%x(:), (0.0, d = 1, 3-Field%Dim)
         end do
         write (11, "(A, I0)") "POINT_DATA ", ntotal
 
@@ -222,14 +222,14 @@ contains
         !!! Write particle velocity
         write (11, "(A)") "VECTORS U double"
         do i = 1, ntotal
-            write(11, 1001) Particles(i)%v(:), (0.0, d = 1, 3-Field%dim)
+            write(11, 1001) Particles(i)%v(:), (0.0, d = 1, 3-Field%Dim)
         end do
 
         !!! Write particle stress
         write (11, "(A)") "TENSORS Stress double"
         do i = 1, ntotal
-            write(11, 1001) ((Particles(i)%Stress(d,dd),d=1,Field%dim),dd=1,Field%dim), &
-                            (0.0, d = 1, 9-Field%dim**2)
+            write(11, 1001) ((Particles(i)%Stress(d,dd),d=1,Field%Dim),dd=1,Field%Dim), &
+                            (0.0, d = 1, 9-Field%Dim**2)
         end do
 
     end subroutine write_vtk

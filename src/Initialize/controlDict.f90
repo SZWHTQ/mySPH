@@ -60,8 +60,8 @@ module ctrl_dict
 
     type Field_t
         !!! Physical Field Variables
-        integer :: dim    !! Dimension
-        integer :: maxn   !! Maximum Number of Particles
+        integer :: Dim    !! Dimension
+        integer :: Maxn   !! Maximum Number of Particles
         integer :: ntotal
         ! real(8) :: tau_ba !! Viscous shear force
 

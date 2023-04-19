@@ -5,6 +5,7 @@ a.out
 *.dat
 *.vtk
 *.png
+*.prof
 doc/books/*
 doc/The\ LaTeX\ testfile\ for\ vscode
 doc/Formula

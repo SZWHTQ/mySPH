@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 
 # set(CMAKE_SYSTEM_NAME Generic)
 
-set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Debug)
 
 project(
     "mySPH"

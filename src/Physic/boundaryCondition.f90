@@ -286,34 +286,34 @@ contains
 
     end subroutine solveBufferProperty
 
-    subroutine shrink(Particles, ntotal)
-        type(Particle), intent(inout) :: Particles(:)
-        integer, intent(inout) :: ntotal
-        type(Particle) :: P
+    ! subroutine shrink(Particles, ntotal)
+    !     type(Particle), intent(inout) :: Particles(:)
+    !     integer, intent(inout) :: ntotal
+    !     type(Particle) :: P
 
-        integer i, j
+    !     integer i, j
 
-        i = 1
-        j = ntotal
-        do while( i <= j )
-            do while( i <= j .and. Particles(i)%State /= -1 )
-                i = i + 1
-            end do
-            do while( i <= j .and. Particles(j)%State == -1 )
-                j = j - 1
-            end do
-            if ( i < j ) then
-                P = Particles(i)
-                Particles(i) = Particles(j)
-                Particles(j) = P
-                i = i + 1
-                j = j - 1
-            end if
-        end do
+    !     i = 1
+    !     j = ntotal
+    !     do while( i <= j )
+    !         do while( i <= j .and. Particles(i)%State /= -1 )
+    !             i = i + 1
+    !         end do
+    !         do while( i <= j .and. Particles(j)%State == -1 )
+    !             j = j - 1
+    !         end do
+    !         if ( i < j ) then
+    !             P = Particles(i)
+    !             Particles(i) = Particles(j)
+    !             Particles(j) = P
+    !             i = i + 1
+    !             j = j - 1
+    !         end if
+    !     end do
 
-        ntotal = j
+    !     ntotal = j
 
-    end subroutine shrink
+    ! end subroutine shrink
 
     ! subroutine bufferShrink(Particles, ntotal)
     !     type(Buffer_t), intent(inout) :: Particles(:)

@@ -71,6 +71,7 @@ contains
         integer :: aux, h
         real :: r
 
+        r = 0
         select type(var)
         type is (real(8))
             associate (aux => mod(int(var*10.**(decimal+1)), 10))

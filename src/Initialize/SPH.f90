@@ -117,7 +117,7 @@ contains
         integer, intent(in) :: ParticleNum, Dim, PairNum
         type(Particle) :: P
 
-        integer i
+        ! integer i
 
         call P%initialize(Dim, PairNum)
         allocate(Particles(ParticleNum), source=P)

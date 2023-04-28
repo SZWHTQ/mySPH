@@ -1,4 +1,5 @@
 module parse_toml_m
+    use, intrinsic :: iso_fortran_env, only: err => error_unit
     use ctrl_dict, only: Config, Field, Project
     use tomlf, only: toml_table, get_value, toml_parse
     use tools_m, only: create_directory, ESC
@@ -146,20 +147,23 @@ contains
         call get_value(sph_file, 'Parallel', subtable)
 
 #ifdef _OPENMP
-        call getenv('OMP_NUM_THREADS', buffer)
-        if ( trim(buffer)/="" ) then
-            read(buffer, *) Config%nthreads
-            call get_value(subtable, 'OMP_NUM_THREADS', Config%nthreads, 1*Config%nthreads)
-        else
-            call get_value(subtable, 'OMP_NUM_THREADS', Config%nthreads, 1)
-        end if
-        if ( Config%nthreads == 0 ) then
-            if ( trim(buffer)/="" ) then
+        Config%nthreads = 0
+
+        call get_value(subtable, 'OMP_NUM_THREADS', Config%nthreads, 0)
+        if ( Config%nthreads == 0 ) then 
+            call getenv('OMP_NUM_THREADS', buffer)
+            if ( trim(buffer) /= "" ) then
                 read(buffer, *) Config%nthreads
-            else
+            end if
+
+            if ( Config%nthreads <= 0 ) then
+                if ( Config%nthreads < 0) then
+                    write(err, "(A, I0)") "Illegal number of threads: ", Config%nthreads
+                end if
                 Config%nthreads = omp_get_num_procs()
             end if
         end if
+
         write(*, "(A, I0)") " >> Number of Threads: ", Config%nthreads
 #endif
         write(*,*)
@@ -174,22 +178,22 @@ contains
 
     end subroutine get_details_from_sph_toml
 
-    subroutine from_access_file()
-        type(toml_table), allocatable :: access_file
-        type(toml_table), pointer :: subtable
-        integer file_unit
+    ! subroutine from_access_file()
+    !     type(toml_table), allocatable :: access_file
+    !     type(toml_table), pointer :: subtable
+    !     integer file_unit
 
-        open (newunit=file_unit, file='./access.toml', status='old')
-        call toml_parse(access_file, file_unit)
-        close (file_unit)
+    !     open (newunit=file_unit, file='./access.toml', status='old')
+    !     call toml_parse(access_file, file_unit)
+    !     close (file_unit)
 
-        call get_value(access_file, 'access', subtable)
-        call get_value(subtable, 'Path',  Project%in_path,  './data/input')     !! Default Input  Dir
-        Project%out_path = Project%in_path//"/output"
-        Project%vtk_path = Project%in_path//"/vtk"
+    !     call get_value(access_file, 'access', subtable)
+    !     call get_value(subtable, 'Path',  Project%in_path,  './data/input')     !! Default Input  Dir
+    !     Project%out_path = Project%in_path//"/output"
+    !     Project%vtk_path = Project%in_path//"/vtk"
 
-        nullify (subtable)
+    !     nullify (subtable)
 
-    end subroutine from_access_file
+    ! end subroutine from_access_file
 
 end module parse_toml_m

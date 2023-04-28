@@ -41,6 +41,7 @@ contains
         q = r / hsml
         w = 0
         dwdx = 0
+        factor = 0
 
         !!! Calculate factor alpha_d
         if (Field%Dim == 1) then
@@ -83,6 +84,7 @@ contains
         q = r/hsml
         w = 0
         dwdx = 0
+        factor = 0
 
         !!! Calculate factor alpha_d
         if (1 <= Field%Dim .and. Field%Dim <= 3) then ! NOTE: Var "dim" is an integer
@@ -118,6 +120,7 @@ contains
         q = r/hsml
         w = 0
         dwdx = 0
+        factor = 0
 
         !!! Calculate factor alpha_d
         if (Field%Dim == 1) then

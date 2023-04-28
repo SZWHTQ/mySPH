@@ -220,4 +220,47 @@ contains
 
     end subroutine sum_density_dsph
 
+    subroutine norm_density(P)
+        type(Particle), intent(inout) :: P(:)
+        integer :: ntotal
+        real(8) :: self
+        real(8) :: hv(Field%Dim)
+        real(8), allocatable :: wi(:)  !! Integration of the kernel itself
+        integer i, j, k
+
+        ntotal = size(P)
+        allocate(wi(ntotal), source=0._8)
+        hv = 0
+
+        !!! Self density of each particle: Wii (Kernel for distance 0)
+        !!! and take contribution of particle itself
+
+        !!! Firstly, calculate the integration of the kernel over the space
+        !$OMP PARALLEL DO PRIVATE(i, self, hv)
+        do i = 1, ntotal
+            call kernel(dble(0), 1*hv, P(i)%SmoothingLength, self, hv)
+            wi(i) = P(i)%Mass / P(i)%Density * self
+        end do
+        !$OMP END PARALLEL DO
+
+        !$OMP PARALLEL DO PRIVATE(i, j, k) REDUCTION(+:wi)
+        do i = 1, ntotal
+            do k = 1, P(i)%neighborNum
+                j = P(i)%neighborList(k)
+                wi(i) = wi(i) + P(j)%Mass/P(j)%Density * P(i)%w(k)
+            end do
+        end do
+        !$OMP END PARALLEL DO
+
+        !!! Thirdly, calculate the normalized rho, rho = Σrho / Σw
+        !$OMP PARALLEL DO PRIVATE(i)
+        do i = 1, ntotal
+            P(i)%Density = P(i)%Density / wi(i)
+        end do
+        !$OMP END PARALLEL DO
+
+        deallocate(wi)
+        
+    end subroutine norm_density
+
 end module density_m

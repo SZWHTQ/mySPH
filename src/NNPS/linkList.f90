@@ -18,11 +18,11 @@ module link_list_m
     end type link_list_t
 
 contains
-    pure function init_node(item) result(node)
-            class(*), intent(in) :: item
-            type(link_node_t) :: node
-            allocate(node%item, source=item)
-    end function init_node
+    ! pure function init_node(item) result(node)
+    !         class(*), intent(in) :: item
+    !         type(link_node_t) :: node
+    !         allocate(node%item, source=item)
+    ! end function init_node
 
     pure subroutine link_list_add(this, item)
         class(link_list_t), intent(inout) :: this

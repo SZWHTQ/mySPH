@@ -18,7 +18,7 @@ module APS_M
         procedure :: locate     => locate
     end type grid_t
 
-    real(8), parameter :: GMR = 1.02 !! Grid Magnification Ratio
+    real(8), parameter :: GMR = 1.1 !! Grid Magnification Ratio
     integer, parameter :: NPG = 3   !! Number of particles Per Grid cell
 
     public :: BGGS
@@ -177,6 +177,9 @@ contains
 
         numTargets = size(Targets)
         numPairs   = size(Targets(1)%neighborList)
+
+        ! write(*,"(2(A, I0))") "Num of targets: ", numTargets, &
+        !                       " Num of sources: ", size(Sources)
 
         allocate( cell(Field%Dim), source = 0 )
         allocate( cellNumPerHSML(Field%Dim), source = 0 )

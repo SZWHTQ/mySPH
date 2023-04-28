@@ -158,6 +158,7 @@ contains
 
         n_dp_1 = ndummy
         gamma = 1.4
+        scale_k = 0
 
         select case (Config%skf)
         case (1)
@@ -222,6 +223,7 @@ contains
         integer i
 
         n_dp_1 = ndummy
+        scale_k = 0
 
         select case (Config%skf)
         case (1)
@@ -306,99 +308,100 @@ contains
 
     end subroutine undex_chamber_dp_1
 
-    subroutine undex_chamber_dp_2(ntotal, ndummy, P)
-        integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy
-        type(Particle), intent(inout) :: P(:)
-        real(8) :: boundary(2, 2), dx, thickness
-        logical :: first_entry = .true.
-        save boundary, dx, first_entry
-        integer :: scale_k, n_dp_1
-        integer i
+    ! subroutine undex_chamber_dp_2(ntotal, ndummy, P)
+    !     integer, intent(in) :: ntotal
+    !     integer, intent(inout) :: ndummy
+    !     type(Particle), intent(inout) :: P(:)
+    !     real(8) :: boundary(2, 2), dx, thickness
+    !     logical :: first_entry = .true.
+    !     save boundary, dx, first_entry
+    !     integer :: scale_k, n_dp_1
+    !     integer i
 
-        boundary = reshape([-huge(0._8), -huge(0._8),  &
-                             huge(0._8),  huge(0._8)], &
-                             shape(boundary))
-        if ( first_entry ) then
-            dx = P(2)%x(2) - P(1)%x(2)
-            do i = 1, ntotal+ndummy
-                if ( P(i)%x(1) > boundary(1,1) ) then
-                    boundary(1,1) = P(i)%x(1)
-                end if
-                if ( p(i)%x(2) > boundary(2,1) ) then
-                    boundary(2,1) = P(i)%x(2)
-                end if
-                if ( p(i)%x(1) < boundary(1,2) ) then
-                    boundary(1,2) = P(i)%x(1)
-                end if
-                if ( p(i)%x(2) < boundary(2,2) ) then
-                    boundary(2,2) = P(i)%x(2)
-                end if
-            end do
-            first_entry = .false.
-        end if
+    !     scale_k = 0
+    !     boundary = reshape([-huge(0._8), -huge(0._8),  &
+    !                          huge(0._8),  huge(0._8)], &
+    !                          shape(boundary))
+    !     if ( first_entry ) then
+    !         dx = P(2)%x(2) - P(1)%x(2)
+    !         do i = 1, ntotal+ndummy
+    !             if ( P(i)%x(1) > boundary(1,1) ) then
+    !                 boundary(1,1) = P(i)%x(1)
+    !             end if
+    !             if ( p(i)%x(2) > boundary(2,1) ) then
+    !                 boundary(2,1) = P(i)%x(2)
+    !             end if
+    !             if ( p(i)%x(1) < boundary(1,2) ) then
+    !                 boundary(1,2) = P(i)%x(1)
+    !             end if
+    !             if ( p(i)%x(2) < boundary(2,2) ) then
+    !                 boundary(2,2) = P(i)%x(2)
+    !             end if
+    !         end do
+    !         first_entry = .false.
+    !     end if
 
-        n_dp_1 = ndummy
+    !     n_dp_1 = ndummy
 
-        select case (Config%skf)
-        case (1)
-            scale_k = 2
-        case (2, 3)
-            scale_k = 3
-        end select
+    !     select case (Config%skf)
+    !     case (1)
+    !         scale_k = 2
+    !     case (2, 3)
+    !         scale_k = 3
+    !     end select
 
-        do i = 1, ntotal
-            !!! Dummy particle II on the Upper side
-            if ( boundary(2, 1) - P(i)%x(2) &
-               < P(i)%SmoothingLength * scale_k ) then
-                ndummy = ndummy + 1
-                thickness = P(i)%SmoothingLength * scale_k
-                P(ntotal+ndummy) = P(i)
-                ! P(ntotal+ndummy)%x(2) =  2*boundary(2, 1) - P(i)%x(2)
-                P(ntotal+ndummy)%x(2) =  P(i)%x(2) + thickness
-                ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
-                ! P(ntotal+ndummy)%Type =  P(i)%Type
-            end if
+    !     do i = 1, ntotal
+    !         !!! Dummy particle II on the Upper side
+    !         if ( boundary(2, 1) - P(i)%x(2) &
+    !            < P(i)%SmoothingLength * scale_k ) then
+    !             ndummy = ndummy + 1
+    !             thickness = P(i)%SmoothingLength * scale_k
+    !             P(ntotal+ndummy) = P(i)
+    !             ! P(ntotal+ndummy)%x(2) =  2*boundary(2, 1) - P(i)%x(2)
+    !             P(ntotal+ndummy)%x(2) =  P(i)%x(2) + thickness
+    !             ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
+    !             ! P(ntotal+ndummy)%Type =  P(i)%Type
+    !         end if
 
-            !!! Dummy particle II on the Lower side
-            if ( P(i)%x(2) - boundary(2, 2) < P(i)%SmoothingLength * scale_k ) then
-                ndummy = ndummy + 1
-                thickness = P(i)%SmoothingLength * scale_k
-                P(ntotal+ndummy) = P(i)
-                ! P(ntotal+ndummy)%x(2) =  2*boundary(2, 2) - P(i)%x(2)
-                P(ntotal+ndummy)%x(2) =  P(i)%x(2) - thickness
-                ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
-                ! P(ntotal+ndummy)%Type =  P(i)%Type
-            end if
-        end do
+    !         !!! Dummy particle II on the Lower side
+    !         if ( P(i)%x(2) - boundary(2, 2) < P(i)%SmoothingLength * scale_k ) then
+    !             ndummy = ndummy + 1
+    !             thickness = P(i)%SmoothingLength * scale_k
+    !             P(ntotal+ndummy) = P(i)
+    !             ! P(ntotal+ndummy)%x(2) =  2*boundary(2, 2) - P(i)%x(2)
+    !             P(ntotal+ndummy)%x(2) =  P(i)%x(2) - thickness
+    !             ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
+    !             ! P(ntotal+ndummy)%Type =  P(i)%Type
+    !         end if
+    !     end do
 
-        n_dp_1 = ntotal+ndummy
+    !     n_dp_1 = ntotal+ndummy
 
-        do i = 1, n_dp_1
-            !!! Monaghan type dummy particle on the Right side
-            if ( boundary(1, 1) - P(i)%x(1) < P(i)%SmoothingLength * scale_k ) then
-                ndummy = ndummy + 1
-                thickness = P(i)%SmoothingLength * scale_k
-                P(ntotal+ndummy) = P(i)
-                ! P(ntotal+ndummy)%x(1) =  2*boundary(1, 1) - P(i)%x(1)
-                P(ntotal+ndummy)%x(1) =  P(i)%x(1) + thickness
-                ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
-                ! P(ntotal+ndummy)%Type =  P(i)%Type
-            end if
+    !     do i = 1, n_dp_1
+    !         !!! Monaghan type dummy particle on the Right side
+    !         if ( boundary(1, 1) - P(i)%x(1) < P(i)%SmoothingLength * scale_k ) then
+    !             ndummy = ndummy + 1
+    !             thickness = P(i)%SmoothingLength * scale_k
+    !             P(ntotal+ndummy) = P(i)
+    !             ! P(ntotal+ndummy)%x(1) =  2*boundary(1, 1) - P(i)%x(1)
+    !             P(ntotal+ndummy)%x(1) =  P(i)%x(1) + thickness
+    !             ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
+    !             ! P(ntotal+ndummy)%Type =  P(i)%Type
+    !         end if
 
-            !!! Monaghan type dummy particle on the Left side
-            if ( P(i)%x(1) - boundary(1, 2) < P(i)%SmoothingLength * scale_k ) then
-                thickness = P(i)%SmoothingLength * scale_k
-                ndummy = ndummy + 1
-                P(ntotal+ndummy) = P(i)
-                ! P(ntotal+ndummy)%x(1) =  2*boundary(1, 2) - P(i)%x(1)
-                P(ntotal+ndummy)%x(1) =  P(i)%x(1) - thickness
-                ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
-                ! P(ntotal+ndummy)%Type =  P(i)%Type
-            end if
-        end do
+    !         !!! Monaghan type dummy particle on the Left side
+    !         if ( P(i)%x(1) - boundary(1, 2) < P(i)%SmoothingLength * scale_k ) then
+    !             thickness = P(i)%SmoothingLength * scale_k
+    !             ndummy = ndummy + 1
+    !             P(ntotal+ndummy) = P(i)
+    !             ! P(ntotal+ndummy)%x(1) =  2*boundary(1, 2) - P(i)%x(1)
+    !             P(ntotal+ndummy)%x(1) =  P(i)%x(1) - thickness
+    !             ! P(ntotal+ndummy)%v(:) =  P(i)%v(:)
+    !             ! P(ntotal+ndummy)%Type =  P(i)%Type
+    !         end if
+    !     end do
 
-    end subroutine undex_chamber_dp_2
+    ! end subroutine undex_chamber_dp_2
 
     subroutine undex_dp_1(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
@@ -443,6 +446,7 @@ contains
         logical, save :: first_entry = .true.
         integer i
 
+        scale_k = 0
         boundary = reshape([-huge(0._8), -huge(0._8),  &
                              huge(0._8),  huge(0._8)], &
                              shape(boundary))
@@ -600,52 +604,52 @@ contains
 
     end subroutine dam_break_dp
 
-    subroutine taylor_rod_dp_1(ntotal, ndummy, P)
-        integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy
-        type(Particle), intent(inout) :: P(:)
-        real(8) :: dx
-        save dx
-        real(8) :: wall_domain(4)
-        integer :: Nx, Ny
-        integer :: layer
-        logical :: first_entry = .true.
-        save first_entry
+    ! subroutine taylor_rod_dp_1(ntotal, ndummy, P)
+    !     integer, intent(in) :: ntotal
+    !     integer, intent(inout) :: ndummy
+    !     type(Particle), intent(inout) :: P(:)
+    !     real(8) :: dx
+    !     save dx
+    !     real(8) :: wall_domain(4)
+    !     integer :: Nx, Ny
+    !     integer :: layer
+    !     logical :: first_entry = .true.
+    !     save first_entry
 
-        integer :: index
-        integer i, j
+    !     integer :: index
+    !     integer i, j
 
-        ndummy = 0
+    !     ndummy = 0
 
-        if ( first_entry ) then
-            dx = abs(P(2)%x(1) - P(2)%x(2)) / 2
-            first_entry = .false.
-        end if
+    !     if ( first_entry ) then
+    !         dx = abs(P(2)%x(1) - P(2)%x(2)) / 2
+    !         first_entry = .false.
+    !     end if
 
-        layer = 4
-        wall_domain = [-1.14, 1.9, 0., 0.]  * 1e-2
-        wall_domain(3) = - layer * dx
+    !     layer = 4
+    !     wall_domain = [-1.14, 1.9, 0., 0.]  * 1e-2
+    !     wall_domain(3) = - layer * dx
 
-        Nx = floor((wall_domain(2) - wall_domain(1))/dx)
-        Ny = floor((wall_domain(4) - wall_domain(3))/dx)
-        do i = 1, Nx
-            do j = 1, Ny
-                ndummy = ndummy + 1
-                index = ntotal + ndummy
-                P(index)%x(:)  = [wall_domain(2) - (i-0.5)*dx, &
-                                wall_domain(4) - (j-0.5)*dx]
-                P(index)%v(:)  = 0
-                P(index)%Density         = 7850
-                P(index)%Mass            = P(index)%Density * dx * dx
-                P(index)%Pressure        = 0
-                P(index)%InternalEnergy  = 0
-                P(index)%SoundSpeed      = 5000
-                P(index)%Type           = -P(1)%Type
-                P(index)%SmoothingLength = dx * 2
-            end do
-        end do
+    !     Nx = floor((wall_domain(2) - wall_domain(1))/dx)
+    !     Ny = floor((wall_domain(4) - wall_domain(3))/dx)
+    !     do i = 1, Nx
+    !         do j = 1, Ny
+    !             ndummy = ndummy + 1
+    !             index = ntotal + ndummy
+    !             P(index)%x(:)  = [wall_domain(2) - (i-0.5)*dx, &
+    !                             wall_domain(4) - (j-0.5)*dx]
+    !             P(index)%v(:)  = 0
+    !             P(index)%Density         = 7850
+    !             P(index)%Mass            = P(index)%Density * dx * dx
+    !             P(index)%Pressure        = 0
+    !             P(index)%InternalEnergy  = 0
+    !             P(index)%SoundSpeed      = 5000
+    !             P(index)%Type           = -P(1)%Type
+    !             P(index)%SmoothingLength = dx * 2
+    !         end do
+    !     end do
 
-    end subroutine taylor_rod_dp_1
+    ! end subroutine taylor_rod_dp_1
 
     subroutine taylor_rod_dp_2(ntotal, ndummy, P)
         integer, intent(in) :: ntotal
@@ -655,6 +659,7 @@ contains
 
         integer i
 
+        scale_k = 0
         select case (Config%skf)
         case (1)
             scale_k = 2

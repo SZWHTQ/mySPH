@@ -121,7 +121,7 @@ contains
                         Shear_prev(:, :, i) = Shear(:, :, i)
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2)*dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
-                        Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                        Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
                     end if
 #endif
                 end do
@@ -149,7 +149,7 @@ contains
                     if ( abs(P(i)%Type) == 8 ) then
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2) * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
-                        Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                        Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
                     end if
 #endif
                 end do
@@ -174,7 +174,7 @@ contains
                     if ( abs(P(i)%Type) == 8 ) then
                         Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
-                        Shear(:, :, i) = Shear(:, :, i) * min(1., sqrt(((SigmaY**2)/3)/J2))
+                        Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
                     end if
 #endif
                     cntemp = courant_num(P(i)%SmoothingLength, P(i)%divergenceVelocity, P(i)%SoundSpeed)

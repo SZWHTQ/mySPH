@@ -8,7 +8,8 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     use sph,                only: Particle, allocateNeighborList, allocateParticleList
     use nnps_m,             only: search_particles, print_statistics
     use APS_M,              only: BGGS !! Asymmetric Particle Search
-    use density_m,          only: sum_density, con_density, con_density_riemann, sum_density_dsph
+    use density_m,          only: sum_density, con_density, con_density_riemann, &
+                                  sum_density_dsph, norm_density
     use visc_m,             only: viscosity
     use divergence_m,       only: divergence
     use in_force_m,         only: in_force
@@ -90,6 +91,8 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         write(err, "(1X, A, I0)") "Error density scheme ", Config%pa_sph
         error stop
     end select
+
+    ! call norm_density(Particles(1:ntotal))
 
     call detonation_wave(Config%i_time_step, Config%delta_t, Particles(1:ntotal))
 

@@ -23,7 +23,7 @@ if(PROF)
     message(STATUS "Gprof profiling enabled")
 endif()
 
-set(OMP OFF CACHE BOOL "Enable OpenMP")
+set(OMP ON CACHE BOOL "Enable OpenMP")
 if(OMP)
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -lgomp -fopenmp")
     message(STATUS "OpenMP enabled")

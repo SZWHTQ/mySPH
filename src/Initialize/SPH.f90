@@ -47,7 +47,7 @@ contains
     subroutine writeParticle(P, unit, iotype, v_list, iostat, iomsg)
         class(Particle), intent(in) :: P
         integer, intent(in) :: unit
-        character(len=*), intent(in) :: iotype
+        character(len=*), intent(in), optional :: iotype
         integer, intent(in), optional :: v_list(:)
         integer, intent(out), optional :: iostat
         character(len=*), intent(inout), optional :: iomsg

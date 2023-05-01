@@ -74,6 +74,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     else
         call search_particles(Config%nnps, Particles(1:N))
     end if
+    ! call BGGS(Particles(1:ntotal+ndummy), Particles(1:N), skipItsSelf=.true.)
 
     !!! Density approximation or change rate
     select case (Config%pa_sph)

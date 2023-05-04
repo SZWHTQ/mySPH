@@ -20,10 +20,10 @@ SPH = 2
 ##    1. Direct Search Method
 ##    2. Background-Grid Link List Search Method
 ##    3. Tree Search Method
-NNPS = 3
+NNPS = 2
 
 ## Indicator Variables for Smooth Length Estimation
-SLE = 2
+SLE = 0
 
 ## Smooth Kernel Function : 
 ##    1. cubic spline kernel by w4 - spline (monaghan 1985)
@@ -40,7 +40,7 @@ printInterval = 500
 
 saveInterval = 100
 
-maxTimeStep = 10000
+maxTimeStep = 50000
 
 ## Time Step
 deltaT = 5.0e-5
@@ -55,7 +55,7 @@ externalForce       = true   # if "dummyParticle" or "gravity" is true, "externa
 gravity             = false
 artificialViscosity = false
 artificialHeat      = false
-normalizeDensity    = false
+normalizeDensity    = true
 
 
 [Parallel]

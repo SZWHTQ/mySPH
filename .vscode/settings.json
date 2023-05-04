@@ -1,10 +1,5 @@
 {
     "makefile.extensionOutputFolder": "./.vscode",
-    "fortran.linter.includePaths": [
-        "~/Repository/include",
-        "${workspaceFolder}/module",
-        "${workspaceFolder}/build/**"
-    ],
     "fortran.linter.modOutput": "${workspaceFolder}/module/",
     "cmake.configureOnOpen": false,
     "cmake.configureArgs": [
@@ -162,5 +157,10 @@
     "latex-workshop.latex.autoClean.run": "onFailed",
     "latex-workshop.latex.recipe.default": "lastUsed",
     "latex-workshop.view.pdf.internal.synctex.keybinding": "double-click",
-    "C_Cpp.inlayHints.referenceOperator.enabled": true
+    "C_Cpp.inlayHints.referenceOperator.enabled": true,
+    "fortran.linter.includePaths": [
+        "~/Repository/include",
+        "${workspaceFolder}/module",
+        "${workspaceFolder}/build/**"
+    ]
 }

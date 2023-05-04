@@ -51,7 +51,11 @@ contains
         mp     = 40
         xl     = 1.0e-3
         dx     = xl / mp
-        drive  = 1.0e-3
+        if ( Config%i_time_step <= 10000 ) then
+            drive = 0
+        else
+            drive = 1.0e-3
+        end if
         layer = 1
 
         do l = 1, layer
@@ -100,7 +104,7 @@ contains
             P(ntotal+i)%Mass            = P(ntotal+i)%Density * dx**2
             P(ntotal+i)%Pressure        = 0
             P(ntotal+i)%InternalEnergy  = 357.1
-            P(ntotal+i)%Type           = -P(1)%Type
+            P(ntotal+i)%Type            = -P(1)%Type
             P(ntotal+i)%SmoothingLength = dx
         end do
 

@@ -3,7 +3,7 @@
     "fortran.linter.modOutput": "${workspaceFolder}/module/",
     "cmake.configureOnOpen": false,
     "cmake.configureArgs": [
-        "-DOMP=on",
+        "-DOMP=off",
         "-Wno-dev",
         "-DCMAKE_Fortran_COMPILER=gfortran",
     ],
@@ -39,7 +39,7 @@
         }
     },
     "cmake.debugConfig": {
-        "args": ["../data/armcoIronCollide"],
+        "args": ["../data/undexChamber"],
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "latex-workshop.latex.autoBuild.run": "onSave",

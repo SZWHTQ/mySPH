@@ -257,5 +257,72 @@ contains
         write (FMT, '(a, i0, a)') "(", fdigit, "x, 3a)"
         write (*, FMT, advance='no') char(13), char(8), char(13)
     end subroutine
+    
+    subroutine MCPE(A,B,X) !列主元消去法(Maximal Column Pivoting Elimination)
+        implicit none
+        real(8) :: A(:,:), B(:), X(:), buffer, temp
+        real(8), allocatable :: bakA(:,:), bakB(:)
+        integer :: n, p
+        integer :: i, j, k, flag
+
+        !初始化及数据备份
+        n = size(A,2)
+        allocate(bakA(n,n), bakB(n))
+        bakA=A; bakB=B
+
+        !重排主元
+        do i = 1, n
+            p=i
+            !取最大
+            do j = i+1, n
+                if ( abs(A(p,i)) < abs(A(j,i)) ) p=j
+            end do
+            !行变换
+            do j = 1, n
+                buffer = A(i,j)
+                A(i,j) = A(p,j)
+                A(p,j) = buffer
+            end do
+            buffer = B(i)
+            B(i) = B(p)
+            B(P) = buffer
+        end do
+
+        !A,B行变换消元
+        do i = 1, n-1
+            do j = i+1, n
+                buffer = A(j,i) / A(i,i)
+                temp = 0
+                do k = i, n
+                    A(j,k) = A(j,k)-A(i,k)*buffer
+                    temp = temp + A(j,k)**2
+                end do
+                B(j)=B(j)-B(i)*buffer
+                if ( temp==0 ) then
+                    if ( B(j)==0 ) then
+                        flag=2
+                        return
+                    else
+                        flag=3
+                        return
+                    end if
+                end if
+            end do
+        end do
+
+        !求解X
+        X(n)=B(n)/A(n,n)
+        do i = n-1, 1, -1
+            do j = n, i+1, -1
+                B(i)=B(i)-A(i,j)*X(j)
+            end do
+            X(i)=B(i)/A(i,i)
+        end do
+
+        !恢复并释放内存
+        A=bakA; B=bakB
+        deallocate(bakA, bakB)
+
+    end subroutine MCPE
 
 end module tools_m

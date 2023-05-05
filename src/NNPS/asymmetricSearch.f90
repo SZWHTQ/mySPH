@@ -50,7 +50,7 @@ contains
         class(grid_t), intent(inout) :: self
         type(Particle), intent(in) :: Particles(:)
         integer, allocatable :: cell(:)
-        integer :: ntotal
+        integer :: ntotal, maxloc(Field%Dim), minloc(Field%Dim)
 
         integer i, d, dd, ddd, n
 
@@ -62,8 +62,14 @@ contains
 
         do i = 1, ntotal
             do d = 1, Field%Dim
-                if ( Particles(i)%x(d) > self%maxCoor(d) ) self%maxCoor(d) = Particles(i)%x(d)
-                if ( Particles(i)%x(d) < self%minCoor(d) ) self%minCoor(d) = Particles(i)%x(d)
+                if ( Particles(i)%x(d) > self%maxCoor(d) ) then
+                    self%maxCoor(d) = Particles(i)%x(d)
+                    maxloc(d) = i
+                end if
+                if ( Particles(i)%x(d) < self%minCoor(d) ) then
+                    self%minCoor(d) = Particles(i)%x(d)
+                    minloc(d) = i
+                end if
             end do
         end do
 
@@ -163,6 +169,9 @@ contains
         integer, allocatable :: cell(:), cellNumPerHSML(:)
         real(8), allocatable :: dx(:)
         real(8) :: dr, r, mhsml
+#ifdef _OPENMP
+        integer :: ChunkSize= 0
+#endif
 
         integer i, j, k, d, xcell, ycell, zcell
 
@@ -177,6 +186,9 @@ contains
 
         numTargets = size(Targets)
         numPairs   = size(Targets(1)%neighborList)
+#ifdef _OPENMP
+        ChunkSize = numTargets / Config%nthreads
+#endif
 
         ! write(*,"(2(A, I0))") "Num of targets: ", numTargets, &
         !                       " Num of sources: ", size(Sources)
@@ -190,7 +202,7 @@ contains
         !$OMP PARALLEL DO PRIVATE(i, j, k, d, xcell, ycell, zcell) &
         !$OMP PRIVATE(cell, maxCell, minCell, cellNumPerHSML)      &
         !$OMP PRIVATE(dx, dr, r, mhsml)                            &
-        !$OMP SCHEDULE(dynamic, Config%chunkSize)
+        !$OMP SCHEDULE(dynamic, ChunkSize)
         do i = 1, numTargets
             if ( Targets(i)%State == -1 ) cycle
             cell = Grid%locate(Targets(i))
@@ -227,6 +239,8 @@ contains
                                 if ( Targets(i)%neighborNum <= numPairs ) then
                                     Targets(i)%neighborList(Targets(i)%neighborNum) = j
                                 else !! Targets(i)%neighborNum > numPairs
+                                    write(*,"(2(A, I0))") "Particle ", i, &
+                                                        " Number of Neighbors exceeds maximum: ", numPairs
                                     Targets(i)%neighborList = [Targets(i)%neighborList, j]
                                 end if !! Targets(i)%neighborNum <= numPairs
                                 call kernel(r, dx, mhsml,                 &

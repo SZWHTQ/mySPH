@@ -15,12 +15,12 @@ set cbrange [0:1e3]
 set cbtics font ",12"
 set cblabel "Pressure/MPa" offset 0,0
 
-do for [i=0:300:1] {
+do for [i=1:100:1] {
     set title sprintf('%.3fμs', i*1e-5*1e6)
-    plot sprintf('./output/Type_6_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 lw 0.4 , \
-         sprintf('./output/Type_5_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 lw 0.4 , \
-        #  sprintf('./output/Type_-6_%d.dat', i) using 2:3 pt 6 lw 0.4 lt rgb "green"
-    pause 0.2
+    plot sprintf('./output/Type_6_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 , \
+         sprintf('./output/Type_5_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 , \
+         sprintf('./output/Type_8_%d.dat', i) using 4:5 pt 6 ps 1 lw 1 lt rgb "orange"
+    pause 0.5
 }
 
-pause -1
+pause -1 "press enter to exit"

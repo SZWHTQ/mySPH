@@ -29,7 +29,7 @@ contains
         use eos_m, only: mie_gruneisen_eos_of_water
         integer, intent(inout) :: ntotal, nbuffer
         type(Particle), intent(inout) :: Particles(:), Buffers(:)
-        type(Particle), allocatable :: Ghosts(:)
+        type(Particle), allocatable :: Ghosts(:), Temp(:)
         integer :: N
         type(rectangle_t) :: FluidDomain, AllDomain
         real(8), dimension(2, 4) :: fixedPoints, normal
@@ -43,6 +43,7 @@ contains
         entry_count = entry_count + 1
 
         if ( entry_count == 1 ) then
+            call allocateParticleList(Ghosts, nbuffer, Field%Dim, Field%pairNum)
             nbuffer = 0
             dx = abs(Particles(2)%x(1) - Particles(2)%x(2))
             FluidDomain = rectangle_t( &
@@ -102,20 +103,24 @@ contains
                 end do
             end do !! l
             do i = 1, nbuffer
-                !! Buffer Particles Fluid Property
+                !! Buffer Particle's Physical Quantity
                 Buffers(i)%State = 1
                 Buffers(i)%Density = 1000
-                Buffers(i)%Mass = Buffers(nbuffer)%Density * dx**2
+                Buffers(i)%Mass = Buffers(i)%Density * dx**2
                 Buffers(i)%InternalEnergy = 1e8
-                call mie_gruneisen_eos_of_water(1d3, 1d8, Buffers(i)%Pressure)
                 Buffers(i)%Type  = 6
                 Buffers(i)%SmoothingLength = 1.5 * dx
-
+                call mie_gruneisen_eos_of_water(Buffers(i)%Density,        &
+                                                Buffers(i)%InternalEnergy, &
+                                                Buffers(i)%Pressure)
+                !! Ghosts Particle's Physical Quantity
                 Ghosts(i)%x = calcGhostPosition(Buffers(i))
                 Ghosts(i)%SmoothingLength = 1.5 * dx
             end do
         else !! entry_count /= 1
         ! end if !! entry_count == 1
+
+            call allocateParticleList(Ghosts, size(Buffers), Field%Dim, Field%pairNum)
 
             do i = 1, ntotal !! Fluid Particle
                 if ( BufferDomainContain(Particles(i)) ) then
@@ -160,12 +165,15 @@ contains
         ! call bufferShrink(Buffers, nbuffer)
         ! Buffers = [Buffers(1:nbuffer)]
 
-        call allocateParticleList(Ghosts, nbuffer, Field%Dim, Field%pairNum)
+        ! call allocateParticleList(Ghosts, nbuffer, Field%Dim, Field%pairNum)
 
-        call BGGS(Ghosts, Particles(1:ntotal))
+        allocate(Temp, source=[Particles(1:ntotal)])
+
+        call BGGS(Ghosts, Temp)
 
         do i = 1, nbuffer
-            call solveBufferProperty(Buffers(i), Ghosts(i), Particles)
+            ! write(*,"(A, I0)") "Solve Buffer Property ", nbuffer
+            call solveBufferProperty(Buffers(i), Ghosts(i), Temp)
             Particles(ntotal + i) = Buffers(i)
         end do
 
@@ -232,12 +240,13 @@ contains
     end subroutine gen_undex_chamber_nrbc
 
     subroutine solveBufferProperty(buffer, ghost, Particles)
-        use tools_m,  only: dyadic_product
+        use tools_m,  only: dyadic_product, MCPE
         ! use kernel_m, only: kernel
         type(Particle), intent(inout) :: buffer
         type(Particle), intent(in)    :: ghost
         type(Particle), intent(in)    :: Particles(:)
         real(8), allocatable :: A(:,:), Solve(:, :), h(:)
+        real(8) :: sum, temp
         ! real(8) :: wi
         integer :: m, flag
 
@@ -246,8 +255,11 @@ contains
         m = Field%Dim + 1
         allocate(A(m, m), Solve(m, Field%Dim+6), h(m), source=0._8)
         h = 0
+        sum = 0
         do j = 1, ghost%neighborNum
             l = ghost%neighborList(j)
+            temp = ghost%w(j) * Particles(l)%Mass/Particles(l)%Density
+            sum = sum + temp
             associate (aux => [ghost%w(j), ghost%dwdx(:, j)] &
                 * Particles(l)%Mass/Particles(l)%Density)
             h = h + aux * [1._8, Particles(l)%x-ghost%x]
@@ -264,14 +276,15 @@ contains
             end associate
         end do
 
-        Solve(1, :) = Solve(1, :) / h(1)
-        do d = 2, Field%Dim + 1
-            Solve(d, :) = Solve(d, :) / h(d)
-        end do
+        ! Solve(1, :) = Solve(1, :) / h(1)
+        ! do d = 2, Field%Dim + 1
+        !     Solve(d, :) = Solve(d, :) / h(d)
+        ! end do
 
         h = 0
         do j = 1, Field%Dim + 6
-            call DGESV(m,1, A,m, h, Solve(:, j),m, flag)
+            ! call DGESV(m,1, A,m, h, Solve(:, j),m, flag)
+            call MCPE(A, Solve(:,j)*1, Solve(:,j))
         end do
 
         buffer%Mass               = Solve(1, 1) + dot_product((buffer%x - ghost%x), Solve(2:m, 1))

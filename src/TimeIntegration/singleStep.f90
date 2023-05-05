@@ -55,7 +55,11 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     if ( Config%dummy_parti_w ) call gen_dummy_particle(ndummy, Particles(1:ntotal))
 
     if ( Config%open_boundary_w) then
-        call allocateParticleList(Buffers, nbuffer, Field%Dim, 1)
+        if (Config%i_time_step == 1) then
+            call allocateParticleList(Buffers, nbuffer, Field%Dim, 1)
+        else
+            allocate(Buffers, source=Particles(ntotal:))
+        end if
         call gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
     else
         nbuffer = 0

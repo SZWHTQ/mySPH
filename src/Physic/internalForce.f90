@@ -43,53 +43,53 @@ contains
 
 
         if ( Config%viscosity_w ) then
-                !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux, vab, vba)
-                do i = 1, ntotal !! All particles
-                !!! Calculate SPH sum for Strain Rate Tensor of Fluid
-                !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
+            !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux, vab, vba)
+            do i = 1, ntotal !! All particles
+            !!! Calculate SPH sum for Strain Rate Tensor of Fluid
+            !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
 #if SOLID
-                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+            if ( abs(P(i)%Type) < 8 ) then !! Fluid
 #endif
-                    do k = 1, P(i)%neighborNum !! All neighbors of each particle
-                        j = P(i)%neighborList(k)
+                do k = 1, P(i)%neighborNum !! All neighbors of each particle
+                    j = P(i)%neighborList(k)
+                    dv = P(j)%v(:) - P(i)%v(:)
+                    do d = 1, Field%Dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
+                        do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
+                            edot(d, dd, i) = edot(d, dd, i) &
+                                + P(j)%Mass/P(j)%Density    &
+                                * dv(d) * P(i)%dwdx(dd, k)
+                            edot(dd, d, i) = edot(dd, d, i) &
+                                + P(j)%Mass/P(j)%Density    &
+                                * dv(dd) * P(i)%dwdx(d, k)
+                            if ( d == dd ) then !! δii = 1, δij = 0
+                                do ddd = 1, Field%Dim
+                                    edot(d, d, i) = edot(d, d, i) &
+                                        - 2._8 / 3                &
+                                        * P(j)%Mass/P(j)%Density  &
+                                        * dv(ddd) * P(i)%dwdx(ddd, k)
+                                end do
+                            end if !! d == dd
+                        end do !! dd
+                    end do !! d
+                end do !! k
+#if SOLID
+            !!! Calculate SPH sum for Strain Rate Tensor and Rotation Rate Tensor of Fluid
+            !!! εab = 1/2 * (va,b + vb,a)
+            !!! Rab = 1/2 * (va,b + vb,a)
+            else if ( present(Shear) ) then !! Solid
+                do k = 1, P(i)%neighborNum !! All neighbors of each particle
+                    j = P(i)%neighborList(k)
                         dv = P(j)%v(:) - P(i)%v(:)
-                        do d = 1, Field%Dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
-                            do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
-                                edot(d, dd, i) = edot(d, dd, i) &
-                                    + P(j)%Mass/P(j)%Density    &
-                                    * dv(d) * P(i)%dwdx(dd, k)
-                                edot(dd, d, i) = edot(dd, d, i) &
-                                    + P(j)%Mass/P(j)%Density    &
-                                    * dv(dd) * P(i)%dwdx(d, k)
-                                if ( d == dd ) then !! δii = 1, δij = 0
-                                    do ddd = 1, Field%Dim
-                                        edot(d, d, i) = edot(d, d, i) &
-                                            - 2._8 / 3                &
-                                            * P(j)%Mass/P(j)%Density  &
-                                            * dv(ddd) * P(i)%dwdx(ddd, k)
-                                    end do
-                                end if !! d == dd
+                        do d = 1, Field%Dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
+                            do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
+                                vab = P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k)
+                                vba = P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k)
+
+                                edot(d, dd, i) = edot(d, dd, i) + 0.5 * (vab + vba)
+                                rdot(d, dd, i) = rdot(d, dd, i) + 0.5 * (vab - vba)
                             end do !! dd
                         end do !! d
-                    end do !! k
-#if SOLID
-                !!! Calculate SPH sum for Strain Rate Tensor and Rotation Rate Tensor of Fluid
-                !!! εab = 1/2 * (va,b + vb,a)
-                !!! Rab = 1/2 * (va,b + vb,a)
-                else if ( present(Shear) ) then !! Solid
-                    do k = 1, P(i)%neighborNum !! All neighbors of each particle
-                        j = P(i)%neighborList(k)
-                            dv = P(j)%v(:) - P(i)%v(:)
-                            do d = 1, Field%Dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
-                                do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
-                                    vab = P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k)
-                                    vba = P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k)
-
-                                    edot(d, dd, i) = edot(d, dd, i) + 0.5 * (vab + vba)
-                                    rdot(d, dd, i) = rdot(d, dd, i) + 0.5 * (vab - vba)
-                                end do !! dd
-                            end do !! d
-                    end do !! k
+                end do !! k
             end if !! Fluid or Solid
 #endif
             end do !! i

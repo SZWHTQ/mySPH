@@ -155,7 +155,7 @@ contains
                 end do
                 !$OMP END PARALLEL DO
                 if ( Config%open_boundary_w ) then
-                    do i = ntotal + 1, ntotal + ndummy
+                    do i = ntotal + 1, ntotal + nbuffer
                         P(i)%x(:) = P(i)%x(:) + Config%delta_t * P(i)%v(:)
                     end do
                 end if
@@ -183,7 +183,7 @@ contains
                 end do
                 !$OMP END PARALLEL DO
                 if ( Config%open_boundary_w ) then
-                    do i = ntotal + 1, ntotal + ndummy
+                    do i = ntotal + 1, ntotal + nbuffer
                         P(i)%x(:) = P(i)%x(:) + Config%delta_t * P(i)%v(:)
                     end do
                 end if

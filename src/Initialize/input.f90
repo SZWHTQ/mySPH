@@ -299,6 +299,7 @@ contains
     end subroutine undex_cylinder
 
     subroutine undex_chamber(ntotal, P)
+        use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         integer :: water_n(2) = [90, 90], &
@@ -308,6 +309,10 @@ contains
         real(8) :: length(2) = [1, 1], tnt_length(2) = [0.1, 0.1]
         real(8) :: delta(2), tnt_delta(2)
         integer i, j, k
+
+        real(8) :: origin(2) = [-0.5, -0.5]
+        integer :: layer, n(2) = [201, 201]
+        integer l
 
         if ( Field%Dim /= 2 )  Field%Dim = 2
 
@@ -320,13 +325,15 @@ contains
         do i = 1, water_n(1)
             do j = 1, water_n(2)*2 + int(tnt_length(2)/delta(2)+1)
                 k = ntotal + (i-1) * (water_n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
+                P(k)%x(:)            = water_origin &
+                                        + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 1e8
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
-                P(k)%x(:)            = water_origin + [i-1, j-1] * delta
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
         end do
         ntotal = k
@@ -335,13 +342,15 @@ contains
         do i = 1, int(tnt_length(1)/delta(1)+1)
             do j = 1, water_n(2)
                 k = ntotal + (i-1) * water_n(2) + j
-                P(k)%x(:) = [tnt_origin(1), water_origin(2)] + [i-1, j-1] * delta
+                P(k)%x(:)            = [tnt_origin(1), water_origin(2)] &
+                                        + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 1e8
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
         end do
         ntotal = k
@@ -350,13 +359,15 @@ contains
         do i = 1, int(tnt_length(1)/delta(1)+1)
             do j = 1, water_n(2)
                 k = ntotal + (i-1) * water_n(2) + j
-                P(k)%x(:) = [tnt_origin(1), water_origin(2)] + [0._8, length(2)] + [i-1, 1-j] * delta
+                P(k)%x(:)            = [tnt_origin(1), water_origin(2)] &
+                                        + [0._8, length(2)] + [i-1, 1-j] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 1e8
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
         end do
         ntotal = k
@@ -365,13 +376,15 @@ contains
         do i = 1, water_n(1)
             do j = 1, water_n(2)*2 + int(tnt_length(2)/delta(2)+1)
                 k = ntotal + (i-1) * (water_n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
-                P(k)%x(:) = [tnt_origin(1)+tnt_length(1)+delta(1), water_origin(2)] + [i-1, j-1] * delta
+                P(k)%x(:)            = [tnt_origin(1)+tnt_length(1)+delta(1), water_origin(2)] &
+                                        + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 1e8
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
         end do
         ntotal = k
@@ -381,16 +394,85 @@ contains
         do i = 1, tnt_n(1)
             do j = 1, tnt_n(2)
                 k = ntotal + (i-1) * tnt_n(2) + j
-                P(k)%x(:) = tnt_origin + [i-1, j-1] * tnt_delta
+                P(k)%x(:)             = tnt_origin + [i-1, j-1] * tnt_delta
                 P(k)%Density          = 1630
                 P(k)%Mass             = P(k)%Density * tnt_delta(1)*tnt_delta(2)
-                P(k)%Pressure         = 0
                 P(k)%InternalEnergy   = 4.29e6
                 P(k)%Type             = 5
                 P(k)%SmoothingLength  = 1.5 * sum(tnt_delta)/2
+                call jwl_eos(P(k)%Density, P(k)%InternalEnergy, P(k)%Pressure)
             end do
         end do
         ntotal = k
+
+        delta = length / (n - 1)
+
+        layer = 6
+        do l = 1, layer
+            !!! Monaghan type dummy particle on the Upper side
+            do i = 1, n(1) + 2*(l+1)
+                k = ntotal + i
+                P(k)%x(1) = origin(1) + delta(1) * (i-l-2)
+                P(k)%x(2) = length(2)+origin(2) + delta(2) * (l+1)
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+            end do
+            ntotal = k
+
+            !!! Monaghan type dummy particle on the Lower side
+            do i = 1, n(1) + 2*(l+1)
+                k = ntotal + i
+                P(k)%x(1) = origin(1) + delta(1) * (i-l-2)
+                P(k)%x(2) = origin(2) - delta(2) * (l+1)
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+            end do
+            ntotal = k
+
+            !!! Monaghan type dummy particle on the Left side
+            do i = 1, n(2) + 2*l
+                k = ntotal + i
+                P(k)%x(1) = origin(1) - delta(1) * (l+1)
+                P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+            end do
+            ntotal = k
+
+            !!! Monaghan type dummy particle on the Right side
+            do i = 1, n(2) + 2*l
+                k = ntotal + i
+                P(k)%x(1) = length(1) + origin(1) + delta(1) * (l+1)
+                P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+            end do
+            ntotal = k
+        end do
 
     end subroutine undex_chamber
 
@@ -427,7 +509,7 @@ contains
                 P(ntotal)%Pressure     = 0
                 P(ntotal)%InternalEnergy     = 2e7
                 P(ntotal)%Type = 6
-                P(ntotal)%Mass  = P(ntotal)%Density * dx*dx 
+                P(ntotal)%Mass  = P(ntotal)%Density * dx*dx
                 P(ntotal)%SmoothingLength  = dx
             end do
         end do
@@ -511,17 +593,17 @@ contains
             do i = 1, Nx
                 ! k = (i-1) * Ny + j
                 k = (j-1) * Nx + i
-                P(k)%x(:)  = [solid_domain(1) + (i-0.5) * dx, &
-                              solid_domain(3) + (j-0.5) * dx]
-                P(k)%v(1)  = 0
-                P(k)%v(2)  = -221
-                P(k)%Density   = 7850
-                P(k)%Mass  = P(k)%Density * dx * dx
-                P(k)%Pressure     = 0
-                P(k)%InternalEnergy     = 0
-                P(k)%SoundSpeed     = 5000
-                P(k)%Type = 8
-                P(k)%SmoothingLength  = dx * 2
+                P(k)%x(:)            = [solid_domain(1) + (i-0.5) * dx, &
+                                        solid_domain(3) + (j-0.5) * dx]
+                P(k)%v(1)            = 0
+                P(k)%v(2)            = -221
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = dx * 2
             end do
         end do
 

@@ -304,7 +304,7 @@ contains
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
-                P(k)%Type           = -P(1)%Type
+                P(k)%Type            = -P(1)%Type
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
             end do
             first_entry = .false.

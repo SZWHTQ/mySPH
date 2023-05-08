@@ -140,7 +140,7 @@ contains
                 aver_edot(d, d) = aver_edot(d, d) - aux
             end do
 
-            tdsdt(i) = 1 / P(i)%Density * sum(Shear(:, :, i) * aver_edot(:, :))
+            tdsdt(i) = sum(Shear(:, :, i) * aver_edot(:, :)) / P(i)%Density
 
             select case ( abs(P(i)%Type) )
             case (8)
@@ -193,7 +193,7 @@ contains
                         aux = (P(i)%Pressure + P(j)%Pressure) * rhoij
 
                         !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(: ,i)                  &
+                        dvdt(:, i) = dvdt(: ,i)                    &
                             + P(j)%Mass                            &
                             * ( - aux * P(i)%dwdx(:, k)            &
                                 + matmul(  P(i)%Viscocity*edot(:, :, i)  &

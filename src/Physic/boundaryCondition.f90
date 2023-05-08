@@ -321,8 +321,8 @@ contains
             ny = 5
 
             do i = 1, ny
-                P(i)%x = [0, i-1] * dx
-                P(i)%v = 0
+                ! P(i)%x = [0, i-1] * dx
+                ! P(i)%v = 0
                 D(i)%Velocity = 0
             end do
 

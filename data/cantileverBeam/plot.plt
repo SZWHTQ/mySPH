@@ -18,7 +18,7 @@ set cbrange [0:250]
 set cbtics 25 font ",12"
 
 do for [i=0:100:1] {
-    set title sprintf('%dμs', i)
+    set title sprintf('%.1fms', i*0.1)
     plot sprintf('./output/Type_8_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) palette pt 6 ps 1
     pause 0.05
 }

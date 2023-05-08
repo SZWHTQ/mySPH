@@ -65,7 +65,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         nbuffer = 0
     end if
 
-    call fixedBoundary(Particles, Delta)
+    ! call fixedBoundary(Particles, Delta)
 
     N = ntotal + ndummy + nbuffer
 

@@ -4,22 +4,23 @@ nick = "undex_chamber"
 
 [Parameter]
 DIM = 2
-maxN   = 50000
-kPair  = 50
+maxN   = 55000
+kPair  = 100
 NNPS   = 2
 SKF    = 1
 SLE    = 0
-deltaT = 5e-7
-printInterval = 100
-saveInterval  = 20
-maxTimeStep   = 5000
+deltaT = 2.5e-7
+printInterval = 200
+saveInterval  = 100
+maxTimeStep   = 10000
 monitorParticle = 1
 
 summationDensity    = false
-# dummyParticle       = true
+dummyParticle       = false
 artificialViscosity = true
 # gravity = true
 normalizeDensity    = true
+openBoundary        = false
 
 [Parallel]
 OMP_NUM_THREADS = 6

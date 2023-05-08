@@ -1,19 +1,17 @@
 cmake_minimum_required(VERSION 3.11)
 
-# set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_NAME Linux)
 
 # set(CMAKE_BUILD_TYPE Debug)
 
 project(
     "mySPH"
     LANGUAGES "Fortran"
-    VERSION "0.1.0"    
+    VERSION "0.1.1"
 )
+# set(CMAKE_GENERATOR "Ninja")
+add_definitions("-std=f2018 -cpp")
 
-# file(GLOB_RECURSE srcs0 src/0/*.f90)
-# file(GLOB_RECURSE srcs1 src/1/*.f90)
-# file(GLOB_RECURSE srcs2 src/2/*.f90)
-# file(GLOB_RECURSE srcs3 src/3/*.f90)
 set(srcs)
 add_subdirectory("src")
 
@@ -27,9 +25,9 @@ if(PROF)
     message(STATUS "Gprof profiling enabled")
 endif()
 
-set(OMP OFF CACHE BOOL "Enable OpenMP")
+set(OMP ON CACHE BOOL "Enable OpenMP")
 if(OMP)
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -lgomp -fopenmp")
     message(STATUS "OpenMP enabled")
 else(OMP)
     message(STATUS "OpenMP disabled")
@@ -42,7 +40,7 @@ endif()
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 
 add_library(
-    mySPH-lib
+    ${PROJECT_NAME}-lib
     ${srcs}
 )
 
@@ -52,19 +50,19 @@ if(LOCAL_TOMLF)
     if(Toml-f_FOUND)
         message(STATUS "Local toml-f library found")
         target_include_directories(
-            mySPH-lib
+            ${PROJECT_NAME}-lib
             PRIVATE
             ${Toml-f_INCLUDE_DIR}
         )
         target_link_libraries(
-            mySPH-lib
+            ${PROJECT_NAME}-lib
             ${Toml-f_LIBRARY}
         )
     elseif(NOT Toml-f_FOUND)
         message(STATUS "Local toml-f library not found, downloading and building it")
         include(toml-f)
         target_link_libraries(
-            mySPH-lib
+            ${PROJECT_NAME}-lib
             toml-f
         )
     endif(Toml-f_FOUND)
@@ -72,24 +70,29 @@ elseif(NOT LOCAL_TOMLF)
     message(STATUS "Downloading and building toml-f")
     include(toml-f)
     target_link_libraries(
-        mySPH-lib
+        ${PROJECT_NAME}-lib
         toml-f
     )
 endif(LOCAL_TOMLF)
 
+target_link_libraries(
+    ${PROJECT_NAME}-lib
+    blas
+    lapack
+)
 
 add_executable(
-    mySPH
-    src/main.f90
+    ${PROJECT_NAME}
+    "src/main.f90"
 )
 
 target_link_libraries(
     ${PROJECT_NAME}
-    mySPH-lib
+    ${PROJECT_NAME}-lib
 )
 
 set_target_properties(
-    mySPH-lib
+    ${PROJECT_NAME}-lib
     PROPERTIES
     POSITION_INDEPENDENT_CODE TRUE
     OUTPUT_NAME "${PROJECT_NAME}"
@@ -107,5 +110,5 @@ set_target_properties(
     Fortran_MODULE_DIRECTORY "${PROJECT_SOURCE_DIR}/module"
 )
 
-enable_testing()
-add_subdirectory(test)
+# enable_testing()
+# add_subdirectory(test)

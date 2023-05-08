@@ -40,9 +40,9 @@ contains
 
     end subroutine factor3
 
-    subroutine decompose(itype, x, extend, nsub, sub_ntotal, sub_ndummy, sub_index)
+    subroutine decompose(Type, x, extend, nsub, sub_ntotal, sub_ndummy, sub_index)
         use geometry_m
-        integer, intent(in)  :: itype(:)
+        integer, intent(in)  :: Type(:)
         real(8), intent(in)  :: x(:, :)
         real(8), intent(in)  :: extend
         integer, intent(in)  :: nsub
@@ -64,7 +64,7 @@ contains
             ! write(*,*) "Initialize Grid"
         end if
 
-        call distribute_point(itype, x, grid, sub_ntotal, sub_ndummy, sub_index)
+        call distribute_point(Type, x, grid, sub_ntotal, sub_ndummy, sub_index)
 
         ! write(*, "(A)") " >> Statistics: OpenMP Grid Info: "
         ! write(*, "(3X, A15, 3(A17), 3(A8))") "Center-X", "Center-Y", "Length-X", "Length-Y", &
@@ -176,10 +176,10 @@ contains
 
     end subroutine equally_decompose
 
-    subroutine distribute_point(itype, x, grid, sub_ntotal, sub_ndummy, sub_index)
+    subroutine distribute_point(Type, x, grid, sub_ntotal, sub_ndummy, sub_index)
         !$ use omp_lib
         use geometry_m
-        integer, intent(in)  :: itype(:)
+        integer, intent(in)  :: Type(:)
         real(8), intent(in)  :: x(:, :)
         class(geometry_t), intent(in)  :: grid(:, :, :, :)
         integer, intent(out) :: sub_ntotal(:)
@@ -202,7 +202,7 @@ contains
                 do i = 1, size(grid, 1)
                     if ( grid(i, 1, 1, 1)%contain(point_t(x(:,n), n)) ) then
                         cell_id = grid(i, 1, 1, 1)%index
-                        if ( itype(n) > 0 ) then
+                        if ( Type(n) > 0 ) then
                             sub_ntotal(cell_id) = sub_ntotal(cell_id) + 1
                             sub_index(cell_id,sub_ntotal(cell_id)) = n
                         end if
@@ -220,7 +220,7 @@ contains
                     do j = 1, size(grid, 2)
                         if ( grid(i, j, 1, 1)%contain(point_t(x(:,n), n)) ) then
                             cell_id = grid(i, j, 1, 1)%index
-                            if ( itype(n) > 0 ) then
+                            if ( Type(n) > 0 ) then
                                 sub_ntotal(cell_id) = sub_ntotal(cell_id) + 1
                                 sub_index(cell_id,sub_ntotal(cell_id)) = n
                             end if
@@ -241,7 +241,7 @@ contains
                         do k = 1, size(grid, 3)
                             if ( grid(i, j, k, 1)%contain(point_t(x(:,n), n)) ) then
                                 cell_id = grid(i, j, k, 1)%index
-                                if ( itype(n) > 0 ) then
+                                if ( Type(n) > 0 ) then
                                     sub_ntotal(cell_id) = sub_ntotal(cell_id) + 1
                                     sub_index(cell_id,sub_ntotal(cell_id)) = n
                                 end if
@@ -264,7 +264,7 @@ contains
                 distributed = .false.
                 do i = 1, size(grid, 1)
                     if ( grid(i, 1, 1, 1)%contain(point_t(x(:,n), n)) ) then
-                        if ( itype(n) < 0 ) then
+                        if ( Type(n) < 0 ) then
                             cell_id = grid(i, 1, 1, 1)%index
                             sub_ndummy(cell_id) = sub_ndummy(cell_id) + 1
                             sub_index(cell_id,sub_ntotal(cell_id)+sub_ndummy(cell_id)) = n
@@ -282,7 +282,7 @@ contains
                 do i = 1, size(grid, 1)
                     do j = 1, size(grid, 2)
                         if ( grid(i, j, 1, 1)%contain(point_t(x(:,n), n)) ) then
-                            if ( itype(n) < 0 ) then
+                            if ( Type(n) < 0 ) then
                                 cell_id = grid(i, j, 1, 1)%index
                                 sub_ndummy(cell_id) = sub_ndummy(cell_id) + 1
                                 sub_index(cell_id,sub_ntotal(cell_id)+sub_ndummy(cell_id)) = n
@@ -303,7 +303,7 @@ contains
                     do j = 1, size(grid, 2)
                         do k = 1, size(grid, 3)
                                 if ( grid(i, j, k, 1)%contain(point_t(x(:,n), n)) ) then
-                                    if ( itype(n) < 0 ) then
+                                    if ( Type(n) < 0 ) then
                                         cell_id = grid(i, j, k, 1)%index
                                         sub_ndummy(cell_id) = sub_ndummy(cell_id) + 1
                                         sub_index(cell_id,sub_ntotal(cell_id)+sub_ndummy(cell_id)) = n

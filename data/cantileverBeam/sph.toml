@@ -1,6 +1,6 @@
 ## Project Name
-name = "Two-dimensional Armco Iron Collide"
-nick = "taylor_rod"
+name = "Two-dimensional Cantilever Beam"
+nick = "can_beam"
 
 [Parameter]
 
@@ -8,10 +8,10 @@ nick = "taylor_rod"
 DIM = 2
 
 ## Maximum Number of Particles
-maxN = 2000
+maxN = 505
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 80
+kPair = 45
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -32,23 +32,23 @@ SLE = 0
 SKF = 1
 
 ## Serial Number of the Monitored Particle
-monitorParticle = 1
+monitorParticle = 500
 
 printStatistics = true
 
-printInterval = 500
+printInterval = 5000
 
-saveInterval = 100
+saveInterval = 1000
 
-maxTimeStep = 10000
+maxTimeStep = 100000
 
 ## Time Step
-deltaT = 1e-8
+deltaT = 1e-7
 
 summationDensity    = false
 dummyParticle       = true
 viscosity           = true # Must be true for Solid
-# gravity             = true
+gravity             = true
 artificialViscosity = true
 # artificialHeat      = true
 # averageVelocity     = true

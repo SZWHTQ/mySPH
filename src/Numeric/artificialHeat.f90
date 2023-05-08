@@ -1,19 +1,11 @@
 module arti_heat_m
+    use sph, only: Particle
     implicit none
 
 contains
-    subroutine arti_heat(ntotal, x, mass, rho, e, c, hsml, neighborNum, neighborList, dwdx, div_v, dedt)
+    subroutine arti_heat(ntotal, P, dedt)
         integer, intent(in) :: ntotal
-        real(8), intent(in) :: x(:, :)
-        real(8), intent(in) :: mass(:)
-        real(8), intent(in) :: rho(:)
-        real(8), intent(in) :: e(:)
-        real(8), intent(in) :: c(:)
-        real(8), intent(in) :: hsml(:)
-        integer, intent(in) :: neighborNum(:)
-        integer, intent(in) :: neighborList(:, :)
-        real(8), intent(in) :: dwdx(:, :, :)
-        real(8), intent(in)  :: div_v(:)
+        type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dedt(:)
         real(8), parameter :: alpha = 0.1_8
         real(8), parameter :: beta  = 1.0_8
@@ -23,32 +15,37 @@ contains
         integer i, j, k
 
         !!! Calculate SPH sum for artificial heat conduction
-
-        forall (i=1:ntotal)
+        do i=1, ntotal
             dedt(i)  = 0
-        end forall
+        end do
 
         !$OMP PARALLEL DO PRIVATE(i, j, k, q_i, q_j, q_ij, hsml_ij, rho_ij, aux)
         do i = 1, ntotal
-            do k = 1, neighborNum(i)
-                j = neighborList(i, k)
+            do k = 1, P(i)%neighborNum
+                j = P(i)%neighborList(k)
 
-                q_i = alpha*hsml(i)*c(i) + beta*(hsml(i)**2)*(abs(div_v(i))-div_v(i))
-                q_j = alpha*hsml(j)*c(j) + beta*(hsml(j)**2)*(abs(div_v(j))-div_v(j))  !! @todo: P375 ?
-                ! q_i = (alpha*hsml(i)*rho(i)*c(i) + beta*(hsml(i)**2)*rho(i)*abs(div_v(i))) &  !! P123
-                !       * abs(div_v(i))
-                ! q_j = (alpha*hsml(j)*rho(j)*c(j) + beta*(hsml(j)**2)*rho(j)*abs(div_v(j))) &
-                !       * abs(div_v(j))
+                q_i = alpha * P(i)%SmoothingLength*P(i)%SoundSpeed &
+                    + beta * (P(i)%SmoothingLength**2)             &
+                           * (abs(P(i)%divergenceVelocity)-P(i)%divergenceVelocity)
+                q_j = alpha * P(j)%SmoothingLength*P(j)%SoundSpeed &
+                    + beta * (P(j)%SmoothingLength**2)             &
+                           * (abs(P(j)%divergenceVelocity)-P(j)%divergenceVelocity)  !! @todo: P375 ?
+                ! q_i = (alpha*P(i)%SmoothingLength*P(i)%Density*P(i)%SoundSpeed + beta*(P(i)%SmoothingLength**2)*P(i)%Density*abs(P(i)%divergenceVelocity)) &  !! P123
+                !       * abs(P(i)%divergenceVelocity)
+                ! q_j = (alpha*P(j)%SmoothingLength*P(j)%Density*P(j)%SoundSpeed + beta*(P(j)%SmoothingLength**2)*P(j)%Density*abs(P(j)%divergenceVelocity)) &
+                !       * abs(P(j)%divergenceVelocity)
                 q_ij    = 0.5_8 * (q_i + q_j)
-                hsml_ij = 0.5_8 * (hsml(i) + hsml(j))
-                rho_ij  = 0.5_8 * (rho(i)  + rho(j) )
+                hsml_ij = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
+                rho_ij  = 0.5_8 * (P(i)%Density  + P(j)%Density )
 
-                associate (dx => x(:, i) - x(:, j))
-                    aux = q_ij * sum(dx*dwdx(:, i, k)) &
+                associate (dx => P(i)%x(:) - P(j)%x(:))
+                    aux = q_ij * sum(dx*P(i)%dwdx(:, k)) &
                         / (rho_ij * (sum(dx**2) + 0.01_8*hsml_ij**2))
                 end associate
 
-                dedt(i) = dedt(i) + 2._8 * mass(j) * aux * (e(i)-e(j))
+                dedt(i) = dedt(i)            &
+                    + 2._8 * P(j)%Mass * aux &
+                        * (P(i)%InternalEnergy-P(j)%InternalEnergy)
 
             end do
         end do

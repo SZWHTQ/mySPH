@@ -9,6 +9,38 @@ module tools_m
     integer, private :: fdigit = 0
 
 contains
+    pure function kronecker_product(a, b) result(c)
+        real(8), intent(in) :: a(:,:), b(:,:)
+        real(8) :: c(size(a,1)*size(b,1), size(a,2)*size(b,2))
+        integer :: i, j, k, l
+
+        c = 0
+        do i = 1, size(a,1)
+            do j = 1, size(a,2)
+                do k = 1, size(b,1)
+                do l = 1, size(b,2)
+                    c((i-1)*size(b,1)+k, (j-1)*size(b,2)+l) = a(i,j)*b(k,l)
+                end do
+                end do
+            end do
+        end do
+
+    end function kronecker_product
+
+    pure function dyadic_product(a,b) result(c)
+        implicit none
+        real(8), intent(in) :: a(:), b(:)
+        real(8) :: c(size(a),size(b))
+        integer :: i, j
+
+        do i = 1, size(a)
+            do j = 1, size(b)
+                c(i,j) = a(i) * b(j)
+            end do
+        end do
+
+    end function dyadic_product
+
     pure function to_string(var) result(str)
         implicit none
         class(*),     intent(in)  :: var
@@ -39,6 +71,7 @@ contains
         integer :: aux, h
         real :: r
 
+        r = 0
         select type(var)
         type is (real(8))
             associate (aux => mod(int(var*10.**(decimal+1)), 10))
@@ -141,13 +174,13 @@ contains
                 if ( present(info) ) then
                     info = "Created directory: "//trim(adjustl(buffer))
                 end if
-                call system('mkdir '//trim(adjustl(buffer)))
+                call execute_command_line('mkdir '//trim(adjustl(buffer)))
             else
                 if ( present(info) ) then
                     info = "Directory already exists: "//trim(adjustl(buffer))
                 end if
             end if
-    
+
             deallocate(buffer)
 
     end subroutine create_directory
@@ -193,19 +226,19 @@ contains
         remain(1) = int(estimate/6d4) ! minutes
         remain(2) = int((estimate-remain(1)*6d4)*1d-3) ! seconds
 
-        write (*, "(1X, 2(I0, A), $)") value, " / ", max, " ["
+        write (*, "(1X, 2(I0, A))", advance="no") value, " / ", max, " ["
         do i = 1, int(digit*rate)
-            write (*, '(a, $)') "="
+            write (*, '(a)', advance="no") "="
         end do
-        write (*, '(a, $)') ">"
+        write (*, '(a)', advance="no") ">"
         do i = int(digit*rate) + 1, digit
-            write (*, '(a, $)') "-"
+            write (*, '(a)', advance="no") "-"
         end do
 
         if (isflushed) then
             fdigit = 2 * int(log10(real(max))+1) + 75
         end if
-        write (*, '(a, f7.2, a, i3, a, i2, a, a, $)') &
+        write (*, '(a, f7.2, a, i3, a, i2, a, a)', advance="no") &
                "]", 100d0*rate, "% ", remain(1), "m", remain(2), "s", CR
 
         if (value == max) then
@@ -224,5 +257,72 @@ contains
         write (FMT, '(a, i0, a)') "(", fdigit, "x, 3a)"
         write (*, FMT, advance='no') char(13), char(8), char(13)
     end subroutine
+    
+    subroutine MCPE(A,B,X) !列主元消去法(Maximal Column Pivoting Elimination)
+        implicit none
+        real(8) :: A(:,:), B(:), X(:), buffer, temp
+        real(8), allocatable :: bakA(:,:), bakB(:)
+        integer :: n, p
+        integer :: i, j, k, flag
+
+        !初始化及数据备份
+        n = size(A,2)
+        allocate(bakA(n,n), bakB(n))
+        bakA=A; bakB=B
+
+        !重排主元
+        do i = 1, n
+            p=i
+            !取最大
+            do j = i+1, n
+                if ( abs(A(p,i)) < abs(A(j,i)) ) p=j
+            end do
+            !行变换
+            do j = 1, n
+                buffer = A(i,j)
+                A(i,j) = A(p,j)
+                A(p,j) = buffer
+            end do
+            buffer = B(i)
+            B(i) = B(p)
+            B(P) = buffer
+        end do
+
+        !A,B行变换消元
+        do i = 1, n-1
+            do j = i+1, n
+                buffer = A(j,i) / A(i,i)
+                temp = 0
+                do k = i, n
+                    A(j,k) = A(j,k)-A(i,k)*buffer
+                    temp = temp + A(j,k)**2
+                end do
+                B(j)=B(j)-B(i)*buffer
+                if ( temp==0 ) then
+                    if ( B(j)==0 ) then
+                        flag=2
+                        return
+                    else
+                        flag=3
+                        return
+                    end if
+                end if
+            end do
+        end do
+
+        !求解X
+        X(n)=B(n)/A(n,n)
+        do i = n-1, 1, -1
+            do j = n, i+1, -1
+                B(i)=B(i)-A(i,j)*X(j)
+            end do
+            X(i)=B(i)/A(i,i)
+        end do
+
+        !恢复并释放内存
+        A=bakA; B=bakB
+        deallocate(bakA, bakB)
+
+    end subroutine MCPE
 
 end module tools_m

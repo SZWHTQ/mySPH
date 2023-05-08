@@ -12,6 +12,8 @@ doc/Formula
 # access.toml
 # .vscode
 # .gitignore
+./cleah.sh
+./tar.sh
 
 ## Core latex/pdflatex auxiliary files:
 *.aux

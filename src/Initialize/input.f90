@@ -1,29 +1,31 @@
 module input_m
-    use ctrl_dict, only: ntotal, dim, &
-                         read_ini_file_W
-    use initial_m, only: itype, x, v, mass, rho, p, e, c, hsml
-    use parse_toml_m, only: in_path, out_path, vtk_path, nick
+    use ctrl_dict, only: Project, Config, Field
+    use sph
     use output_m,  only: output
     use tools_m
     implicit none
 
 contains
-    subroutine input()
+    subroutine input(ntotal, Particles)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: Particles(:)
 
-        if ( read_ini_file_w ) then
-            call read_initial_file()
+        if ( Config%read_ini_file_w ) then
+            call read_initial_file(ntotal, Particles)
         else
-            call write_initial_file()
+            call write_initial_file(ntotal, Particles)
         end if
 
     end subroutine input
 
     !!! Load initial particle information from external disk file
-    subroutine read_initial_file()
+    subroutine read_initial_file(ntotal, Particles)
+        integer,        intent(inout) :: ntotal
+        type(Particle), intent(inout) :: Particles(:)
         integer i, null
 
 
-        open(11, file = in_path // "ini.dat")
+        open(11, file = Project%in_path // "ini.dat")
 
         write(*,*) "   Loading initial particle configuration..."
         read(11,*) ntotal
@@ -31,9 +33,7 @@ contains
         write(*,*)
 
         do i = 1, ntotal
-            read(11, *) null    , x(:, i), v(:, i), &
-                        mass(i) , rho(i) , p(i)   , e(i), &
-                        itype(i), hsml(i)
+            read(11, "(I5, DT)", advance="no") null, Particles
             if ( null /= i ) then
                 call print_warning(null, "Unconsistent particle index", BS)
             end if
@@ -42,34 +42,37 @@ contains
 
     end subroutine read_initial_file
 
-    subroutine write_initial_file()
-        use ctrl_dict, only: maxn
-        real(8) :: div_r(maxn)
-        real(8) :: Stress(dim,dim,maxn)
+    subroutine write_initial_file(ntotal, Particles)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: Particles(:)
         integer :: ini = 0
 
-        select case(nick)
+        select case(Project%nick)
         case("shear_cavity")
-            call shear_cavity()
+            call shear_cavity(ntotal, Particles)
         case("shock_tube")
-            call shock_tube()
+            ntotal = Field%ntotal
+            call shock_tube(ntotal, Particles)
         case("tnt_bar")
-            call tnt_bar()
+            ntotal = Field%ntotal
+            call tnt_bar(ntotal, Particles)
         case("tnt_cylinder")
-            call tnt_cylinder()
+            call tnt_cylinder(ntotal, Particles)
         case("undex_cylinder")
-            call undex_cylinder()
+            call undex_cylinder(ntotal, Particles)
         case("undex_chamber")
-            call undex_chamber()
+            call undex_chamber(ntotal, Particles)
         case("UNDEX")
-            call undex()
+            call undex(ntotal, Particles)
         case("dam_break")
-            call dam_break()
+            call dam_break(ntotal, Particles)
         case ("taylor_rod")
-            call taylor_rod()
+            call taylor_rod(ntotal, Particles)
+        case ("can_beam")
+            call cantilever_beam(ntotal, Particles)
         end select
 
-        call output(ini, ntotal, itype, x, v, mass, rho, p, e, c, hsml, div_r, Stress)
+        call output(ini, Particles(1:ntotal))
 
         write(*,*) "Initial particle configuration generated"
         write(*,*) ">> Total number of particles: ", to_string(ntotal)
@@ -77,14 +80,16 @@ contains
 
     end subroutine write_initial_file
 
-    subroutine shock_tube()
+    subroutine shock_tube(ntotal, P)
+        integer, intent(in) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         real(8) :: dx
         real(8) :: gamma
 
         integer :: n_left
         integer i
 
-        if ( dim /= 1 ) dim = 1
+        if ( Field%Dim /= 1 ) Field%Dim = 1
 
         gamma = 1.4
         dx = 0.6 / ntotal * 5
@@ -92,40 +97,40 @@ contains
 
 
         do i = 1, n_left
-            x(1, i)  = -0.6 + dx / 4 * (i-1)
-            v(:, i)  = 0
-            itype(i) = 1
-            hsml(i)  = dx * 2
-            rho(i)   = 1
-            mass(i)  = rho(i) * dx / 4
-            ! mass(i) = 0.75/ ntotal
-            p(i)     = 1
-            e(i)     = 2.5
-            c(i)     = sqrt(gamma*p(i)/rho(i))
+            P(i)%x(1)            = -0.6 + dx / 4 * (i-1)
+            P(i)%v(:)            = 0
+            P(i)%Type           = 1
+            P(i)%SmoothingLength = dx * 2
+            P(i)%Density         = 1
+            P(i)%Mass            = P(i)%Density * dx / 4
+            P(i)%Pressure        = 1
+            P(i)%InternalEnergy  = 2.5
+            P(i)%SoundSpeed      = sqrt(gamma * P(i)%Pressure / P(i)%Density)
         end do
 
         do i = n_left+1, ntotal
-            x(1, i)  = 0 + dx * (i-n_left)
-            v(:, i)  = 0
-            itype(i) = 1
-            hsml(i)  = dx * 2
-            rho(i)   = 0.25
-            mass(i)  = rho(i) * dx
-            ! mass(i) = 0.75/ ntotal
-            p(i)     = 0.1795
-            e(i)     = 1.795
-            c(i)     = sqrt(gamma*p(i)/rho(i))
+            P(i)%x(1)            = 0 + dx * (i-n_left)
+            P(i)%v(:)            = 0
+            P(i)%Type           = 1
+            P(i)%SmoothingLength = dx * 2
+            P(i)%Density         = 0.25
+            P(i)%Mass            = P(i)%Density * dx
+            P(i)%Pressure        = 0.1795
+            P(i)%InternalEnergy  = 1.795
+            P(i)%SoundSpeed      = sqrt(gamma * P(i)%Pressure / P(i)%Density)
         end do
 
     end subroutine shock_tube
 
-    subroutine shear_cavity()
+    subroutine shear_cavity(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         integer :: m, n, mp, np, k
         real(8) :: xl, yl, dx, dy
 
         integer i, j
 
-        if ( dim /= 2 ) dim = 2
+        if ( Field%Dim /= 2 ) Field%Dim = 2
 
         m = 41
         n = 41
@@ -140,56 +145,60 @@ contains
         do i = 1, mp
             do j = 1, np
                 k = j + (i-1)*np
-                x(1, k) = (i-1)*dx + dx/2._8
-                x(2, k) = (j-1)*dy + dy/2._8
+                P(k)%x(1) = (i-1)*dx + dx/2._8
+                P(k)%x(2) = (j-1)*dy + dy/2._8
             end do
 
         end do
 
         do i = 1, mp*np
-            v(1, i)  = 0
-            v(2, i)  = 0
-            rho(i)   = 1000
-            mass(i)  = dx*dy*rho(i)
-            p(i)     = 0
-            e(i)     = 357.1
-            itype(i) = 3
-            hsml(i)  = dx
+            P(i)%v(1)            = 0
+            P(i)%v(2)            = 0
+            P(i)%Density         = 1000
+            P(i)%Mass            = dx * dy * P(i)%Density
+            P(i)%Pressure        = 0
+            P(i)%InternalEnergy  = 357.1
+            P(i)%Type           = 3
+            P(i)%SmoothingLength = dx
         end do
 
 
     end subroutine shear_cavity
 
-    subroutine tnt_bar()
+    subroutine tnt_bar(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         real(8) :: space_x
         real(8) :: rho0 = 1630, E0 = 4.29e6
         integer i
 
-        if ( dim /= 1 ) dim = 1
+        if ( Field%Dim /= 1 ) Field%Dim = 1
 
         space_x = 0.1 / ntotal
 
         do i = 1, ntotal
-            x(:, i)  = 0 + space_x * i
-            v(:, i)  = 0
-            rho(i)   = rho0
-            mass(i)  = rho(i) * space_x
-            p(i)     = 0
-            e(i)     = E0
-            itype(i) = 0
-            hsml(i)  = space_x * 1.5
+            P(i)%x(:)            = 0 + space_x * i
+            P(i)%v(:)            = 0
+            P(i)%Density         = rho0
+            P(i)%Mass            = P(i)%Density * space_x
+            P(i)%Pressure        = 0
+            P(i)%InternalEnergy  = E0
+            P(i)%Type           = 0
+            P(i)%SmoothingLength = space_x * 1.5
         end do
 
     end subroutine tnt_bar
 
-    subroutine tnt_cylinder()
+    subroutine tnt_cylinder(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         real(8) :: rho0 = 1630, e0 = 4.29e6
         integer :: nr = 20, nt = 60
         real(8) :: dr
         real(8) :: theta, rot(2, 2)
         integer i, j, k
 
-        if ( dim /= 2 ) dim = 2
+        if ( Field%Dim /= 2 ) Field%Dim = 2
 
         ntotal = nr * nt
 
@@ -201,43 +210,45 @@ contains
              shape(rot))
 
         do i = 1, nr
-            x(1, i)  = 0 + dr * i
-            x(2, i)  = 0
-            v(:, i)  = 0
-            rho( i)  = rho0
-            mass(i)  = rho(i) * dr * ((2*PI*i*dr)/nt)
-            p(i)     = 0
-            e(i)     = e0
-            itype(i) = 4
-            hsml( i) = dr * 2
+            P(i)%x(1)            = 0 + dr * i
+            P(i)%x(2)            = 0
+            P(i)%v(:)            = 0
+            P(i)%Density         = rho0
+            P(i)%Mass            = P(i)%Density * dr * ((2*PI*i*dr)/nt)
+            P(i)%Pressure        = 0
+            P(i)%InternalEnergy  = e0
+            P(i)%Type           = 4
+            P(i)%SmoothingLength = dr * 2
         end do
 
         do i = 1, nt - 1
             do j = 1, nr
                 k = i * nr + j
-                x(:, k)  = matmul(rot, x(:, k-nr))
-                v(:, k)  = 0
-                rho( k)  = rho0
-                mass(k)  = mass(k-nr)
-                p(k)     = 0
-                e(k)     = e0
-                itype(k) = 4
-                hsml( k) = dr * 2
+                P(k)%x(:)            = matmul(rot, P(k-nr)%x)
+                P(k)%v(:)            = 0
+                P(k)%Density         = rho0
+                P(k)%Mass            = P(k-nr)%Mass
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = e0
+                P(k)%Type           = 4
+                P(k)%SmoothingLength = dr * 2
             end do
         end do
 
     end subroutine tnt_cylinder
 
-    subroutine undex_cylinder()
+    subroutine undex_cylinder(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         real(8) :: rho0(2) = [1630., 1000.], e0(2) = [4.29e6, 0.]
         real(8) :: p0 = 101.325e3
         integer :: nr(2) = [10,  40], nt = 60
         real(8) :: r(2)  = [0.1, 0.4]
         real(8) :: dr
         real(8) :: theta, rot(2, 2)
-        integer i, j, k
+        integer i, j, k, index
 
-        if ( dim /= 2 ) dim = 2
+        if ( Field%Dim /= 2 ) Field%Dim = 2
 
         ntotal = sum(nr) * nt
 
@@ -249,46 +260,50 @@ contains
              shape(rot))
 
         do i = 1, nr(1)
-            x(1, i)  = 0 + dr * i
-            x(2, i)  = 0
-            v(:, i)  = 0
-            rho( i)  = rho0(1)
-            mass(i)  = rho(i) * dr * (theta*i*dr)
-            p(i)     = 0
-            e(i)     = e0(1)
-            itype(i) = 0
-            hsml( i) = dr * 2
+            P(i)%x(1)            = 0 + dr * i
+            P(i)%x(2)            = 0
+            P(i)%v(:)            = 0
+            P(i)%Density         = rho0(1)
+            P(i)%mass            = P(i)%Density * dr * (theta*i*dr)
+            P(i)%Pressure        = 0
+            P(i)%InternalEnergy  = e0(1)
+            P(i)%Type           = 0
+            P(i)%SmoothingLength = dr * 2
         end do
 
         do i = nr(1) + 1, nr(1) + nr(2)
-            x(1, i)  = 0 + dr * i
-            x(2, i)  = 0
-            v(:, i)  = 0
-            rho( i)  = rho0(2)
-            mass(i)  = rho(i) * dr * (theta*i*dr)
-            p(i)     = p0
-            e(i)     = e0(2)
-            itype(i) = 6
-            hsml( i) = dr * 2
+            P(i)%x(1)            = 0 + dr * i
+            P(i)%x(2)            = 0
+            P(i)%v(:)            = 0
+            P(i)%Density         = rho0(2)
+            P(i)%Mass            = P(i)%Density * dr * (theta*i*dr)
+            P(i)%Pressure        = p0
+            P(i)%InternalEnergy  = e0(2)
+            P(i)%Type           = 6
+            P(i)%SmoothingLength = dr * 2
         end do
 
         do i = 1, nt - 1
             do j = 1, sum(nr)
                 k = i * sum(nr) + j
-                x(:, k)  = matmul(rot, x(:, k-sum(nr)))
-                v(:, k)  = 0
-                rho( k)  = rho(k-sum(nr))
-                mass(k)  = mass(k-sum(nr))
-                p(k)     = p(k-sum(nr))
-                e(k)     = e(k-sum(nr))
-                itype(k) = itype(k-sum(nr))
-                hsml( k) = dr * 2
+                index = k - sum(nr)
+                P(k)%x(:)            = matmul(rot, P(index)%x(:))
+                P(k)%v(:)            = 0
+                P(k)%Density         = P(index)%Density
+                P(k)%Mass            = P(index)%Mass
+                P(k)%Pressure        = P(index)%Pressure
+                P(k)%InternalEnergy  = P(index)%InternalEnergy
+                P(k)%Type           = P(index)%Type
+                P(k)%SmoothingLength = dr * 2
             end do
         end do
 
     end subroutine undex_cylinder
 
-    subroutine undex_chamber()
+    subroutine undex_chamber(ntotal, P)
+        use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         integer :: water_n(2) = [90, 90], &
                      tnt_n(2) = [61, 61]
         real(8) :: water_origin(2) = [-0.5, -0.5], &
@@ -297,7 +312,11 @@ contains
         real(8) :: delta(2), tnt_delta(2)
         integer i, j, k
 
-        if ( dim /= 2 )  dim = 2
+        real(8) :: origin(2) = [-0.5, -0.5]
+        integer :: layer, n(2) = [201, 201]
+        integer l
+
+        if ( Field%Dim /= 2 )  Field%Dim = 2
 
         delta = (length - tnt_length) / (water_n*2)
         tnt_delta = tnt_length / (tnt_n - 1)
@@ -308,13 +327,15 @@ contains
         do i = 1, water_n(1)
             do j = 1, water_n(2)*2 + int(tnt_length(2)/delta(2)+1)
                 k = ntotal + (i-1) * (water_n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
-                rho(k)   = 1000
-                mass(k)  = rho(k) * delta(1)*delta(2)
-                p(k)     = 0
-                e(k)     = 1e8
-                itype(k) = 6
-                hsml(k)  = 1.5 * sum(delta)/2
-                x(:, k) = water_origin + [i-1, j-1] * delta
+                P(k)%x(:)            = water_origin &
+                                        + [i-1, j-1] * delta
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%InternalEnergy  = 1e8
+                P(k)%Type            = 6
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
         end do
         ntotal = k
@@ -323,13 +344,15 @@ contains
         do i = 1, int(tnt_length(1)/delta(1)+1)
             do j = 1, water_n(2)
                 k = ntotal + (i-1) * water_n(2) + j
-                x(:, k) = [tnt_origin(1), water_origin(2)] + [i-1, j-1] * delta
-                rho(k)   = 1000
-                mass(k)  = rho(k) * delta(1)*delta(2)
-                p(k)     = 0
-                e(k)     = 1e8
-                itype(k) = 6
-                hsml(k)  = 1.5 * sum(delta)/2
+                P(k)%x(:)            = [tnt_origin(1), water_origin(2)] &
+                                        + [i-1, j-1] * delta
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%InternalEnergy  = 1e8
+                P(k)%Type            = 6
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
         end do
         ntotal = k
@@ -338,13 +361,15 @@ contains
         do i = 1, int(tnt_length(1)/delta(1)+1)
             do j = 1, water_n(2)
                 k = ntotal + (i-1) * water_n(2) + j
-                x(:, k) = [tnt_origin(1), water_origin(2)] + [0._8, length(2)] + [i-1, 1-j] * delta
-                rho(k)   = 1000
-                mass(k)  = rho(k) * delta(1)*delta(2)
-                p(k)     = 0
-                e(k)     = 1e8
-                itype(k) = 6
-                hsml(k)  = 1.5 * sum(delta)/2
+                P(k)%x(:)            = [tnt_origin(1), water_origin(2)] &
+                                        + [0._8, length(2)] + [i-1, 1-j] * delta
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%InternalEnergy  = 1e8
+                P(k)%Type            = 6
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
         end do
         ntotal = k
@@ -353,13 +378,15 @@ contains
         do i = 1, water_n(1)
             do j = 1, water_n(2)*2 + int(tnt_length(2)/delta(2)+1)
                 k = ntotal + (i-1) * (water_n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
-                x(:, k) = [tnt_origin(1)+tnt_length(1)+delta(1), water_origin(2)] + [i-1, j-1] * delta
-                rho(k)   = 1000
-                mass(k)  = rho(k) * delta(1)*delta(2)
-                p(k)     = 0
-                e(k)     = 1e8
-                itype(k) = 6
-                hsml(k)  = 1.5 * sum(delta)/2
+                P(k)%x(:)            = [tnt_origin(1)+tnt_length(1)+delta(1), water_origin(2)] &
+                                        + [i-1, j-1] * delta
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%InternalEnergy  = 1e8
+                P(k)%Type            = 6
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
         end do
         ntotal = k
@@ -369,21 +396,92 @@ contains
         do i = 1, tnt_n(1)
             do j = 1, tnt_n(2)
                 k = ntotal + (i-1) * tnt_n(2) + j
-                x(:, k) = tnt_origin + [i-1, j-1] * tnt_delta
-                rho(k)   = 1630
-                mass(k)  = rho(k) * tnt_delta(1)*tnt_delta(2)
-                p(k)     = 0
-                e(k)     = 4.29e6
-                itype(k) = 5
-                hsml(k)  = 1.5 * sum(tnt_delta)/2
+                P(k)%x(:)             = tnt_origin + [i-1, j-1] * tnt_delta
+                P(k)%Density          = 1630
+                P(k)%Mass             = P(k)%Density * tnt_delta(1)*tnt_delta(2)
+                P(k)%InternalEnergy   = 4.29e6
+                P(k)%Type             = 5
+                P(k)%SmoothingLength  = 1.5 * sum(tnt_delta)/2
+                call jwl_eos(P(k)%Density, P(k)%InternalEnergy, P(k)%Pressure)
             end do
         end do
         ntotal = k
 
+        delta = length / (n - 1)
+
+        layer = 6
+        do l = 1, layer
+            !!! Monaghan type dummy particle on the Upper side
+            do i = 1, n(1) + 2*(l+1)
+                k = ntotal + i
+                P(k)%x(1) = origin(1) + delta(1) * (i-l-2)
+                P(k)%x(2) = length(2)+origin(2) + delta(2) * (l+1)
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+            end do
+            ntotal = k
+
+            !!! Monaghan type dummy particle on the Lower side
+            do i = 1, n(1) + 2*(l+1)
+                k = ntotal + i
+                P(k)%x(1) = origin(1) + delta(1) * (i-l-2)
+                P(k)%x(2) = origin(2) - delta(2) * (l+1)
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+            end do
+            ntotal = k
+
+            !!! Monaghan type dummy particle on the Left side
+            do i = 1, n(2) + 2*l
+                k = ntotal + i
+                P(k)%x(1) = origin(1) - delta(1) * (l+1)
+                P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+            end do
+            ntotal = k
+
+            !!! Monaghan type dummy particle on the Right side
+            do i = 1, n(2) + 2*l
+                k = ntotal + i
+                P(k)%x(1) = length(1) + origin(1) + delta(1) * (l+1)
+                P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = 1.5 * sum(delta)/2
+            end do
+            ntotal = k
+        end do
+
     end subroutine undex_chamber
 
-    subroutine undex()
+    subroutine undex(ntotal, P)
         use geometry_m
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         real(8) :: fluid_domian(4) = [0.0, 0.1, -0.045, 0.045]
         real(8) :: confined = 1
         type(rectangle_t) :: confined_domian
@@ -403,18 +501,18 @@ contains
         do i = 1, Nx
             do j = 1, Ny
                 ntotal = ntotal + 1
-                x(:, ntotal)  = [fluid_domian(1) + i * dx, &
+                P(ntotal)%x(:)  = [fluid_domian(1) + i * dx, &
                                  fluid_domian(3) + j * dx]
-                if ( confined_domian%contain(point_t(x(:,ntotal), 0)) ) then
+                if ( confined_domian%contain(point_t(P(ntotal)%x(:), 0)) ) then
                     ntotal = ntotal - 1
                     cycle
                 end if
-                rho(ntotal)   = 1000
-                p(ntotal)     = 0
-                e(ntotal)     = 2e7
-                itype(ntotal) = 6
-                mass(ntotal)  = rho(ntotal) * dx*dx 
-                hsml(ntotal)  = dx
+                P(ntotal)%Density   = 1000
+                P(ntotal)%Pressure     = 0
+                P(ntotal)%InternalEnergy     = 2e7
+                P(ntotal)%Type = 6
+                P(ntotal)%Mass  = P(ntotal)%Density * dx*dx
+                P(ntotal)%SmoothingLength  = dx
             end do
         end do
 
@@ -423,25 +521,25 @@ contains
         do i = 1, Nx
             do j = 1, Ny
                 ntotal = ntotal + 1
-                x(:, ntotal) = confined_domian%center   &
+                P(ntotal)%x(:) = confined_domian%center   &
                              - confined_domian%length/2 &
                              + [i-0.3, j-0.3] * (dx/confined)
                 ! if ( tnt_domain%contain(point_t(x(:,ntotal), 0)) ) then
                     !!! TNT
-                    rho(ntotal)   = 1630
-                    p(ntotal)     = 0
-                    e(ntotal)     = 4.29e6
-                    itype(ntotal) = 5
+                    P(ntotal)%Density   = 1630
+                    P(ntotal)%Pressure     = 0
+                    P(ntotal)%InternalEnergy     = 4.29e6
+                    P(ntotal)%Type = 5
                 ! else
                 !     ! ntotal = ntotal - 1
                 !     !!! Water
-                !     rho(ntotal)   = 1000
-                !     p(ntotal)     = 0
-                !     e(ntotal)     = 0
-                !     itype(ntotal) = 6
+                !     P(ntotal)%Density   = 1000
+                !     P(ntotal)%Pressure     = 0
+                !     P(ntotal)%InternalEnergy     = 0
+                !     P(ntotal)%Type = 6
                 ! end if
-                mass(ntotal) = rho(ntotal) * dx*dx / (confined**2)
-                hsml(ntotal) = dx / (confined**2)
+                P(ntotal)%Mass = P(ntotal)%Density * dx*dx / (confined**2)
+                P(ntotal)%SmoothingLength = dx / (confined**2)
             end do
         end do
 
@@ -449,7 +547,9 @@ contains
 
     end subroutine undex
 
-    subroutine dam_break()
+    subroutine dam_break(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         ! real(8) :: fluid_domian(4) = [0, 2, 0, 1]
         real(8) :: fluid_domian(4) = [0, 25, 0, 25]
         ! real(8) :: dx = 0.02
@@ -463,15 +563,15 @@ contains
         do i = 1, Nx
             do j = 1, Ny
                 k = (i-1) * Ny + j
-                x(:, k)  = [fluid_domian(1) + (i-0.5) * dx, &
+                P(k)%x(:)  = [fluid_domian(1) + (i-0.5) * dx, &
                             fluid_domian(3) + (j-0.5) * dx]
-                v(:, k)  = 0
-                rho(k)   = 1000
-                mass(k)  = rho(k) * dx * dx
-                p(k)     = 0
-                e(k)     = 0
-                itype(k) = 2
-                hsml(k)  = dx
+                P(K)%v(:)  = 0
+                P(k)%Density   = 1000
+                P(k)%Mass  = P(k)%Density * dx * dx
+                P(k)%Pressure     = 0
+                P(k)%InternalEnergy     = 0
+                P(k)%Type = 2
+                P(k)%SmoothingLength  = dx
             end do
         end do
 
@@ -479,7 +579,9 @@ contains
 
     end subroutine dam_break
 
-    subroutine taylor_rod()
+    subroutine taylor_rod(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
         real(8) :: solid_domain(4) = [0., 0.760, &
                                       0., 2.546] * 1e-2
         real(8) :: dx = 0.038 * 1e-2
@@ -489,20 +591,21 @@ contains
 
         Nx = floor((solid_domain(2) - solid_domain(1)) / dx)
         Ny = floor((solid_domain(4) - solid_domain(3)) / dx)
-        do i = 1, Nx
-            do j = 1, Ny
-                k = (i-1) * Ny + j
-                x(:, k)  = [solid_domain(1) + (i-0.5) * dx, &
-                            solid_domain(3) + (j-0.5) * dx]
-                v(1, k)  = 0
-                v(2, k)  = -221
-                rho(k)   = 7850
-                mass(k)  = rho(k) * dx * dx
-                p(k)     = 0
-                e(k)     = 0
-                c(k)     = 5000
-                itype(k) = 8
-                hsml(k)  = dx * 2
+        do j = 1, Ny
+            do i = 1, Nx
+                ! k = (i-1) * Ny + j
+                k = (j-1) * Nx + i
+                P(k)%x(:)            = [solid_domain(1) + (i-0.5) * dx, &
+                                        solid_domain(3) + (j-0.5) * dx]
+                P(k)%v(1)            = 0
+                P(k)%v(2)            = -221
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = dx * 2
             end do
         end do
 
@@ -510,69 +613,30 @@ contains
 
     end subroutine taylor_rod
 
-    subroutine config_input_3()
-        integer i, null
+    subroutine cantilever_beam(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
+        real(8) :: dx = 1e-3
+        integer :: nx = 101, ny = 5
 
+        integer i, j, k
 
-        open(11, file = in_path // "/f_xv.dat")
-        open(12, file = in_path // "/f_state.dat")
-        open(13, file = in_path // "/f_other.dat")
-
-        write(*,*) repeat("#", 60)
-        write(*,*) "Loading initial particle configuration..."
-        read(11,*) ntotal
-        write(*,*) "Total number of particle: ", to_string(ntotal)
-        write(*,*) repeat("#", 60)
-
-        do i = 1, ntotal
-            read(11,*) null, x(:, i), v(:, i)
-            read(12,*) null, mass(i), rho(i), p(i), e(i)
-            read(13,*) null, itype(i), hsml(i)
+        do i = 1, nx
+            do j = 1, ny
+                k = (i-1) * ny + j
+                P(k)%x(:)            = [i-1, j-1] * dx
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = dx * 2
+            end do
         end do
+        ntotal = nx * ny
 
-        close(11)
-        close(12)
-        close(13)
-
-    end subroutine config_input_3
-
-    subroutine input_3()
-        integer i
-
-        open(11, file = in_path // "/ini_xv.dat")
-        open(12, file = in_path // "/ini_state.dat")
-        open(13, file = in_path // "/ini_other.dat")
-
-        select case(nick)
-        case("shear_cavity")
-            call shear_cavity()
-        case("shock_tube")
-            call shock_tube()
-        case("tnt_bar")
-            call tnt_bar()
-        case("tnt_cylinder")
-            call tnt_cylinder()
-        end select
-
-        do i = 1, ntotal
-            write(11, 1001) i, x(:, i), v(:, i)
-            write(12, 1002) i, mass(i), rho(i), p(i), e(i)
-            write(13, 1003) i, itype(i), hsml(i)
-        end do
-
-        1001 format(I5, 6(2X, E15.8))
-        1002 format(I5, 4(2X, E15.8))
-        1003 format(I5, 2X, I2, 2X, E15.8)
-
-        write(*,*) repeat("#", 60)
-        write(*,*) "Initial particle configuration generated"
-        write(*,*) "Total number of particles: ", to_string(ntotal)
-        write(*,*) repeat("#", 60)
-
-        close(11)
-        close(12)
-        close(13)
-
-    end subroutine input_3
+    end subroutine cantilever_beam
 
 end module input_m

@@ -1,29 +1,31 @@
 module ex_force_m
-    use ctrl_dict, only: dim, i_time_step, gravity_w
-    use parse_toml_m, only: nick
+    use ctrl_dict, only: Config, Field, Project
+    use sph,       only: Particle
     implicit none
 
 contains
-    subroutine ex_force(ntotal, itype, x, hsml, neighborNum, neighborList, dvdt)
-        integer, intent(in)  :: ntotal
-        integer, intent(in) :: itype(:)
-        real(8), intent(in) :: x(:, :)
-        real(8), intent(in) :: hsml(:)
-        integer, intent(in) :: neighborNum(:)
-        integer, intent(in) :: neighborList(:, :)
+    subroutine external_force(ntotal, P, dvdt)
+        integer, intent(in) :: ntotal
+        type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:, :)
-        real(8) :: dx(dim), dr, r
+        real(8) :: dx(Field%Dim), dr, r
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
         logical, save :: first_entry = .true.
 
         integer i, j, k, d
 
-        forall (i=1:dim, j=1:ntotal) dvdt(i, j) = 0
+        do i=1, Field%Dim
+            do j=1, ntotal
+                dvdt(i, j) = 0
+            end do
+        end do
 
         !!! Consider gravity or not
-        if ( gravity_w ) then
-            forall (i=1:ntotal) dvdt(dim, i) = -9.8
+        if ( Config%gravity_w ) then
+            do i=1, ntotal
+                dvdt(Field%Dim, i) = -9.8
+            end do
         end if
 
         !!! Boundary particle force and penalty anti-penetration force
@@ -37,22 +39,22 @@ contains
             n1 = 6
             n2 = 4
 
-            select case (nick)
+            select case (Project%nick)
             case ("shock_tube")
                 factor_s = 10
-                r0 = abs(x(1, 2) - x(1, 1)) * 0.5
+                r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
             case ("tnt_bar")
                 factor_s = 1e4
-                r0 = abs(x(1, 2) - x(1, 1))
+                r0 = abs(P(2)%x(1) - P(1)%x(1))
             case ("undex_chamber")
                 factor_s = 1e4
-                r0 = abs(x(1, 2) - x(1, 1)) * 0.5
+                r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
             case ("dam_break")
                 factor_s = 10
-                r0 = abs(x(1, 2) - x(2, 2)) * 1
+                r0 = abs(P(2)%x(1) - P(2)%x(2)) * 1
             case ("taylor_rod")
                 factor_s = 1e-2
-                r0 = abs(x(1, 2) - x(2, 2)) * 1
+                r0 = abs(P(2)%x(1) - P(2)%x(2)) * 1
             end select
 
             first_entry = .false.
@@ -60,16 +62,16 @@ contains
 
         !$OMP PARALLEL DO PRIVATE(i, j, k, d, dx, dr, r, pe)
         do i = 1, ntotal !! All particles
-            do k = 1, neighborNum(i) !! All neighbors
-                j = neighborList(i, k)
+            do k = 1, P(i)%neighborNum !! All neighbors
+                j = P(i)%neighborList(k)
 
                 !!! Interaction between real particle and dummy particle
-                if ( itype(i) > 0 .and. itype(j) < 0 ) then
+                if ( P(i)%Type > 0 .and. P(j)%Type < 0 ) then
                     !!! Calculate the distance 'r' between particle i and j
-                    dx(1) = x(1, i) - x(1, j)
+                    dx(1) = P(i)%x(1) - P(j)%x(1)
                     dr = dx(1)*dx(1)
-                    do d = 2, dim
-                        dx(d) = x(d, i) - x(d, j)
+                    do d = 2, Field%Dim
+                        dx(d) = P(i)%x(d) - P(j)%x(d)
                         dr = dr + dx(d)*dx(d)
                     end do
                     r = sqrt(dr)
@@ -81,17 +83,17 @@ contains
                     end if
                 end if
                 !!! Interaction between different phase particles
-                if ( (itype(i) > 0 .and. itype(j) > 0) .and. itype(i) /= itype(j) ) then
+                if ( (P(i)%Type > 0 .and. P(j)%Type > 0) .and. P(i)%Type /= P(j)%Type ) then
                     !!! Calculate the distance 'r' between particle i and j
-                    dx(1) = x(1, i) - x(1, j)
+                    dx(1) = P(i)%x(1) - P(j)%x(1)
                     dr = dx(1)*dx(1)
-                    do d = 2, dim
-                        dx(d) = x(d, i) - x(d, j)
+                    do d = 2, Field%Dim
+                        dx(d) = P(i)%x(d) - P(j)%x(d)
                         dr = dr + dx(d)*dx(d)
                     end do
                     r = sqrt(dr)
                     !!! Calculate the force between particle i and j
-                    pe = (hsml(i) + hsml(j)) / (2 * r)
+                    pe = (P(i)%SmoothingLength + P(j)%SmoothingLength) / (2 * r)
                     if ( pe >= 1 ) then
                         dvdt(:, i) = dvdt(:, i) &
                             + factor_p * (pe**n1 - pe**n2) * dx(:) / r**2
@@ -102,6 +104,6 @@ contains
         !$OMP END PARALLEL DO
 
 
-    end subroutine ex_force
+    end subroutine external_force
 
 end module ex_force_m

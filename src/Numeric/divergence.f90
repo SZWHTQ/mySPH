@@ -9,10 +9,10 @@ contains
 
         integer i, j, k
 
-        forall (i=1:ntotal)
+        do i=1, ntotal
             P(i)%divergencePosition = 0
             P(i)%divergenceVelocity = 0
-        end forall
+        end do
 
         !$OMP PARALLEL DO PRIVATE(i, j, k)
         do i = 1, ntotal

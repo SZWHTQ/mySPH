@@ -86,9 +86,9 @@ contains
                             "StressXX"
             do i = 1, ntotal
                 if ( present(index) ) then
-                    write(11, "(I8, $)") index(i)
+                    write(11, "(I8)", advance="no") index(i)
                 else
-                    write(11, "(I8, $)") i
+                    write(11, "(I8)", advance="no") i
                 end if
                 write(11, "(DT)") Particles(i)
             end do
@@ -105,9 +105,9 @@ contains
                             "StressYX", "StressYY"
             do i = 1, ntotal
                 if ( present(index) ) then
-                    write(11, "(I8, $)") index(i)
+                    write(11, "(I8)", advance="no") index(i)
                 else
-                    write(11, "(I8, $)") i
+                    write(11, "(I8)", advance="no") i
                 end if
                 write(11, "(DT)") Particles(i)
             end do
@@ -125,9 +125,9 @@ contains
                             "StressZX", "StressZY", "StressZZ"
             do i = 1, ntotal
                 if ( present(index) ) then
-                    write(11, "(I8, $)") index(i)
+                    write(11, "(I8)", advance="no") index(i)
                 else
-                    write(11, "(I8, $)") i
+                    write(11, "(I8)", advance="no") i
                 end if
                 write(11, "(DT)") Particles(i)
             end do

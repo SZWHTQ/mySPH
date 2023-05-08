@@ -12,9 +12,9 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
                                   sum_density_dsph, norm_density
     use visc_m,             only: viscosity
     use divergence_m,       only: divergence
-    use in_force_m,         only: in_force
+    use in_force_m,         only: internal_force
     use arti_visc_m,        only: arti_visc
-    use ex_force_m,         only: ex_force
+    use ex_force_m,         only: external_force
     use hsml_m,             only: h_upgrade
     use arti_heat_m,        only: arti_heat
     use corr_velo_m,        only: aver_velo
@@ -22,7 +22,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     use he_m,               only: detonation_wave
     use decompose_m,        only: decompose
     use area_m,             only: calculate_area
-    use bc_m,               only: gen_non_reflecting_bc
+    use bc_m,               only: gen_non_reflecting_bc, fixedBoundary
     implicit none
     integer,        intent(inout) :: ntotal
     integer,        intent(inout) :: ndummy, nbuffer
@@ -65,6 +65,8 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         nbuffer = 0
     end if
 
+    call fixedBoundary(Particles, Delta)
+
     N = ntotal + ndummy + nbuffer
 
 #ifdef _OPENMP
@@ -105,16 +107,16 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     !!! Internal forces
 #if SOLID
-    call in_force(ntotal+ndummy, Particles, indvdt, indedt, Shear, dSdt)
+    call internal_force(ntotal+ndummy, Particles, indvdt, indedt, Shear, dSdt)
 #else
-    call in_force(ntotal+ndummy, Particles, indvdt, indedt)
+    call internal_force(ntotal+ndummy, Particles, indvdt, indedt)
 #endif
 
     !!! Artificial viscosity
     if ( Config%arti_visc_w ) call arti_visc(ntotal+ndummy, Particles, avdvdt, avdedt)
 
     !!! External force
-    if ( Config%ex_force_w ) call ex_force(ntotal+ndummy, Particles, exdvdt)
+    if ( Config%ex_force_w ) call external_force(ntotal+ndummy, Particles, exdvdt)
 
     if ( Config%arti_heat_w ) call arti_heat(ntotal+ndummy, Particles, ahdedt)
 
@@ -130,6 +132,8 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         Delta(i)%Energy   = indedt(i)    + avdedt(i)    + ahdedt(i)
     end do
 
+    call fixedBoundary(Particles, Delta)
+
 
     if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then
         !!! Statistics for the interaction
@@ -144,7 +148,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
             end if
             call print_statistics(Particles(1:ntotal+ndummy))
         end if
-            
+
         ! index = 0
         ! number = 0
         ! do i = 1, ntotal+ndummy

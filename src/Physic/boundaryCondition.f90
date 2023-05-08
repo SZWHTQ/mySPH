@@ -10,7 +10,7 @@ module bc_m
         type(Particle) :: g !! Ghost
     end type Buffer_t
 
-    public :: gen_non_reflecting_bc
+    public :: gen_non_reflecting_bc, fixedBoundary
 contains
     subroutine gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
         integer, intent(inout) :: ntotal, nbuffer
@@ -78,7 +78,7 @@ contains
 
             FluidDomain%length = FluidDomain%length + 0.1 * dx
 
-            !!! This N is for particles' number in each layer
+            !!! This N is for particle number in each layer
             N = int(1 / dx) + 1
             do l = 1, layer
                 !! Left
@@ -103,7 +103,7 @@ contains
                 end do
             end do !! l
             do i = 1, nbuffer
-                !! Buffer Particle's Physical Quantity
+                !! Buffer Particle Physical Quantity
                 Buffers(i)%State = 1
                 Buffers(i)%Density = 1000
                 Buffers(i)%Mass = Buffers(i)%Density * dx**2
@@ -113,7 +113,7 @@ contains
                 call mie_gruneisen_eos_of_water(Buffers(i)%Density,        &
                                                 Buffers(i)%InternalEnergy, &
                                                 Buffers(i)%Pressure)
-                !! Ghosts Particle's Physical Quantity
+                !! Ghosts Particle Physical Quantity
                 Ghosts(i)%x = calcGhostPosition(Buffers(i))
                 Ghosts(i)%SmoothingLength = 1.5 * dx
             end do
@@ -248,7 +248,7 @@ contains
         real(8), allocatable :: A(:,:), Solve(:, :), h(:)
         real(8) :: sum, temp
         ! real(8) :: wi
-        integer :: m, flag
+        integer :: m
 
         integer j, l, d
 
@@ -298,6 +298,36 @@ contains
         end do
 
     end subroutine solveBufferProperty
+
+    subroutine fixedBoundary(P, D)
+        use time_integration_m, only: Update
+        type(Particle), intent(inout) :: P(:)
+        type(Update), intent(inout) :: D(:)
+
+        select case(Project%nick)
+        case("can_beam")
+            call cantilever_beam(P, D)
+        end select
+
+    contains
+        subroutine cantilever_beam(P, D)
+            type(Particle), intent(inout) :: P(:)
+            type(Update), intent(inout) :: D(:)
+            real(8) :: dx = 1e-3
+            integer :: ny
+
+            integer i
+
+            ny = 5
+
+            do i = 1, ny
+                P(i)%x = [0, i-1] * dx
+                P(i)%v = 0
+                D(i)%Velocity = 0
+            end do
+
+        end subroutine cantilever_beam
+    end subroutine fixedBoundary
 
     ! subroutine shrink(Particles, ntotal)
     !     type(Particle), intent(inout) :: Particles(:)

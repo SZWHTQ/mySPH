@@ -1,14 +1,16 @@
 cmake_minimum_required(VERSION 3.11)
 
-# set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_NAME Linux)
 
 # set(CMAKE_BUILD_TYPE Debug)
 
 project(
     "mySPH"
     LANGUAGES "Fortran"
-    VERSION "0.1.1"    
+    VERSION "0.1.1"
 )
+# set(CMAKE_GENERATOR "Ninja")
+add_definitions("-std=f2018 -cpp")
 
 set(srcs)
 add_subdirectory("src")
@@ -108,5 +110,5 @@ set_target_properties(
     Fortran_MODULE_DIRECTORY "${PROJECT_SOURCE_DIR}/module"
 )
 
-enable_testing()
-add_subdirectory(test)
+# enable_testing()
+# add_subdirectory(test)

@@ -71,6 +71,4 @@ module ctrl_dict
     end type Field_t
     type(Field_t), public :: Field
 
-contains
-
 end module ctrl_dict

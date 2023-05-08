@@ -15,7 +15,9 @@ contains
         integer i, j, k
 
         !!! Calculate SPH sum for artificial heat conduction
-        forall (i=1:ntotal) dedt(i)  = 0
+        do i=1, ntotal
+            dedt(i)  = 0
+        end do
 
         !$OMP PARALLEL DO PRIVATE(i, j, k, q_i, q_j, q_ij, hsml_ij, rho_ij, aux)
         do i = 1, ntotal

@@ -35,7 +35,7 @@ contains
         real(8), intent(inout) :: w        !! Kernel for all interaction pairs
         real(8), intent(inout) :: dwdx(:)  !! Derivative of kernel with respect to x, y and z
 
-        real(8) :: q       !! R = r/h = |x-x'|/h
+        real(8) :: q       !! R = r/h = |x-x0|/h
         real(8) :: factor  !! alpha_d
 
         q = r / hsml
@@ -61,7 +61,7 @@ contains
             dwdx = factor * ( -2._8 + 3._8/2._8*q ) / hsml**2 * dx
         else if ( q >= 1 .and. q <= 2 ) then
             w = factor * ( 1._8/6._8 ) * (2-q)**3
-            dwdx = factor * -(1._8/2._8) * (2-q)**2 / hsml * (dx/r)
+            dwdx = factor * (-1._8/2._8) * (2-q)**2 / hsml * (dx/r)
         else
             w = 0
             dwdx = 0
@@ -78,7 +78,7 @@ contains
         real(8), intent(inout) :: w        !! Kernel for all interaction pairs
         real(8), intent(inout) :: dwdx(:)  !! Derivative of kernel with respect to x, y and z
 
-        real(8) :: q       !! R = r/h = |x-x'|/h
+        real(8) :: q       !! R = r/h = |x-x0|/h
         real(8) :: factor  !! alpha_d
 
         q = r/hsml
@@ -114,7 +114,7 @@ contains
         real(8), intent(inout) :: w        !! Kernel for all interaction pairs
         real(8), intent(inout) :: dwdx(:)  !! Derivative of kernel with respect to x, y and z
 
-        real(8) :: q       !! R = r/h = |x-x'|/h
+        real(8) :: q       !! R = r/h = |x-x0|/h
         real(8) :: factor  !! alpha_d
 
         q = r/hsml

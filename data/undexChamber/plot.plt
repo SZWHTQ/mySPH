@@ -19,7 +19,7 @@ do for [i=1:100:1] {
     set title sprintf('%.3fμs', i*1e-5*1e6)
     plot sprintf('./output/Type_6_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 , \
          sprintf('./output/Type_5_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 , \
-         sprintf('./output/Type_8_%d.dat', i) using 4:5 pt 6 ps 1 lw 1 lt rgb "orange"
+         sprintf('./output/Type_8_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 # lt rgb "orange"
     pause 0.5
 }
 

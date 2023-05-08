@@ -65,14 +65,14 @@ contains
             allocate(Delta(i)%Velocity(Field%Dim), source=0._8)
         end do
 
-        forall (i=1:Field%Maxn)
+        do i=1, Field%Maxn
             aver_v(:, i) = 0
 #if SOLID
             Shear_prev(:, :, i) = 0
             Shear(:, :, i)      = 0
             dSdt(:, :, i)       = 0
 #endif
-        end forall
+        end do
 
 #if SOLID
         SigmaY = 6e8

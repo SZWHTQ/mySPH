@@ -20,7 +20,9 @@ contains
             return
         case (1)
             factor = 2._8
-            forall (i=1:ntotal) P(i)%SmoothingLength = factor*(P(i)%Mass/P(i)%Density)**(1._8/Field%Dim)
+            do i=1, ntotal
+                P(i)%SmoothingLength = factor*(P(i)%Mass/P(i)%Density)**(1._8/Field%Dim)
+            end do
         case (2)
             !!! dh/dt = (-1/dim)*(h/rho)*(drho/dt)
             !!! drho/dt = sum(m*dv*dwdx )

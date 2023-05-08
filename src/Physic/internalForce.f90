@@ -7,7 +7,7 @@ module in_force_m
     implicit none
 
 contains
-    subroutine in_force(ntotal, P, dvdt, dedt, Shear, dSdt)
+    subroutine internal_force(ntotal, P, dvdt, dedt, Shear, dSdt)
         use, intrinsic :: iso_fortran_env, only: err => error_unit
         use visc_m
         use eos_m
@@ -326,6 +326,6 @@ contains
         deallocate(rdot, aver_edot)
 #endif
 
-    end subroutine in_force
+    end subroutine internal_force
 
 end module in_force_m

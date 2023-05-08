@@ -174,7 +174,7 @@ contains
                 if ( present(info) ) then
                     info = "Created directory: "//trim(adjustl(buffer))
                 end if
-                call system('mkdir '//trim(adjustl(buffer)))
+                call execute_command_line('mkdir '//trim(adjustl(buffer)))
             else
                 if ( present(info) ) then
                     info = "Directory already exists: "//trim(adjustl(buffer))
@@ -226,19 +226,19 @@ contains
         remain(1) = int(estimate/6d4) ! minutes
         remain(2) = int((estimate-remain(1)*6d4)*1d-3) ! seconds
 
-        write (*, "(1X, 2(I0, A), $)") value, " / ", max, " ["
+        write (*, "(1X, 2(I0, A))", advance="no") value, " / ", max, " ["
         do i = 1, int(digit*rate)
-            write (*, '(a, $)') "="
+            write (*, '(a)', advance="no") "="
         end do
-        write (*, '(a, $)') ">"
+        write (*, '(a)', advance="no") ">"
         do i = int(digit*rate) + 1, digit
-            write (*, '(a, $)') "-"
+            write (*, '(a)', advance="no") "-"
         end do
 
         if (isflushed) then
             fdigit = 2 * int(log10(real(max))+1) + 75
         end if
-        write (*, '(a, f7.2, a, i3, a, i2, a, a, $)') &
+        write (*, '(a, f7.2, a, i3, a, i2, a, a)', advance="no") &
                "]", 100d0*rate, "% ", remain(1), "m", remain(2), "s", CR
 
         if (value == max) then

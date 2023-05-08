@@ -4,7 +4,7 @@ module ex_force_m
     implicit none
 
 contains
-    subroutine ex_force(ntotal, P, dvdt)
+    subroutine external_force(ntotal, P, dvdt)
         integer, intent(in) :: ntotal
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:, :)
@@ -15,11 +15,17 @@ contains
 
         integer i, j, k, d
 
-        forall (i=1:Field%Dim, j=1:ntotal) dvdt(i, j) = 0
+        do i=1, Field%Dim
+            do j=1, ntotal
+                dvdt(i, j) = 0
+            end do
+        end do
 
         !!! Consider gravity or not
         if ( Config%gravity_w ) then
-            forall (i=1:ntotal) dvdt(Field%Dim, i) = -9.8
+            do i=1, ntotal
+                dvdt(Field%Dim, i) = -9.8
+            end do
         end if
 
         !!! Boundary particle force and penalty anti-penetration force
@@ -98,6 +104,6 @@ contains
         !$OMP END PARALLEL DO
 
 
-    end subroutine ex_force
+    end subroutine external_force
 
 end module ex_force_m

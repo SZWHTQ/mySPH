@@ -9,10 +9,10 @@ kPair  = 100
 NNPS   = 2
 SKF    = 1
 SLE    = 0
-deltaT = 5e-7
-printInterval = 10
-saveInterval  = 10
-maxTimeStep   = 5000
+deltaT = 2.5e-7
+printInterval = 200
+saveInterval  = 100
+maxTimeStep   = 10000
 monitorParticle = 1
 
 summationDensity    = false

@@ -47,16 +47,17 @@ contains
     subroutine writeParticle(P, unit, iotype, v_list, iostat, iomsg)
         class(Particle), intent(in) :: P
         integer, intent(in) :: unit
-        character(len=*), intent(in), optional :: iotype
-        integer, intent(in), optional :: v_list(:)
-        integer, intent(out), optional :: iostat
-        character(len=*), intent(inout), optional :: iomsg
+        character(len=*), intent(in) :: iotype
+        integer, intent(in) :: v_list(:)
+        integer, intent(out) :: iostat
+        character(len=*), intent(inout) :: iomsg
 
         integer, parameter :: scalarNum = 8, vectorNum = 2, tensorNum = 1
         character(len=128) :: fmt
         integer i, j, dim, N
 
         dim = size(P%x)
+        iostat = 0
 
         N = scalarNum + vectorNum * dim + tensorNum * dim * dim
 
@@ -85,14 +86,15 @@ contains
     subroutine readParticle(P, unit, iotype, v_list, iostat, iomsg)
         class(Particle), intent(inout) :: P
         integer, intent(in) :: unit
-        character(len=*), intent(in), optional :: iotype
-        integer, intent(in), optional :: v_list(:)
-        integer, intent(out), optional :: iostat
-        character(len=*), intent(inout), optional :: iomsg
+        character(len=*), intent(in) :: iotype
+        integer, intent(in) :: v_list(:)
+        integer, intent(out) :: iostat
+        character(len=*), intent(inout) :: iomsg
 
         integer i, j, dim
 
         dim = size(P%x)
+        iostat = 0
 
 #if WRITE_NEIGHBOR_INFO
         read(unit, *) P%Type, P%State,                          &

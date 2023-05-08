@@ -19,7 +19,11 @@ contains
         !!! the ε ≤ 0.3
         parameter(epsilon = 0.3)
 
-        forall(i=1:Field%Dim, j=1:ntotal) aver_v(i, j) = 0._8
+        do i=1, Field%Dim
+            do j=1, ntotal
+                aver_v(i, j) = 0._8
+            end do
+        end do
 
         do i = 1, ntotal
             do k = 1, P(i)%neighborNum

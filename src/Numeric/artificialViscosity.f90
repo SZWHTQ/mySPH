@@ -19,10 +19,10 @@ contains
 
         integer i, j, k
 
-        forall (i=1:ntotal)
+        do i=1, ntotal
             dvdt(:, i) = 0
             dedt(i)    = 0
-        end forall
+        end do
         
 
         select case(Project%nick)

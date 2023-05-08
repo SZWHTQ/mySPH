@@ -22,7 +22,7 @@ contains
         character(512) :: buffer
         integer i
 
-        argument_num = iargc()
+        argument_num = command_argument_count()
         select case( argument_num )
         case (0)
             write(*, "(A)") ESC//"[31m"
@@ -30,7 +30,7 @@ contains
             write(*, "(A)", advance="no") ESC//"[0m"
             stop
         case (1)
-            call getarg(1, buffer)
+            call get_command_argument(1, buffer)
             allocate(Project%in_path, source=trim(adjustl(buffer)))
             inquire(file=Project%in_path//"/sph.toml", exist=alive)
             if ( .not. alive ) then
@@ -42,7 +42,7 @@ contains
             end if
         case default
             do i = 1, argument_num
-                call getarg(i, buffer)
+                call get_command_argument(i, buffer)
                 allocate(Project%in_path, source=trim(adjustl(buffer)))
                 inquire(file=Project%in_path//"/sph.toml", exist=alive)
                 if ( alive ) then
@@ -151,7 +151,7 @@ contains
 
         call get_value(subtable, 'OMP_NUM_THREADS', Config%nthreads, 0)
         if ( Config%nthreads == 0 ) then 
-            call getenv('OMP_NUM_THREADS', buffer)
+            call get_environment_variable('OMP_NUM_THREADS', buffer)
             if ( trim(buffer) /= "" ) then
                 read(buffer, *) Config%nthreads
             end if

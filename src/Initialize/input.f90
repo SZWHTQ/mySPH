@@ -33,7 +33,7 @@ contains
         write(*,*)
 
         do i = 1, ntotal
-            read(11, "(I5, DT, $)") null, Particles
+            read(11, "(I5, DT)", advance="no") null, Particles
             if ( null /= i ) then
                 call print_warning(null, "Unconsistent particle index", BS)
             end if
@@ -68,6 +68,8 @@ contains
             call dam_break(ntotal, Particles)
         case ("taylor_rod")
             call taylor_rod(ntotal, Particles)
+        case ("can_beam")
+            call cantilever_beam(ntotal, Particles)
         end select
 
         call output(ini, Particles(1:ntotal))
@@ -610,5 +612,31 @@ contains
         ntotal = Nx * Ny
 
     end subroutine taylor_rod
+
+    subroutine cantilever_beam(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
+        real(8) :: dx = 1e-3
+        integer :: nx = 101, ny = 5
+
+        integer i, j, k
+
+        do i = 1, nx
+            do j = 1, ny
+                k = (i-1) * ny + j
+                P(k)%x(:)            = [i-1, j-1] * dx
+                P(k)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = dx * 2
+            end do
+        end do
+        ntotal = nx * ny
+
+    end subroutine cantilever_beam
 
 end module input_m

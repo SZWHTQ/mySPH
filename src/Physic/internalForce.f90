@@ -81,14 +81,12 @@ contains
                     j = P(i)%neighborList(k)
                         dv = P(j)%v(:) - P(i)%v(:)
                         do d = 1, Field%Dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
-                            do dd = d, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
+                            do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
                                 vab = 0.5 * P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k)
                                 vba = 0.5 * P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k)
 
                                 edot(d, dd, i) = edot(d, dd, i) + (vab + vba)
                                 edot(dd, d, i) = edot(dd, d, i) + (vab + vba)
-                                rdot(d, dd, i) = rdot(d, dd, i) + (vab - vba)
-                                rdot(dd, d, i) = rdot(dd, d, i) - (vab - vba)
                             end do !! dd
                         end do !! d
                 end do !! k

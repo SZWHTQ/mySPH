@@ -299,21 +299,18 @@ contains
 
     end subroutine solveBufferProperty
 
-    subroutine fixedBoundary(P, D)
+    subroutine fixedBoundary(D)
         use time_integration_m, only: Update
-        type(Particle), intent(inout) :: P(:)
         type(Update), intent(inout) :: D(:)
 
         select case(Project%nick)
         case("can_beam")
-            call cantilever_beam(P, D)
+            call cantilever_beam(D)
         end select
 
     contains
-        subroutine cantilever_beam(P, D)
-            type(Particle), intent(inout) :: P(:)
+        subroutine cantilever_beam(D)
             type(Update), intent(inout) :: D(:)
-            real(8) :: dx = 1e-3
             integer :: ny
 
             integer i
@@ -321,8 +318,6 @@ contains
             ny = 5
 
             do i = 1, ny
-                ! P(i)%x = [0, i-1] * dx
-                ! P(i)%v = 0
                 D(i)%Velocity = 0
             end do
 

@@ -127,7 +127,7 @@ contains
             P(ntotal+ndummy)%x(1)            = -0.6 - dx / 4 * (i+1)
             P(ntotal+ndummy)%v(1)            =  0
             P(ntotal+ndummy)%SmoothingLength =  dx * 2
-            P(ntotal+ndummy)%Type           = -1
+            P(ntotal+ndummy)%Type            = -1
             P(ntotal+ndummy)%Density         =  1
             P(ntotal+ndummy)%Mass            =  P(ntotal+ndummy)%Density * dx / 4
             P(ntotal+ndummy)%Pressure        =  1
@@ -140,7 +140,7 @@ contains
             P(ntotal+ndummy)%x(1)            =  0.6 + dx * (i+1)
             P(ntotal+ndummy)%v(1)            =  0
             P(ntotal+ndummy)%SmoothingLength =  dx * 2
-            P(ntotal+ndummy)%Type           = -1
+            P(ntotal+ndummy)%Type            = -1
             P(ntotal+ndummy)%Density         =  0.25
             P(ntotal+ndummy)%Mass            =  P(ntotal+ndummy)%Density * dx
             P(ntotal+ndummy)%Pressure        =  0.1795
@@ -176,19 +176,29 @@ contains
                < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                P(index) = P(i)
-                P(index)%x(1)  =  2*P(ntotal+n_dp_1 - 1)%x(1) - P(i)%x(1)
-                P(index)%v(1)  = -P(i)%v(1)
+                P(index)%x(1) =  2*P(ntotal+n_dp_1 - 1)%x(1) - P(i)%x(1)
+                P(index)%v(1) = -P(i)%v(1)
+                P(index)%Mass = P(i)%Mass
+                P(index)%SmoothingLength = P(i)%SmoothingLength
                 P(index)%Type = -P(i)%Type
+                P(index)%InternalEnergy = P(i)%InternalEnergy
+                P(index)%Pressure = P(i)%Pressure
+                P(index)%Density = P(i)%Density
+                P(index)%SoundSpeed = P(i)%SoundSpeed
             end if
             if ( P(ntotal+n_dp_1)%x(1) - P(i)%x(1) &
                < P(i)%SmoothingLength * scale_k ) then
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                P(index) = P(i)
                 P(index)%x(1) =  2*P(ntotal+n_dp_1)%x(1) - P(i)%x(1)
                 P(index)%v(1) = -P(i)%v(1)
+                P(index)%Mass = P(i)%Mass
+                P(index)%SmoothingLength = P(i)%SmoothingLength
                 P(index)%Type = -P(i)%Type
+                P(index)%InternalEnergy = P(i)%InternalEnergy
+                P(index)%Pressure = P(i)%Pressure
+                P(index)%Density = P(i)%Density
+                P(index)%SoundSpeed = P(i)%SoundSpeed
             end if
         end do
 

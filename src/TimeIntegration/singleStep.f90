@@ -65,8 +65,6 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         nbuffer = 0
     end if
 
-    ! call fixedBoundary(Particles, Delta)
-
     N = ntotal + ndummy + nbuffer
 
 #ifdef _OPENMP
@@ -132,7 +130,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         Delta(i)%Energy   = indedt(i)    + avdedt(i)    + ahdedt(i)
     end do
 
-    call fixedBoundary(Particles, Delta)
+    call fixedBoundary(Delta)
 
 
     if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then

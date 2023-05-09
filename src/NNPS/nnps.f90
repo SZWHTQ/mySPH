@@ -147,7 +147,7 @@ contains
                 if ( P(i)%x(d) < grid_min_coor(d) ) grid_min_coor(d) = P(i)%x(d)
             end do
         end do
-        scale = 1.1
+        scale = 1.2
         associate( d => (grid_max_coor-grid_min_coor) )
             grid_max_coor = grid_max_coor + (scale - 1) * d
             grid_min_coor = grid_min_coor - (scale - 1) * d

@@ -99,7 +99,7 @@ contains
         do i = 1, n_left
             P(i)%x(1)            = -0.6 + dx / 4 * (i-1)
             P(i)%v(:)            = 0
-            P(i)%Type           = 1
+            P(i)%Type            = 1
             P(i)%SmoothingLength = dx * 2
             P(i)%Density         = 1
             P(i)%Mass            = P(i)%Density * dx / 4
@@ -111,7 +111,7 @@ contains
         do i = n_left+1, ntotal
             P(i)%x(1)            = 0 + dx * (i-n_left)
             P(i)%v(:)            = 0
-            P(i)%Type           = 1
+            P(i)%Type            = 1
             P(i)%SmoothingLength = dx * 2
             P(i)%Density         = 0.25
             P(i)%Mass            = P(i)%Density * dx

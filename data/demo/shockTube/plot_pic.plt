@@ -47,7 +47,8 @@ set ylabel "Internal Energy"
 set xrange [-0.4:0.4]
 unset yrange
 set grid
-plot '~/OneDrive/Thesis/Data/shockTube/SPH/1600/output/500.dat' u 2:7 with lines lw 2 lt rgb "green" title "SPH 1600", \
+plot './exact/Riemann_0.2s.txt' u 1:5 with lines lw 4 lt rgb "black" title "Exact", \
+     '~/OneDrive/Thesis/Data/shockTube/SPH/1600/output/500.dat' u 2:7 with lines lw 2 lt rgb "green" title "SPH 1600", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/800/output/1000.dat' u 2:7 with lines lw 2 dashtype "-" lt rgb "cyan" title "SPH 800", \
      '~/OneDrive/Thesis/Data/shockTube/SPH/400/output/1000.dat' u 2:7 with lines lw 2 dashtype "." lt rgb "blue" title "SPH 400", \
      './output/Type_1_20.dat' u 4:9 with lines lw 2 lt rgb "red" title "Riemann"

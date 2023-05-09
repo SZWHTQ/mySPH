@@ -38,9 +38,9 @@ contains
             alpha = 1
             beta  = 10
             psi   = 0.1
-        case("taylor_rod")
+        case("taylor_rod", "can_beam")
             alpha = 0.5
-            beta  = 1
+            beta  = 0.5
             psi   = 0.1
         case default
             alpha = 1

@@ -100,7 +100,7 @@ contains
             P(i)%x(1)            = -0.6 + dx / 4 * (i-1)
             P(i)%v(:)            = 0
             P(i)%Type            = 1
-            P(i)%SmoothingLength = dx * 2
+            P(i)%SmoothingLength = dx * 1.5
             P(i)%Density         = 1
             P(i)%Mass            = P(i)%Density * dx / 4
             P(i)%Pressure        = 1
@@ -616,7 +616,7 @@ contains
     subroutine cantilever_beam(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        real(8) :: dx = 1e-3
+        real(8) :: dx = 1e-2
         integer :: nx = 101, ny = 5
 
         integer i, j, k
@@ -635,6 +635,11 @@ contains
                 P(k)%SmoothingLength = dx * 2
             end do
         end do
+
+        do i = 1, Ny
+            P(i)%Boundary = 1 !! Fixed Boundary
+        end do
+
         ntotal = nx * ny
 
     end subroutine cantilever_beam

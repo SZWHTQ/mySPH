@@ -130,7 +130,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         Delta(i)%Energy   = indedt(i)    + avdedt(i)    + ahdedt(i)
     end do
 
-    call fixedBoundary(Delta)
+    call fixedBoundary(ntotal, Particles, Delta)
 
 
     if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then

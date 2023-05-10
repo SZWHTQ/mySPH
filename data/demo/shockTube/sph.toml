@@ -52,7 +52,7 @@ summationDensity    = true
 dummyParticle       = true
 artificialViscosity = true
 # artificialHeat      = false
-averageVelocity     = true
+# averageVelocity     = true
 # DSPH                = false
 
 

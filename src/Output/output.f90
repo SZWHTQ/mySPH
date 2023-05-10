@@ -15,7 +15,7 @@ contains
         integer :: particleType, num(-8:8)
         integer, allocatable :: type_list(:), type_indice(:, :)
         character(:), allocatable :: fileName
-        
+
         integer i, j, k
 
         ntotal = size(Particles)
@@ -70,7 +70,7 @@ contains
         type(Particle), intent(in) :: Particles(:)
         integer, intent(in), optional :: index(:)
         integer :: ntotal
-        
+
         integer i
 
         ntotal = size(Particles)
@@ -83,6 +83,7 @@ contains
                             "Pressure", "InternalEnergy", "SoundSpeed", &
                             "SmoothingLength", "Viscocity",             &
                             "DivDistance",                              &
+                            "Displacement_X",                           &
                             "StressXX"
             do i = 1, ntotal
                 if ( present(index) ) then
@@ -92,7 +93,7 @@ contains
                 end if
                 write(11, "(DT)") Particles(i)
             end do
-            1001 format(3(A8), 11(A17))
+            1001 format(3(A8), 12(A17))
 
         case (2)
             write(11, 1002) "Index", "Type", "State",                   &
@@ -101,6 +102,7 @@ contains
                             "Pressure", "InternalEnergy", "SoundSpeed", &
                             "SmoothingLength", "Viscocity",             &
                             "DivDistance",                              &
+                            "Displacement_X", "Displacement_Y",         &
                             "StressXX", "StressXY",                     &
                             "StressYX", "StressYY"
             do i = 1, ntotal
@@ -111,15 +113,17 @@ contains
                 end if
                 write(11, "(DT)") Particles(i)
             end do
-            1002 format(3(A8), 17(A17))
+            1002 format(3(A8), 18(A17))
 
         case (3)
             write(11, 1003) "Index", "Type", "State",                   &
                             "X", "Y", "Z", "U", "V", "W",               &
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength",                          &
-                            "Viscocity", "DivDistance",                 &
+                            "SmoothingLength", "Viscocity",             &
+                            "DivDistance",                              &
+                            "Displacement_X", "Displacement_Y",         &
+                            "Displacement_Z",                           &
                             "StressXX", "StressXY", "StressXZ",         &
                             "StressYX", "StressYY", "StressYZ",         &
                             "StressZX", "StressZY", "StressZZ"
@@ -131,7 +135,7 @@ contains
                 end if
                 write(11, "(DT)") Particles(i)
             end do
-            1003 format(3(A8), 24(A17))
+            1003 format(3(A8), 25(A17))
 
         end select
 
@@ -198,7 +202,7 @@ contains
             write (11, "(I0)") Particles(i)%Type
         end do
 
-        !!! Write particle type
+        !!! Write particle state
         write (11, "(A)") "SCALARS State int 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
@@ -223,6 +227,12 @@ contains
         write (11, "(A)") "VECTORS U double"
         do i = 1, ntotal
             write(11, 1001) Particles(i)%v(:), (0.0, d = 1, 3-Field%Dim)
+        end do
+
+        !!! Write particle velocity
+        write (11, "(A)") "VECTORS Displacement double"
+        do i = 1, ntotal
+            write(11, 1001) Particles(i)%Displacement(:), (0.0, d = 1, 3-Field%Dim)
         end do
 
         !!! Write particle stress

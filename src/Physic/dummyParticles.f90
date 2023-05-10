@@ -126,7 +126,7 @@ contains
             ndummy = ndummy + 1
             P(ntotal+ndummy)%x(1)            = -0.6 - dx / 4 * (i+1)
             P(ntotal+ndummy)%v(1)            =  0
-            P(ntotal+ndummy)%SmoothingLength =  dx * 2
+            P(ntotal+ndummy)%SmoothingLength =  dx * 1.5
             P(ntotal+ndummy)%Type            = -1
             P(ntotal+ndummy)%Density         =  1
             P(ntotal+ndummy)%Mass            =  P(ntotal+ndummy)%Density * dx / 4

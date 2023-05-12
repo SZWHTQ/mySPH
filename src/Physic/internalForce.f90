@@ -39,7 +39,7 @@ contains
 #endif
 
         !!! Dynamic viscosity
-        if ( Config%viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%Viscocity)
+        if ( Config%viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%Viscosity)
 
 
         if ( Config%viscosity_w ) then
@@ -104,7 +104,7 @@ contains
 #endif
             !!! Viscous entropy Tds/dt = 1/2 eta/rho εab•εab
             if ( Config%viscosity_w ) then
-                tdsdt(i) = 0.5_8 * P(i)%Viscocity / P(i)%Density &
+                tdsdt(i) = 0.5_8 * P(i)%Viscosity / P(i)%Density &
                          * sum(edot(:, :, i)**2)
             end if
 
@@ -150,7 +150,7 @@ contains
             !!! Deviatoric Stress Rate Tensor
             do d = 1, Field%Dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
                 do dd = 1, Field%Dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
-                    dSdt(d, dd, i) = 2 * P(i)%Viscocity * aver_edot(d, dd)
+                    dSdt(d, dd, i) = 2 * P(i)%Viscosity * aver_edot(d, dd)
                     do ddd = 1, Field%Dim
                         dSdt(d, dd, i) = dSdt(d, dd, i) + &
                             Shear(d, ddd, i) * rdot(dd, ddd, i) &
@@ -196,8 +196,8 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                    &
                             + P(j)%Mass                            &
                             * ( - aux * P(i)%dwdx(:, k)            &
-                                + matmul(  P(i)%Viscocity*edot(:, :, i)  &
-                                         + P(j)%Viscocity*edot(:, :, j), &
+                                + matmul(  P(i)%Viscosity*edot(:, :, i)  &
+                                         + P(j)%Viscosity*edot(:, :, j), &
                                          P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy
@@ -226,8 +226,8 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                                                 &
                             + P(j)%Mass                                                         &
                             * ( - aux * P(i)%dwdx(:, k)                                         &
-                                + matmul(  P(i)%Viscocity*edot(:, :, i)/P(i)%Density**2  &
-                                         + P(j)%Viscocity*edot(:, :, j)/P(j)%Density**2, &
+                                + matmul(  P(i)%Viscosity*edot(:, :, i)/P(i)%Density**2  &
+                                         + P(j)%Viscosity*edot(:, :, j)/P(j)%Density**2, &
                                          P(i)%dwdx(:, k)) )
 
                         !!! Conservation of Energy
@@ -296,8 +296,8 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                                 &
                             + P(j)%Mass                                         &
                             * ( - aux * P(i)%dwdx(:, k)                         &
-                                + matmul(  P(i)%Viscocity*edot(:, :, i)  &
-                                         + P(j)%Viscocity*edot(:, :, j), &
+                                + matmul(  P(i)%Viscosity*edot(:, :, i)  &
+                                         + P(j)%Viscosity*edot(:, :, j), &
                                          P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy

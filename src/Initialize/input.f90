@@ -577,6 +577,29 @@ contains
 
         ntotal = Nx * Ny
 
+        Nx = int(0.6 / (dx))
+        Ny = int(10  / (dx))
+        do i = 1, Nx
+            do j = 1, Ny
+                k = ntotal + (i-1) * Ny + j
+                P(k)%x(:) = [50 + (i-(Nx/2.)-0.5) * (dx), &
+                             fluid_domian(3) + (j-0.5) * (dx)]
+                P(K)%v(:) = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * dx * dx / 4
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = dx
+                if ( j == 1 ) then
+                    P(k)%Boundary = 1
+                end if
+            end do
+        end do
+
+        ntotal = ntotal + Nx * Ny
+
     end subroutine dam_break
 
     subroutine taylor_rod(ntotal, P)
@@ -632,12 +655,11 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%SoundSpeed      = 5000
                 P(k)%Type            = 8
-                P(k)%SmoothingLength = dx * 2
+                P(k)%SmoothingLength = dx
             end do
-        end do
-
-        do i = 1, Ny
-            P(i)%Boundary = 1 !! Fixed Boundary
+            if ( i == 1 ) then
+                P(i)%Boundary = 1
+            end if
         end do
 
         ntotal = nx * ny

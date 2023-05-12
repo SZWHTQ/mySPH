@@ -52,7 +52,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     end do
 
     !!! Positions of dummy (boundary) particles
-    if ( Config%dummy_parti_w ) call gen_dummy_particle(ndummy, Particles(1:ntotal))
+    if ( Config%dummy_parti_w ) call gen_dummy_particle(ntotal, ndummy, Particles)
 
     if ( Config%open_boundary_w) then
         if (Config%i_time_step == 1) then

@@ -17,11 +17,12 @@ set palette rgbformulae 22, 13, -31
 set cbrange [0:20]
 # unset colorbox
 
-do for [i=1:300:1] {
+do for [i=1:400:1] {
     set title sprintf('%.2fs', i*0.05)
     plot sprintf('./output/Type_2_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 7 palette ps 0.5 lw 0.5, \
-         sprintf('./output/Type_-2_%d.dat', i) using 4:5 pt 1 ps 0.5 lw 0.2 lt rgb "orange"
-    pause 0.02
+         sprintf('./output/Type_8_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 7 lt rgb "#23a9f2" ps 0.25 lw 0.25, \
+         sprintf('./output/Type_-2_%d.dat', i) using 4:5 pt 1 ps 0.5 lw 0.5 lt rgb "orange"
+    # pause 0.02
 }
 
 pause -1

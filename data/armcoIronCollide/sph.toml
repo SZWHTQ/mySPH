@@ -11,7 +11,7 @@ DIM = 2
 maxN = 2000
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 80
+kPair = 180
 
 ## Indicator Variables for Particle Approximation
 SPH = 2

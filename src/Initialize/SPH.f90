@@ -9,7 +9,7 @@ module sph
         real(8), allocatable :: x(:), v(:)
         real(8), allocatable :: Displacement(:)
         real(8) :: Mass, Density
-        real(8) :: Pressure, InternalEnergy, SoundSpeed, SmoothingLength, Viscocity
+        real(8) :: Pressure, InternalEnergy, SoundSpeed, SmoothingLength, Viscosity
         real(8) :: divergencePosition, divergenceVelocity
         real(8), allocatable :: Stress(:, :)
         integer :: neighborNum
@@ -42,7 +42,7 @@ contains
         self%Mass               = 0.0_8; self%Density            = 0.0_8
         self%Pressure           = 0.0_8; self%InternalEnergy     = 0.0_8
         self%SoundSpeed         = 0.0_8; self%SmoothingLength    = 0.0_8
-        self%Viscocity          = 0.0_8
+        self%Viscosity          = 0.0_8
         self%divergencePosition = 0.0_8; self%divergenceVelocity = 0.0_8
         self%neighborNum        = 0    
 
@@ -72,7 +72,7 @@ contains
         write(unit, fmt) P%Type, P%State,                            &
                          P%x, P%v, P%Mass, P%Density,                &
                          P%Pressure, P%InternalEnergy, P%SoundSpeed, &
-                         P%SmoothingLength, P%Viscocity,             &
+                         P%SmoothingLength, P%Viscosity,             &
                          P%divergencePosition, P%Displacement,       &
                          ((P%Stress(i, j), j=1, dim), i=1, dim),     &
                          P%neighborNum, P%neighborList, P%w, P%dwdx
@@ -81,7 +81,7 @@ contains
         write(unit, fmt) P%Type, P%State,                            &
                          P%x, P%v, P%Mass, P%Density,                &
                          P%Pressure, P%InternalEnergy, P%SoundSpeed, &
-                         P%SmoothingLength, P%Viscocity,             &
+                         P%SmoothingLength, P%Viscosity,             &
                          P%divergencePosition, P%Displacement,       &
                          ((P%Stress(i, j), j=1, dim), i=1, dim)
 #endif
@@ -104,7 +104,7 @@ contains
         read(unit, *) P%Type, P%State,                            &
                       P%x, P%v, P%Mass, P%Density,                &
                       P%Pressure, P%InternalEnergy, P%SoundSpeed, &
-                      P%SmoothingLength, P%Viscocity,             &
+                      P%SmoothingLength, P%Viscosity,             &
                       P%divergencePosition, P%Displacement,       &
                       ((P%Stress(i, j), j=1, dim), i=1, dim),     &
                       P%neighborNum, P%neighborList, P%w, P%dwdx
@@ -112,7 +112,7 @@ contains
         read(unit, *) P%Type, P%State,                            &
                       P%x, P%v, P%Mass, P%Density,                &
                       P%Pressure, P%InternalEnergy, P%SoundSpeed, &
-                      P%SmoothingLength, P%Viscocity,             &
+                      P%SmoothingLength, P%Viscosity,             &
                       P%divergencePosition, P%Displacement,       &
                       ((P%Stress(i, j), j=1, dim), i=1, dim)
 #endif

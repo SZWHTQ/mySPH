@@ -81,7 +81,7 @@ contains
             write(11, 1001) "Index", "Type", "State", "X", "V",         &
                             "Mass", "Density",                          &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "Viscocity",             &
+                            "SmoothingLength", "Viscosity",             &
                             "DivDistance",                              &
                             "Displacement_X",                           &
                             "StressXX"
@@ -100,7 +100,7 @@ contains
                             "X", "Y", "U", "V",                         &
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "Viscocity",             &
+                            "SmoothingLength", "Viscosity",             &
                             "DivDistance",                              &
                             "Displacement_X", "Displacement_Y",         &
                             "StressXX", "StressXY",                     &
@@ -120,7 +120,7 @@ contains
                             "X", "Y", "Z", "U", "V", "W",               &
                             "Mass" , "Density",                         &
                             "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "Viscocity",             &
+                            "SmoothingLength", "Viscosity",             &
                             "DivDistance",                              &
                             "Displacement_X", "Displacement_Y",         &
                             "Displacement_Z",                           &

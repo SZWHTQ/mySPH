@@ -8,14 +8,14 @@ set xlabel "x/m"
 set ylabel "y/m"
 set xtics  font ",12"
 set ytics  font ",12"
-set xrange [-0.01:0.11]
-set yrange [-0.058:0.062]
+set xrange [-0.1:1.1]
+set yrange [-0.58:0.62]
 set grid
 set size 1, 1
 unset key
 set palette rgbformulae 22, 13, -31
-set cbrange [-0.1:0.1]
-set cbtics 0.02
+set cbrange [-0.5:0.5]
+set cbtics 0.2
 set cblabel "Stress_{xx}/MPa"
 
 do for [i=0:100:1] {

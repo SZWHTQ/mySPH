@@ -6,13 +6,12 @@ module dummy_part_m
 
     public gen_dummy_particle
 contains
-    subroutine gen_dummy_particle(ndummy, Particles)
+    subroutine gen_dummy_particle(ntotal, ndummy, Particles)
         ! use ctrl_dict, only: i_time_step
+        integer, intent(in)    :: ntotal
         integer, intent(inout) :: ndummy
         type(Particle), intent(inout) :: Particles(:)
-        integer :: ntotal
 
-        ntotal = size(Particles)
         ndummy = 0
 
         select case(Project%nick)
@@ -593,25 +592,43 @@ contains
                 P(index)%Mass            = P(index)%Density * dx * dx
                 P(index)%Pressure        = 0
                 P(index)%InternalEnergy  = 0
-                P(index)%Type           = -P(1)%Type
+                P(index)%Type            = -P(1)%Type
                 P(index)%SmoothingLength = dx
             end do
         end do
 
-        !!! Dummy particle I for baffle
-        Nx = floor(3 / (dx / 2))
+        ! !!! Dummy particle I for baffle
+        ! Nx = floor(3 / (dx / 2))
+        ! do l = 1, layer
+        !     do i = 1, Nx - l + 1
+        !         ndummy = ndummy + 1
+        !         index = ntotal + ndummy
+        !         P(index)%x(:)  = [sum(wall_domain(1:2))/2 + (i+l-1.5)*dx/2, &
+        !                           wall_domain(3) + (i-0.5)*dx/2]
+        !         P(index)%v(:)  = 0
+        !         P(index)%Density         = 1000
+        !         P(index)%Mass            = P(index)%Density * dx * dx / 4
+        !         P(index)%Pressure        = 0
+        !         P(index)%InternalEnergy  = 0
+        !         P(index)%Type            = -P(1)%Type
+        !         P(index)%SmoothingLength = dx
+        !     end do
+        ! end do
+
+        !!! Dummy particle for Lid
+        Nx = floor((wall_domain(2) - wall_domain(1))/dx) + 1
         do l = 1, layer
-            do i = 1, Nx - l + 1
+            do i = 1, Nx
                 ndummy = ndummy + 1
                 index = ntotal + ndummy
-                P(index)%x(:)  = [sum(wall_domain(1:2))/2 + (i+l-1.5)*dx/2, &
-                                  wall_domain(3) + (i-0.5)*dx/2]
+                P(index)%x(:)  = [wall_domain(1) + (i-0.5)*dx, &
+                                  wall_domain(4) - (l+0.5)*dx]
                 P(index)%v(:)  = 0
                 P(index)%Density         = 1000
-                P(index)%Mass            = P(index)%Density * dx * dx / 4
+                P(index)%Mass            = P(index)%Density * dx * dx
                 P(index)%Pressure        = 0
                 P(index)%InternalEnergy  = 0
-                P(index)%Type           = -P(1)%Type
+                P(index)%Type            = -P(1)%Type
                 P(index)%SmoothingLength = dx
             end do
         end do

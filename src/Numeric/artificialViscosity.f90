@@ -41,7 +41,7 @@ contains
         case("taylor_rod")
             alpha = 0.5
             beta  = 0.5
-            psi   = 0.1
+            psi   = 0.01
         case("can_beam")
             alpha = 0.5
             beta  = 0.5

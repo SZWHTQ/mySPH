@@ -1,6 +1,6 @@
 ## Project Name
-name = "Two-dimensional dam break"
-nick = "dam_break"
+name = "Two-dimensional clammped elastic beam interacting with oil flow"
+nick = "beam_oil"
 
 [Parameter]
 
@@ -8,10 +8,10 @@ nick = "dam_break"
 DIM = 2
 
 ## Maximum Number of Particles
-maxN = 25000
+maxN = 100000
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 30
+kPair = 100
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -32,25 +32,26 @@ SLE = 0
 SKF = 1
 
 ## Serial Number of the Monitored Particle
-monitorParticle = 1
+monitorParticle = 34618
 
 printStatistics = true
 
-printInterval = 2000
+printInterval = 100
 
 saveInterval = 1000
 
-maxTimeStep = 400000
+maxTimeStep = 50000000
 
 ## Time Step
-deltaT = 5e-5
+deltaT = 6e-8
 
 summationDensity    = false
-# averageVelocity     = true
 dummyParticle       = true
 viscosity           = true
 gravity             = true
 artificialViscosity = true
+artificialHeat      = true
+# averageVelocity     = true
 # normalizeDensity    = true
 
 

@@ -12,7 +12,7 @@ contains
         type(Particle), intent(inout) :: Particles(:)
         integer :: ntotal
         type(Particle), allocatable :: this(:)
-        integer :: particleType, num(-8:8)
+        integer :: particleType, num(-200:200)
         integer, allocatable :: type_list(:), type_indice(:, :)
         character(:), allocatable :: fileName
 
@@ -21,7 +21,7 @@ contains
         ntotal = size(Particles)
         call allocateParticleList(this, ntotal, Field%Dim, size(Particles(1)%neighborList))
         num = 0
-        allocate(type_indice(-8:8, ntotal), source=0)
+        allocate(type_indice(-200:200, ntotal), source=0)
         do i = 1, ntotal
             particleType = Particles(i)%Type
             num(particleType) = num(particleType) + 1
@@ -42,7 +42,7 @@ contains
         end if
 
         allocate(type_list(0))
-        do i = -8, 8
+        do i = -200, 200
             if ( num(i) /= 0 ) type_list = [type_list, i]
         end do
 

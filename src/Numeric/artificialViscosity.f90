@@ -42,7 +42,7 @@ contains
             alpha = 0.5
             beta  = 0.5
             psi   = 0.01
-        case("can_beam")
+        case("can_beam", "beam_oil")
             alpha = 0.5
             beta  = 0.5
             psi   = 0.1

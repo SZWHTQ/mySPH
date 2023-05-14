@@ -20,10 +20,10 @@ set cbrange [0:2]
 
 do for [i=30:400:1] {
     set title sprintf('%.2fs', i*0.05)
-    plot sprintf('./output/Type_2_%d.dat', i) using 4:5 pt 7 lt rgb "#23a9f2" ps 1.2 lw 1, \
-         sprintf('./output/Type_102_%d.dat', i) using 4:5:16 pt 7 palette ps 1.2 lw 1, \
-         sprintf('./output/Type_-2_%d.dat', i) using 4:5 pt 2 ps 1.2 lw 1 lt rgb "#ffaa00"
-    pause 0.02
+    plot sprintf('./output/Type_2_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 7 lt rgb "#23a9f2" ps 1.2 lw 1, \
+         sprintf('./output/Type_8_%d.dat', i) using 4:5:16 pt 7 palette ps 1.2 lw 1, \
+         sprintf('./output/Type_-2_%d.dat', i) using 4:5 pt 2 ps 1.2 lw 1 lt rgb "orange"
+    # pause 0.02
 }
 
 pause -1

@@ -19,8 +19,8 @@ set cbtics 25 font ",12"
 
 do for [i=1:100:1] {
     set title sprintf('%dμs', i)
-    plot sprintf('./output/Type_8_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) palette pt 6 ps 1 , \
-         sprintf('./output/Type_-8_%d.dat', i) using 4:5 pt 2 ps 1 lt rgb "orange"
+    plot sprintf('./output/Type_101_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) palette pt 6 ps 1 , \
+         sprintf('./output/Type_-101_%d.dat', i) using 4:5 pt 2 ps 1 lt rgb "orange"
     pause 0.05
 }
 

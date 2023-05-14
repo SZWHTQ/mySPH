@@ -34,6 +34,8 @@ contains
         case("taylor_rod")
             ! call taylor_rod_dp_1(ntotal, ndummy, Particles)
             call taylor_rod_dp_2(ntotal, ndummy, Particles)
+        case("beam_oil")
+            call clammped_beam_with_oil_dp(ntotal, ndummy, Particles)
         end select
 
     end subroutine gen_dummy_particle
@@ -709,5 +711,91 @@ contains
         end do
 
     end subroutine taylor_rod_dp_2
+
+    subroutine clammped_beam_with_oil_dp(ntotal, ndummy, P)
+        integer, intent(in) :: ntotal
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
+        real(8) :: dx
+        real(8) :: wall_domain(4)
+        integer :: Nx, Ny
+        integer :: layer
+
+        integer :: index
+        integer i, l
+
+        ndummy = 0
+        dx = 0.001
+        wall_domain = [real(8) :: -304.5, 304.5, 0, 344.5] * 1e-3
+
+        layer = 4
+        do l = 1, layer
+            !!! Dummy particle I on the Left side
+            Ny = floor((wall_domain(4) - wall_domain(3))/dx) + layer
+            do i = 1, Ny
+                ndummy = ndummy + 1
+                index = ntotal + ndummy
+                P(index)%x(:) = [wall_domain(1) - (l-0.5)*dx, &
+                                 wall_domain(3) + (i-layer-0.5)*dx]
+                P(index)%v(:) = 0
+                P(index)%Density         = 917
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%Type           = -P(1)%Type
+                P(index)%SmoothingLength = dx
+            end do
+
+            !!! Dummy particle I on the Right side
+            do i = 1, Ny
+                ndummy = ndummy + 1
+                index = ntotal + ndummy
+                P(index)%x(:) = [wall_domain(2) + (l-0.5)*dx, &
+                                 wall_domain(3) + (i-layer-0.5)*dx]
+                P(index)%v(:) = 0
+                P(index)%Density         = 917
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%Type           = -P(1)%Type
+                P(index)%SmoothingLength = dx
+            end do
+
+            !!! Dummy particle I on the Bottom
+            Nx = floor((wall_domain(2) - wall_domain(1))/dx) + 1
+            do i = 1, Nx
+                ndummy = ndummy + 1
+                index = ntotal + ndummy
+                P(index)%x(:) = [wall_domain(1) + (i-0.5)*dx, &
+                                 wall_domain(3) - (l-0.5)*dx]
+                P(index)%v(:) = 0
+                P(index)%Density         = 917
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%Type            = -P(1)%Type
+                P(index)%SmoothingLength = dx
+            end do
+        end do
+
+        !!! Dummy particle for Lid
+        Nx = floor((wall_domain(2) - wall_domain(1))/dx) + 1
+        do l = 1, layer
+            do i = 1, Nx
+                ndummy = ndummy + 1
+                index = ntotal + ndummy
+                P(index)%x(:)  = [wall_domain(1) + (i-0.5)*dx, &
+                                  wall_domain(4) - (l+0.5)*dx]
+                P(index)%v(:)  = 0
+                P(index)%Density         = 917
+                P(index)%Mass            = P(index)%Density * dx * dx
+                P(index)%Pressure        = 0
+                P(index)%InternalEnergy  = 0
+                P(index)%Type            = -P(1)%Type
+                P(index)%SmoothingLength = dx
+            end do
+        end do
+
+    end subroutine clammped_beam_with_oil_dp
 
 end module dummy_part_m

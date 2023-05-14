@@ -12,6 +12,7 @@ contains
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
         logical, save :: first_entry = .true.
+        real(8) :: alpha, ax, ay
 
         integer i, j, k, d
 
@@ -23,9 +24,20 @@ contains
 
         !!! Consider gravity or not
         if ( Config%gravity_w ) then
-            do i=1, ntotal
-                dvdt(Field%Dim, i) = -9.8
-            end do
+            select case (Project%nick)
+            case ("beam_oil")
+                alpha = slosh(Config%i_time_step * Config%delta_t)
+                ax = -9.81 * sin(alpha)
+                ay = -9.81 * cos(alpha)
+                do i = 1, ntotal
+                    dvdt(1, i) = ax
+                    dvdt(2, i) = ay
+                end do
+            case default
+                do i = 1, ntotal
+                    dvdt(Field%Dim, i) = -9.81
+                end do
+            end select
         end if
 
         !!! Boundary particle force and penalty anti-penetration force
@@ -103,7 +115,21 @@ contains
         end do !! i
         !$OMP END PARALLEL DO
 
+    contains
+        function slosh(t) result(rad)
+            use tools_m, only: PI
+            real(8), intent(in) :: t
+            real(8) :: rad
+        
+            if ( t < 0.56 ) then
+                rad = -143.42*(t**4) + 110.16*(t**3) - 5.866*(t**2) + 0.9767*t + 0.0077
+            else
+                rad = 4 * sin((2*PI/1.21)*t - 1.3)
+            end if
 
+            rad = rad / 180 * PI
+            
+        end function slosh
     end subroutine external_force
 
 end module ex_force_m

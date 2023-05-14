@@ -48,7 +48,7 @@ contains
             !!! Calculate SPH sum for Strain Rate Tensor of Fluid
             !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
 #if SOLID
-            if ( abs(P(i)%Type) < 8 ) then !! Fluid
+            if ( abs(P(i)%Type) <= 100 ) then !! Fluid
 #endif
                 do k = 1, P(i)%neighborNum !! All neighbors of each particle
                     j = P(i)%neighborList(k)
@@ -86,7 +86,7 @@ contains
                                 vba = 0.5 * P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k)
 
                                 edot(d, dd, i) = edot(d, dd, i) + (vab + vba)
-                                edot(dd, d, i) = edot(dd, d, i) + (vab + vba)
+                                rdot(d, dd, i) = rdot(d, dd, i) + (vab - vba)
                             end do !! dd
                         end do !! d
                 end do !! k
@@ -100,7 +100,7 @@ contains
         !$OMP PARALLEL DO PRIVATE(i, aux, aver_edot, j, k, d, dd, ddd)
         do i = 1, ntotal !! All particles
 #if SOLID
-        if ( abs(P(i)%Type) < 8 ) then !! Fluid
+        if ( abs(P(i)%Type) <= 100 ) then !! Fluid
 #endif
             !!! Viscous entropy Tds/dt = 1/2 eta/rho εab•εab
             if ( Config%viscosity_w ) then
@@ -124,6 +124,7 @@ contains
                 call mie_gruneisen_eos_of_water(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             case (7)
                 call water_polynomial_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+            case (8)
             end select !! abs(P(i)%Type)
 
 #if SOLID
@@ -143,8 +144,10 @@ contains
             tdsdt(i) = sum(Shear(:, :, i) * aver_edot(:, :)) / P(i)%Density
 
             select case ( abs(P(i)%Type) )
-            case (8)
-                call mie_gruneisen_eos_of_solid(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+            case (101)
+                call mie_gruneisen_eos_of_armcoIron(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+            case (102)
+                call mie_gruneisen_eos_of_type102(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             end select
 
             !!! Deviatoric Stress Rate Tensor
@@ -184,7 +187,7 @@ contains
         case (1)
             !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux)
             do i = 1, ntotal  !! All particles
-                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                if ( abs(P(i)%Type) <= 100 ) then !! Fluid
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
 
@@ -215,7 +218,7 @@ contains
         case (2)
             !$OMP PARALLEL DO PRIVATE(i, j, k, aux)
             do i = 1, ntotal  !! All particles
-                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                if ( abs(P(i)%Type) <= 100 ) then !! Fluid
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
 
@@ -265,7 +268,7 @@ contains
             !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux) &
             !$OMP PRIVATE(Z_l, Z_r, v_l, v_r, v_ij, v_star, p_star, e_ij)
             do i = 1, ntotal !! All particles
-                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                if ( abs(P(i)%Type) <= 100 ) then !! Fluid
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
 
@@ -301,7 +304,7 @@ contains
                                          P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy
-                        dedt(i) = dedt(i)   &
+                        dedt(i) = dedt(i)     &
                             + P(j)%Mass * aux &
                             * dot_product(2 * (P(i)%v(:)-v_star), P(i)%dwdx(:, k))
 

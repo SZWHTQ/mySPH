@@ -14,13 +14,13 @@ set grid
 set size 1, 1
 unset key
 set palette rgbformulae 22, 13, -31
-set cbrange [-0.5:0.5]
-set cbtics 0.2
+set cbrange [-0.02:0.02]
+set cbtics 0.005
 set cblabel "Stress_{xx}/MPa"
 
 do for [i=0:100:1] {
     set title sprintf('%.1fms', i*0.1)
-    plot sprintf('./output/Type_8_%d.dat', i) using 4:5:($18*1e-6) palette pt 6 ps 1
+    plot sprintf('./output/Type_102_%d.dat', i) using 4:5:($18*1e-6) palette pt 6 ps 1
     pause 0.1
 }
 

@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.11)
 
-set(CMAKE_SYSTEM_NAME Linux)
+# set(CMAKE_SYSTEM_NAME Linux)
 
 # set(CMAKE_BUILD_TYPE Debug)
 
 project(
     "mySPH"
     LANGUAGES "Fortran"
-    VERSION "0.1.1"
+    VERSION "0.2.0"
 )
 # set(CMAKE_GENERATOR "Ninja")
 add_definitions("-std=f2018 -cpp")

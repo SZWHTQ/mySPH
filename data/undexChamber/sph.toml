@@ -16,11 +16,11 @@ maxTimeStep   = 10000
 monitorParticle = 1
 
 summationDensity    = false
-dummyParticle       = false
+dummyParticle       = true
 artificialViscosity = true
 # gravity = true
-normalizeDensity    = true
-openBoundary        = false
+# normalizeDensity    = false
+openBoundary        = true
 
 [Parallel]
 OMP_NUM_THREADS = 6

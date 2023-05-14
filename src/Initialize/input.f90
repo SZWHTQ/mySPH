@@ -70,6 +70,9 @@ contains
             call taylor_rod(ntotal, Particles)
         case ("can_beam")
             call cantilever_beam(ntotal, Particles)
+        case ("beam_oil")
+            write(*, "(A)") "!!! Unfinished Project !!!"
+            call clammped_beam_with_oil(ntotal, Particles)
         end select
 
         call output(ini, Particles(1:ntotal))
@@ -99,8 +102,8 @@ contains
         do i = 1, n_left
             P(i)%x(1)            = -0.6 + dx / 4 * (i-1)
             P(i)%v(:)            = 0
-            P(i)%Type           = 1
-            P(i)%SmoothingLength = dx * 2
+            P(i)%Type            = 1
+            P(i)%SmoothingLength = dx * 1.5
             P(i)%Density         = 1
             P(i)%Mass            = P(i)%Density * dx / 4
             P(i)%Pressure        = 1
@@ -111,7 +114,7 @@ contains
         do i = n_left+1, ntotal
             P(i)%x(1)            = 0 + dx * (i-n_left)
             P(i)%v(:)            = 0
-            P(i)%Type           = 1
+            P(i)%Type            = 1
             P(i)%SmoothingLength = dx * 2
             P(i)%Density         = 0.25
             P(i)%Mass            = P(i)%Density * dx
@@ -563,21 +566,118 @@ contains
         do i = 1, Nx
             do j = 1, Ny
                 k = (i-1) * Ny + j
-                P(k)%x(:)  = [fluid_domian(1) + (i-0.5) * dx, &
-                            fluid_domian(3) + (j-0.5) * dx]
-                P(K)%v(:)  = 0
-                P(k)%Density   = 1000
-                P(k)%Mass  = P(k)%Density * dx * dx
-                P(k)%Pressure     = 0
-                P(k)%InternalEnergy     = 0
-                P(k)%Type = 2
-                P(k)%SmoothingLength  = dx
+                P(k)%x(:)            = [fluid_domian(1) + (i-0.5) * dx, &
+                                        fluid_domian(3) + (j-0.5) * dx]
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = 2
+                P(k)%SmoothingLength = dx
             end do
         end do
 
         ntotal = Nx * Ny
 
+        Nx = int(0.6 / (dx))
+        Ny = int(10  / (dx))
+        do i = 1, Nx
+            do j = 1, Ny
+                k = ntotal + (i-1) * Ny + j
+                P(k)%x(:)            = [50 + (i-(Nx/2.)-0.5) * (dx), &
+                                        fluid_domian(3) + (j-0.5) * (dx)]
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1100
+                P(k)%Mass            = P(k)%Density * dx * dx / 4
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 40
+                P(k)%Type            = 102
+                P(k)%SmoothingLength = dx
+                if ( j == 1 ) then
+                    P(k)%Boundary = 1
+                end if
+            end do
+        end do
+
+        ntotal = ntotal + Nx * Ny
+
     end subroutine dam_break
+
+    subroutine clammped_beam_with_oil(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
+        real(8) :: domain(4)
+        real(8) :: dx = 0.001
+        integer :: Nx, Ny
+
+        integer i, j, k
+
+        ntotal = 0
+
+        domain = [real(8) :: -304.5, -2, 0, 115] * 1e-3
+        Nx = int((domain(2) - domain(1)) / dx)
+        Ny = int((domain(4) - domain(3)) / dx)
+        do i = 1, Nx
+            do j = 1, Ny
+                k = ntotal + (i-1) * Ny + j
+                P(k)%x(:)            = [domain(1) + (i-0.5) * dx, &
+                                        domain(3) + (j-0.5) * dx]
+                P(K)%v(:)            = 0
+                P(k)%Density         = 917
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = dx
+            end do
+        end do
+        ntotal = ntotal + Nx * Ny
+
+        domain = [real(8) :: 2, 304.5, 0, 115] * 1e-3
+        Nx = int((domain(2) - domain(1)) / dx)
+        Ny = int((domain(4) - domain(3)) / dx)
+        do i = 1, Nx
+            do j = 1, Ny
+                k = ntotal + (i-1) * Ny + j
+                P(k)%x(:)            = [domain(1) + (i+0.0) * dx, &
+                                        domain(3) + (j-0.5) * dx]
+                P(K)%v(:)            = 0
+                P(k)%Density         = 917
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = 8
+                P(k)%SmoothingLength = dx
+            end do
+        end do
+        ntotal = ntotal + Nx * Ny
+
+        domain = [real(8) :: -2, 2, 0, 115] * 1e-3
+        Nx = int((domain(2) - domain(1)) / dx)
+        Ny = int((domain(4) - domain(3)) / dx)
+        do i = 1, Nx
+            do j = 1, Ny
+                k = ntotal + (i-1) * Ny + j
+                P(k)%x(:)            = [domain(1) + (i-0.5) * dx, &
+                                        domain(3) + (j-0.5) * dx]
+                P(K)%v(:)            = 0
+                P(k)%Density         = 7850
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5000
+                P(k)%Type            = 101
+                P(k)%SmoothingLength = dx
+                if ( j == 1 ) then
+                    P(k)%Boundary = 1
+                end if
+            end do
+        end do
+        ntotal = ntotal + Nx * Ny
+
+    end subroutine clammped_beam_with_oil
 
     subroutine taylor_rod(ntotal, P)
         integer, intent(inout) :: ntotal
@@ -604,7 +704,7 @@ contains
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
                 P(k)%SoundSpeed      = 5000
-                P(k)%Type            = 8
+                P(k)%Type            = 101
                 P(k)%SmoothingLength = dx * 2
             end do
         end do
@@ -616,7 +716,7 @@ contains
     subroutine cantilever_beam(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        real(8) :: dx = 1e-3
+        real(8) :: dx = 1e-2
         integer :: nx = 101, ny = 5
 
         integer i, j, k
@@ -626,15 +726,19 @@ contains
                 k = (i-1) * ny + j
                 P(k)%x(:)            = [i-1, j-1] * dx
                 P(k)%v(:)            = 0
-                P(k)%Density         = 7850
+                P(k)%Density         = 1100
                 P(k)%Mass            = P(k)%Density * dx * dx
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 5000
-                P(k)%Type            = 8
+                P(k)%SoundSpeed      = 40
+                P(k)%Type            = 102
                 P(k)%SmoothingLength = dx * 2
             end do
+            if ( i == 1 ) then
+                P(k)%Boundary = 1
+            end if
         end do
+
         ntotal = nx * ny
 
     end subroutine cantilever_beam

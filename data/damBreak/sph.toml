@@ -8,10 +8,10 @@ nick = "dam_break"
 DIM = 2
 
 ## Maximum Number of Particles
-maxN = 20000
+maxN = 25000
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 50
+kPair = 30
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -36,14 +36,14 @@ monitorParticle = 1
 
 printStatistics = true
 
-printInterval = 100
+printInterval = 2000
 
-saveInterval = 50
+saveInterval = 1000
 
-maxTimeStep = 15000
+maxTimeStep = 400000
 
 ## Time Step
-deltaT = 1e-3
+deltaT = 5e-5
 
 summationDensity    = false
 # averageVelocity     = true

@@ -40,7 +40,11 @@ contains
             psi   = 0.1
         case("taylor_rod")
             alpha = 0.5
-            beta  = 1
+            beta  = 0.5
+            psi   = 0.01
+        case("can_beam", "beam_oil")
+            alpha = 0.5
+            beta  = 0.5
             psi   = 0.1
         case default
             alpha = 1

@@ -117,7 +117,7 @@ contains
                     Prev(i)%Velocity = P(i)%v(:)
                     P(i)%v(:) = P(i)%v(:) + (Config%delta_t/2) * Delta(i)%Velocity(:)
 #if SOLID
-                    if ( abs(P(i)%Type) == 8 ) then
+                    if ( abs(P(i)%Type) > 100 ) then
                         Shear_prev(:, :, i) = Shear(:, :, i)
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2)*dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
@@ -144,9 +144,10 @@ contains
                     end if
 
                     P(i)%v(:) = P(i)%v(:) + (Config%delta_t/2) * Delta(i)%Velocity + aver_v(:, i)
-                    P(i)%x(:) = P(i)%x(:) + Config%delta_t * P(i)%v(:)
+                    P(i)%Displacement(:) = Config%delta_t * P(i)%v(:)
+                    P(i)%x(:) = P(i)%x(:) + P(i)%Displacement(:)
 #if SOLID
-                    if ( abs(P(i)%Type) == 8 ) then
+                    if ( abs(P(i)%Type) > 100 ) then
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2) * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
@@ -169,9 +170,10 @@ contains
                         P(i)%Density = Prev(i)%Density + Config%delta_t * Delta(i)%Density
                     end if
                     P(i)%v(:) = Prev(i)%Velocity + Config%delta_t * Delta(i)%Velocity + aver_v(:, i)
+                    P(i)%Displacement(:) = P(i)%Displacement(:) + Config%delta_t * P(i)%v(:)
                     P(i)%x(:) = P(i)%x(:) + Config%delta_t * P(i)%v(:)
 #if SOLID
-                    if ( abs(P(i)%Type) == 8 ) then
+                    if ( abs(P(i)%Type) > 100 ) then
                         Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))

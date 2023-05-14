@@ -52,7 +52,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     end do
 
     !!! Positions of dummy (boundary) particles
-    if ( Config%dummy_parti_w ) call gen_dummy_particle(ndummy, Particles(1:ntotal))
+    if ( Config%dummy_parti_w ) call gen_dummy_particle(ntotal, ndummy, Particles)
 
     if ( Config%open_boundary_w) then
         if (Config%i_time_step == 1) then
@@ -64,8 +64,6 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     else
         nbuffer = 0
     end if
-
-    ! call fixedBoundary(Particles, Delta)
 
     N = ntotal + ndummy + nbuffer
 
@@ -132,7 +130,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         Delta(i)%Energy   = indedt(i)    + avdedt(i)    + ahdedt(i)
     end do
 
-    call fixedBoundary(Particles, Delta)
+    call fixedBoundary(ntotal, Particles, Delta)
 
 
     if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then

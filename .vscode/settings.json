@@ -39,7 +39,7 @@
         }
     },
     "cmake.debugConfig": {
-        "args": ["../data/cantileverBeam"],
+        "args": ["../data/clammpedBeamWithOil"],
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "latex-workshop.latex.autoBuild.run": "onSave",

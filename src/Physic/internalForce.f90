@@ -39,7 +39,7 @@ contains
 #endif
 
         !!! Dynamic viscosity
-        if ( Config%viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%Viscocity)
+        if ( Config%viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%Viscosity)
 
 
         if ( Config%viscosity_w ) then
@@ -48,7 +48,7 @@ contains
             !!! Calculate SPH sum for Strain Rate Tensor of Fluid
             !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
 #if SOLID
-            if ( abs(P(i)%Type) < 8 ) then !! Fluid
+            if ( abs(P(i)%Type) <= 100 ) then !! Fluid
 #endif
                 do k = 1, P(i)%neighborNum !! All neighbors of each particle
                     j = P(i)%neighborList(k)
@@ -81,14 +81,12 @@ contains
                     j = P(i)%neighborList(k)
                         dv = P(j)%v(:) - P(i)%v(:)
                         do d = 1, Field%Dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
-                            do dd = d, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
+                            do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
                                 vab = 0.5 * P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k)
                                 vba = 0.5 * P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k)
 
                                 edot(d, dd, i) = edot(d, dd, i) + (vab + vba)
-                                edot(dd, d, i) = edot(dd, d, i) + (vab + vba)
                                 rdot(d, dd, i) = rdot(d, dd, i) + (vab - vba)
-                                rdot(dd, d, i) = rdot(dd, d, i) - (vab - vba)
                             end do !! dd
                         end do !! d
                 end do !! k
@@ -102,11 +100,11 @@ contains
         !$OMP PARALLEL DO PRIVATE(i, aux, aver_edot, j, k, d, dd, ddd)
         do i = 1, ntotal !! All particles
 #if SOLID
-        if ( abs(P(i)%Type) < 8 ) then !! Fluid
+        if ( abs(P(i)%Type) <= 100 ) then !! Fluid
 #endif
             !!! Viscous entropy Tds/dt = 1/2 eta/rho εab•εab
             if ( Config%viscosity_w ) then
-                tdsdt(i) = 0.5_8 * P(i)%Viscocity / P(i)%Density &
+                tdsdt(i) = 0.5_8 * P(i)%Viscosity / P(i)%Density &
                          * sum(edot(:, :, i)**2)
             end if
 
@@ -126,6 +124,7 @@ contains
                 call mie_gruneisen_eos_of_water(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             case (7)
                 call water_polynomial_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+            case (8)
             end select !! abs(P(i)%Type)
 
 #if SOLID
@@ -145,14 +144,16 @@ contains
             tdsdt(i) = sum(Shear(:, :, i) * aver_edot(:, :)) / P(i)%Density
 
             select case ( abs(P(i)%Type) )
-            case (8)
-                call mie_gruneisen_eos_of_solid(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+            case (101)
+                call mie_gruneisen_eos_of_armcoIron(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+            case (102)
+                call mie_gruneisen_eos_of_type102(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             end select
 
             !!! Deviatoric Stress Rate Tensor
             do d = 1, Field%Dim !! All dimensions For the First Order of Deviatoric Stress Rate Tensor, Loop 1
                 do dd = 1, Field%Dim !! All dimensions For the Second Order of Deviatoric Stress Rate Tensor, Loop 2
-                    dSdt(d, dd, i) = 2 * P(i)%Viscocity * aver_edot(d, dd)
+                    dSdt(d, dd, i) = 2 * P(i)%Viscosity * aver_edot(d, dd)
                     do ddd = 1, Field%Dim
                         dSdt(d, dd, i) = dSdt(d, dd, i) + &
                             Shear(d, ddd, i) * rdot(dd, ddd, i) &
@@ -186,7 +187,7 @@ contains
         case (1)
             !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux)
             do i = 1, ntotal  !! All particles
-                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                if ( abs(P(i)%Type) <= 100 ) then !! Fluid
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
 
@@ -198,8 +199,8 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                    &
                             + P(j)%Mass                            &
                             * ( - aux * P(i)%dwdx(:, k)            &
-                                + matmul(  P(i)%Viscocity*edot(:, :, i)  &
-                                         + P(j)%Viscocity*edot(:, :, j), &
+                                + matmul(  P(i)%Viscosity*edot(:, :, i)  &
+                                         + P(j)%Viscosity*edot(:, :, j), &
                                          P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy
@@ -217,7 +218,7 @@ contains
         case (2)
             !$OMP PARALLEL DO PRIVATE(i, j, k, aux)
             do i = 1, ntotal  !! All particles
-                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                if ( abs(P(i)%Type) <= 100 ) then !! Fluid
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
 
@@ -228,8 +229,8 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                                                 &
                             + P(j)%Mass                                                         &
                             * ( - aux * P(i)%dwdx(:, k)                                         &
-                                + matmul(  P(i)%Viscocity*edot(:, :, i)/P(i)%Density**2  &
-                                         + P(j)%Viscocity*edot(:, :, j)/P(j)%Density**2, &
+                                + matmul(  P(i)%Viscosity*edot(:, :, i)/P(i)%Density**2  &
+                                         + P(j)%Viscosity*edot(:, :, j)/P(j)%Density**2, &
                                          P(i)%dwdx(:, k)) )
 
                         !!! Conservation of Energy
@@ -267,7 +268,7 @@ contains
             !$OMP PARALLEL DO PRIVATE(i, j, k, rhoij, aux) &
             !$OMP PRIVATE(Z_l, Z_r, v_l, v_r, v_ij, v_star, p_star, e_ij)
             do i = 1, ntotal !! All particles
-                if ( abs(P(i)%Type) < 8 ) then !! Fluid
+                if ( abs(P(i)%Type) <= 100 ) then !! Fluid
                     do k = 1, P(i)%neighborNum !! All neighbors of each particle
                         j = P(i)%neighborList(k)
 
@@ -298,12 +299,12 @@ contains
                         dvdt(:, i) = dvdt(: ,i)                                 &
                             + P(j)%Mass                                         &
                             * ( - aux * P(i)%dwdx(:, k)                         &
-                                + matmul(  P(i)%Viscocity*edot(:, :, i)  &
-                                         + P(j)%Viscocity*edot(:, :, j), &
+                                + matmul(  P(i)%Viscosity*edot(:, :, i)  &
+                                         + P(j)%Viscosity*edot(:, :, j), &
                                          P(i)%dwdx(:, k)) * rhoij )
 
                         !!! Conservation of Energy
-                        dedt(i) = dedt(i)   &
+                        dedt(i) = dedt(i)     &
                             + P(j)%Mass * aux &
                             * dot_product(2 * (P(i)%v(:)-v_star), P(i)%dwdx(:, k))
 

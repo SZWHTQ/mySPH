@@ -7,10 +7,10 @@ nick = "shock_tube"
 ## Dimension
 DIM = 1
 
-ntotal = 1600
+ntotal = 1500
 
 ## Maximum Number of Particles
-maxN = 1700
+maxN = 1650
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
 kPair = 50
@@ -19,7 +19,7 @@ kPair = 50
 #     1&2. Classic
 #     3. Riemann Solver(PVRS)
 #     4. Discontinued SPH
-SPH = 3
+SPH = 2
 
 ## Indicator Variables for the Nearest Neighbor Particle Search (NNPS):
 #     1. Direct Search Method
@@ -48,11 +48,11 @@ maxTimeStep = 5000
 ## Time Step
 deltaT = 2e-4
 
-summationDensity    = false
+summationDensity    = true
 dummyParticle       = true
-# artificialViscosity = true
+artificialViscosity = true
 # artificialHeat      = false
-# averageVelocity     = false
+# averageVelocity     = true
 # DSPH                = false
 
 

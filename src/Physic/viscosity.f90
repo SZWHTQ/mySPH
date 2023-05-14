@@ -14,14 +14,16 @@ contains
         !$OMP PARALLEL DO PRIVATE(i)
         do i = 1, ntotal
             select case(abs(Type(i)))
-            case (1)
-                eta(i) = 0
             case (2)
                 eta(i) = 1e-3
-            case (3)
-                eta(i) = 0
             case (8)
+                eta(i) = 0.04585
+            case (101)
                 eta(i) = 8e10
+            case (102)
+                eta(i) = 2.013423e6
+            case default
+                eta(i) = 0
             end select
         end do
         !$OMP END PARALLEL DO

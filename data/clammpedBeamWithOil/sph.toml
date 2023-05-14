@@ -1,6 +1,6 @@
 ## Project Name
-name = "Two-dimensional Armco Iron Collide"
-nick = "taylor_rod"
+name = "Two-dimensional clammped elastic beam interacting with oil flow"
+nick = "beam_oil"
 
 [Parameter]
 
@@ -8,10 +8,10 @@ nick = "taylor_rod"
 DIM = 2
 
 ## Maximum Number of Particles
-maxN = 2000
+maxN = 100000
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 180
+kPair = 100
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -32,32 +32,32 @@ SLE = 0
 SKF = 1
 
 ## Serial Number of the Monitored Particle
-monitorParticle = 1
+monitorParticle = 34618
 
 printStatistics = true
 
-printInterval = 500
+printInterval = 100
 
-saveInterval = 100
+saveInterval = 1000
 
-maxTimeStep = 10000
+maxTimeStep = 50000000
 
 ## Time Step
-deltaT = 1e-8
+deltaT = 6e-8
 
 summationDensity    = false
 dummyParticle       = true
-viscosity           = true # Must be true for Solid
-# gravity             = true
+viscosity           = true
+gravity             = true
 artificialViscosity = true
-# artificialHeat      = true
+artificialHeat      = true
 # averageVelocity     = true
 # normalizeDensity    = true
 
 
 [Parallel]
 
-# OMP_NUM_THREADS = 6  # Overwrite the environment variable OMP_NUM_THREADS
+# OMP_NUM_THREADS = 8  # Overwrite the environment variable OMP_NUM_THREADS
 
 [postProcess]
 writeDummyParticle2VTK = true

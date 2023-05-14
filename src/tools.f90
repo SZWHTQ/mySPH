@@ -196,7 +196,7 @@ contains
         double precision,save :: rate = 0d0, time = 0d0
         double precision dt, dr, estimate
         integer,parameter :: digit = 50
-        integer remain(2), values(8), i
+        integer :: days, hours, minutes, seconds, values(8), i
         ! character(len=20) :: FMT
         logical,intent(in), optional :: isflushed
         if (present(isflushed) .and. isflushed) then
@@ -223,8 +223,12 @@ contains
         estimate = (1d0 - rate) * (dt / dr)
 
         ! min/sec表記に変換
-        remain(1) = int(estimate/6d4) ! minutes
-        remain(2) = int((estimate-remain(1)*6d4)*1d-3) ! seconds
+        minutes = int(estimate/6d4) ! minutes
+        seconds = int((estimate-minutes*6d4)*1d-3) ! seconds
+        hours = int(minutes/60d0) ! hours
+        minutes = minutes - hours*60 ! minutes
+        days = int(hours/24d0)
+        hours = hours - days*24
 
         write (*, "(1X, 2(I0, A))", advance="no") value, " / ", max, " ["
         do i = 1, int(digit*rate)
@@ -235,12 +239,28 @@ contains
             write (*, '(a)', advance="no") "-"
         end do
 
-        if (isflushed) then
-            fdigit = 2 * int(log10(real(max))+1) + 75
+        if ( days > 0 ) then
+            if (isflushed) then
+                fdigit = 2 * int(log10(real(max))+1) + 83
+            end if
+            write (*, '(A, F7.2, A, I3, A, 2(I2, A), I2, A, A)', advance="no") &
+                   "]", 100d0*rate, "% ", days, "d", hours, "h", minutes, "m", seconds, "s", CR
+        else
+            if ( hours > 0 ) then
+                if (isflushed) then
+                    fdigit = 2 * int(log10(real(max))+1) + 79
+                end if
+                write (*, '(A, F7.2, A, 2(I2, A), I2, A, A)', advance="no") &
+                       "]", 100d0*rate, "% ", hours, "h", minutes, "m", seconds, "s", CR
+            else
+                if (isflushed) then
+                    fdigit = 2 * int(log10(real(max))+1) + 75
+                end if
+                write (*, '(A, F7.2, A, I2, A, I2, A, A)', advance="no") &
+                    "]", 100d0*rate, "% ", minutes, "m", seconds, "s", CR
+            end if
         end if
-        write (*, '(a, f7.2, a, i3, a, i2, a, a)', advance="no") &
-               "]", 100d0*rate, "% ", remain(1), "m", remain(2), "s", CR
-
+    
         if (value == max) then
             write (*, *)
         end if

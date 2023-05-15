@@ -339,6 +339,9 @@ contains
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure)
+                if ( (P(k)%x(1) < -0.45) .or. (P(K)%x(2) > 0.45) .or. (P(K)%x(2) < -0.45) ) then
+                    P(k)%Boundary = 2
+                end if
             end do
         end do
         ntotal = k
@@ -356,6 +359,9 @@ contains
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure)
+                if ( (P(K)%x(2) < -0.45) ) then
+                    P(k)%Boundary = 2
+                end if
             end do
         end do
         ntotal = k
@@ -373,6 +379,9 @@ contains
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure)
+                if ( (P(K)%x(2) > 0.45) ) then
+                    P(k)%Boundary = 2
+                end if
             end do
         end do
         ntotal = k
@@ -390,6 +399,9 @@ contains
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure)
+                if ( (P(k)%x(1) > 0.45) .or. (P(K)%x(2) > 0.45) .or. (P(K)%x(2) < -0.45) ) then
+                    P(k)%Boundary = 2
+                end if
             end do
         end do
         ntotal = k
@@ -412,72 +424,73 @@ contains
 
         delta = length / (n - 1)
 
-        layer = 6
-        do l = 1, layer
-            !!! Monaghan type dummy particle on the Upper side
-            do i = 1, n(1) + 2*(l+1)
-                k = ntotal + i
-                P(k)%x(1) = origin(1) + delta(1) * (i-l-2)
-                P(k)%x(2) = length(2)+origin(2) + delta(2) * (l+1)
-                P(k)%v(:)            = 0
-                P(k)%Density         = 7850
-                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
-                P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 5000
-                P(k)%Type            = 8
-                P(k)%SmoothingLength = 1.5 * sum(delta)/2
-            end do
-            ntotal = k
+        ! !!! Solid
+        ! layer = 6
+        ! do l = 1, layer
+        !     !!! Upper side
+        !     do i = 1, n(1) + 2*(l+1)
+        !         k = ntotal + i
+        !         P(k)%x(1) = origin(1) + delta(1) * (i-l-2)
+        !         P(k)%x(2) = length(2)+origin(2) + delta(2) * (l+1)
+        !         P(k)%v(:)            = 0
+        !         P(k)%Density         = 7850
+        !         P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+        !         P(k)%Pressure        = 0
+        !         P(k)%InternalEnergy  = 0
+        !         P(k)%SoundSpeed      = 5000
+        !         P(k)%Type            = 8
+        !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
+        !     end do
+        !     ntotal = k
 
-            !!! Monaghan type dummy particle on the Lower side
-            do i = 1, n(1) + 2*(l+1)
-                k = ntotal + i
-                P(k)%x(1) = origin(1) + delta(1) * (i-l-2)
-                P(k)%x(2) = origin(2) - delta(2) * (l+1)
-                P(k)%v(:)            = 0
-                P(k)%Density         = 7850
-                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
-                P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 5000
-                P(k)%Type            = 8
-                P(k)%SmoothingLength = 1.5 * sum(delta)/2
-            end do
-            ntotal = k
+        !     !!! Lower side
+        !     do i = 1, n(1) + 2*(l+1)
+        !         k = ntotal + i
+        !         P(k)%x(1) = origin(1) + delta(1) * (i-l-2)
+        !         P(k)%x(2) = origin(2) - delta(2) * (l+1)
+        !         P(k)%v(:)            = 0
+        !         P(k)%Density         = 7850
+        !         P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+        !         P(k)%Pressure        = 0
+        !         P(k)%InternalEnergy  = 0
+        !         P(k)%SoundSpeed      = 5000
+        !         P(k)%Type            = 8
+        !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
+        !     end do
+        !     ntotal = k
 
-            !!! Monaghan type dummy particle on the Left side
-            do i = 1, n(2) + 2*l
-                k = ntotal + i
-                P(k)%x(1) = origin(1) - delta(1) * (l+1)
-                P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
-                P(k)%v(:)            = 0
-                P(k)%Density         = 7850
-                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
-                P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 5000
-                P(k)%Type            = 8
-                P(k)%SmoothingLength = 1.5 * sum(delta)/2
-            end do
-            ntotal = k
+        !     !!! Left side
+        !     do i = 1, n(2) + 2*l
+        !         k = ntotal + i
+        !         P(k)%x(1) = origin(1) - delta(1) * (l+1)
+        !         P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
+        !         P(k)%v(:)            = 0
+        !         P(k)%Density         = 7850
+        !         P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+        !         P(k)%Pressure        = 0
+        !         P(k)%InternalEnergy  = 0
+        !         P(k)%SoundSpeed      = 5000
+        !         P(k)%Type            = 8
+        !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
+        !     end do
+        !     ntotal = k
 
-            !!! Monaghan type dummy particle on the Right side
-            do i = 1, n(2) + 2*l
-                k = ntotal + i
-                P(k)%x(1) = length(1) + origin(1) + delta(1) * (l+1)
-                P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
-                P(k)%v(:)            = 0
-                P(k)%Density         = 7850
-                P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
-                P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 5000
-                P(k)%Type            = 8
-                P(k)%SmoothingLength = 1.5 * sum(delta)/2
-            end do
-            ntotal = k
-        end do
+        !     !!! Right side
+        !     do i = 1, n(2) + 2*l
+        !         k = ntotal + i
+        !         P(k)%x(1) = length(1) + origin(1) + delta(1) * (l+1)
+        !         P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
+        !         P(k)%v(:)            = 0
+        !         P(k)%Density         = 7850
+        !         P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+        !         P(k)%Pressure        = 0
+        !         P(k)%InternalEnergy  = 0
+        !         P(k)%SoundSpeed      = 5000
+        !         P(k)%Type            = 8
+        !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
+        !     end do
+        !     ntotal = k
+        ! end do
 
     end subroutine undex_chamber
 

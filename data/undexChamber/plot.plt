@@ -11,7 +11,7 @@ set grid
 set size 1, 1
 unset key
 set palette rgbformulae 22, 13, -31
-set cbrange [0:1e3]
+set cbrange [-5e2:5e2]
 set cbtics font ",12"
 set cblabel "Pressure/MPa" offset 0,0
 
@@ -19,7 +19,8 @@ do for [i=1:100:1] {
     set title sprintf('%.3fμs', i*1e-5*1e6)
     plot sprintf('./output/Type_6_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 , \
          sprintf('./output/Type_5_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 , \
-         sprintf('./output/Type_8_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 # lt rgb "orange"
+         sprintf('./output/Type_-6_%d.dat', i) using 4:5  pt 6 ps 1 lw 1 lt rgb "orange"
+        #  sprintf('./output/Type_101_%d.dat', i) using 4:5:($10*1e-6) palette pt 6 ps 1 lw 1 # lt rgb "orange"
     pause 0.5
 }
 

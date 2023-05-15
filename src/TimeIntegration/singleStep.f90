@@ -22,7 +22,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     use he_m,               only: detonation_wave
     use decompose_m,        only: decompose
     use area_m,             only: calculate_area
-    use bc_m,               only: gen_non_reflecting_bc, fixedBoundary
+    use bc_m,               only: gen_non_reflecting_bc, boundary
     implicit none
     integer,        intent(inout) :: ntotal
     integer,        intent(inout) :: ndummy, nbuffer
@@ -58,7 +58,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         if (Config%i_time_step == 1) then
             call allocateParticleList(Buffers, nbuffer, Field%Dim, 1)
         else
-            allocate(Buffers, source=Particles(ntotal:))
+            allocate(Buffers, source=Particles(ntotal+1:))
         end if
         call gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
     else
@@ -130,7 +130,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         Delta(i)%Energy   = indedt(i)    + avdedt(i)    + ahdedt(i)
     end do
 
-    call fixedBoundary(ntotal, Particles, Delta)
+    call boundary(ntotal, Particles, Delta)
 
 
     if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then

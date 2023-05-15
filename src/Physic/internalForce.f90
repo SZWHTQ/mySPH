@@ -226,9 +226,9 @@ contains
                         aux = (P(i)%Pressure/P(i)%Density**2 + P(j)%Pressure/P(j)%Density**2)
 
                         !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(: ,i)                                                 &
-                            + P(j)%Mass                                                         &
-                            * ( - aux * P(i)%dwdx(:, k)                                         &
+                        dvdt(:, i) = dvdt(: ,i)                                          &
+                            + P(j)%Mass                                                  &
+                            * ( - aux * P(i)%dwdx(:, k)                                  &
                                 + matmul(  P(i)%Viscosity*edot(:, :, i)/P(i)%Density**2  &
                                          + P(j)%Viscosity*edot(:, :, j)/P(j)%Density**2, &
                                          P(i)%dwdx(:, k)) )

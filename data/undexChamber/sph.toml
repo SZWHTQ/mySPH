@@ -20,7 +20,7 @@ dummyParticle       = true
 artificialViscosity = true
 # gravity = true
 # normalizeDensity    = false
-openBoundary        = true
+openBoundary        = false
 
 [Parallel]
 OMP_NUM_THREADS = 6

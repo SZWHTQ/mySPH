@@ -262,6 +262,7 @@ contains
     end subroutine tnt_bar_dp_2
 
     subroutine undex_chamber_dp_1(ntotal, ndummy, P)
+        use eos_m, only: mie_gruneisen_eos_of_water
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy
         type(Particle), intent(inout) :: P(:)
@@ -313,10 +314,11 @@ contains
                 P(k)%v(:)            = 0
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -P(1)%Type
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure)
             end do
             first_entry = .false.
         end if

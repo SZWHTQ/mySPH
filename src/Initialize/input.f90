@@ -339,6 +339,9 @@ contains
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure)
+                if ( (P(k)%x(1) < -0.45) .or. (P(K)%x(2) > 0.45) .or. (P(K)%x(2) < -0.45) ) then
+                    P(k)%Boundary = 2
+                end if
             end do
         end do
         ntotal = k
@@ -356,6 +359,9 @@ contains
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure)
+                if ( (P(K)%x(2) < -0.45) ) then
+                    P(k)%Boundary = 2
+                end if
             end do
         end do
         ntotal = k
@@ -373,6 +379,9 @@ contains
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure)
+                if ( (P(K)%x(2) > 0.45) ) then
+                    P(k)%Boundary = 2
+                end if
             end do
         end do
         ntotal = k
@@ -390,6 +399,9 @@ contains
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure)
+                if ( (P(k)%x(1) > 0.45) .or. (P(K)%x(2) > 0.45) .or. (P(K)%x(2) < -0.45) ) then
+                    P(k)%Boundary = 2
+                end if
             end do
         end do
         ntotal = k
@@ -410,7 +422,7 @@ contains
         end do
         ntotal = k
 
-        ! delta = length / (n - 1)
+        delta = length / (n - 1)
 
         ! !!! Solid
         ! layer = 6

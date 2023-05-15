@@ -10,8 +10,21 @@ module bc_m
         type(Particle) :: g !! Ghost
     end type Buffer_t
 
-    public :: gen_non_reflecting_bc, fixedBoundary
+    public :: gen_non_reflecting_bc, boundary
 contains
+    subroutine boundary(ntotal, P, D)
+        use time_integration_m, only: Update
+        integer, intent(in) :: ntotal
+        type(Particle), intent(in) :: P(:)
+        type(Update), intent(inout) :: D(:)
+
+        call fixedBoundary(ntotal, P, D)
+
+        call spongeLayer(ntotal, P, D)
+    
+        
+    end subroutine boundary
+
     subroutine gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
         integer, intent(inout) :: ntotal, nbuffer
         type(Particle), intent(inout) :: Particles(:), Buffers(:)
@@ -35,7 +48,7 @@ contains
         real(8), dimension(2, 4) :: fixedPoints, normal
         integer :: entry_count = 0
         real(8) :: dx
-        save FluidDomain, AllDomain, fixedPoints, entry_count, dx
+        save FluidDomain, AllDomain, fixedPoints, normal, entry_count, dx
 
         integer :: layer = 4
         integer i, l
@@ -126,6 +139,8 @@ contains
                 if ( BufferDomainContain(Particles(i)) ) then
                     !! Fluid Particle converts to Buffer Particle
                     Particles(i)%State = -1
+                    Particles(i)%x = [-1, -1]
+                    Particles(i)%Boundary = 1
                     nbuffer = nbuffer + 1
                     Buffers(nbuffer)%x = Particles(i)%x
                     Buffers(nbuffer)%State = 0
@@ -137,7 +152,10 @@ contains
 
             N = nbuffer
             do i = 1, N !! Buffer Particle
-                if ( .not. BufferDomainContain(Buffers(i)) ) then
+                if ( BufferDomainContain(Buffers(i)) ) then
+                    Ghosts(i)%x = calcGhostPosition(Buffers(i))
+                    Ghosts(i)%SmoothingLength = 1.5 * dx
+                else 
                     if ( FluidDomain%contain(point_t(Buffers(i)%x, 0)) ) then
                         !! Buffer Particle converts to Fluid Particle
                         Buffers(i)%State = -1
@@ -314,6 +332,39 @@ contains
         end do
 
     end subroutine fixedBoundary
+
+    subroutine spongeLayer(ntotal, P, D)
+        use time_integration_m, only: Update
+        integer, intent(in) :: ntotal
+        type(Particle), intent(in) :: P(:)
+        type(Update), intent(inout) :: D(:)
+        real(8) :: thickness, distance, lambda, factor
+
+        integer i
+
+        select case(Project%nick)
+        case("undex_chamber")
+            thickness = 0.05
+            do i = 1, ntotal
+                if ( P(i)%Boundary == 2 ) then
+                    if ( P(i)%x(1) < -0.45 ) then
+                        distance = -0.45 - P(i)%x(1)
+                    else if ( P(i)%x(1) > 0.45 ) then
+                        distance = P(i)%x(1) - 0.45
+                    else if ( P(i)%x(2) < -0.45 ) then
+                        distance = -0.45 - P(i)%x(2)
+                    else if ( P(i)%x(2) > 0.45 ) then
+                        distance = P(i)%x(2) - 0.45
+                    end if
+                    lambda = (distance) / thickness
+                    factor = ( 1. - 1./(100**((0.9)**(200*lambda))) )
+                    D(i)%Density = factor * D(i)%Density
+                    ! D(i)%Density = 0
+                end if
+            end do
+        end select
+        
+    end subroutine spongeLayer
 
     ! subroutine shrink(Particles, ntotal)
     !     type(Particle), intent(inout) :: Particles(:)

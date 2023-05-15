@@ -59,8 +59,8 @@ contains
                 factor_s = 1e4
                 r0 = abs(P(2)%x(1) - P(1)%x(1))
             case ("undex_chamber")
-                factor_s = 1e4
-                r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
+                factor_s = 1e5
+                r0 = abs(P(2)%x(1) - P(1)%x(1))! * 0.5
             case ("dam_break")
                 factor_s = 10
                 r0 = abs(P(2)%x(1) - P(2)%x(2)) * 1

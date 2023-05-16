@@ -38,12 +38,12 @@ printStatistics = true
 
 printInterval = 100
 
-saveInterval = 1000
+saveInterval = 2000
 
-maxTimeStep = 50000000
+maxTimeStep = 400000
 
 ## Time Step
-deltaT = 6e-8
+deltaT = 1e-5
 
 summationDensity    = false
 dummyParticle       = true

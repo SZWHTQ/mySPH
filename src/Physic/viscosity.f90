@@ -21,7 +21,9 @@ contains
             case (101)
                 eta(i) = 8e10
             case (102)
-                eta(i) = 2.013423e6
+                eta(i) = 4.27e6
+            case (103)
+                eta(i) = 0.5e6
             case default
                 eta(i) = 0
             end select

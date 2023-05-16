@@ -30,7 +30,11 @@ contains
             call undex_dp_1(ntotal, ndummy, Particles)
             call undex_dp_2(ntotal, ndummy, Particles)
         case("dam_break")
-            call dam_break_dp(ntotal, ndummy, Particles)
+            call damBreak(ntotal, ndummy, Particles)
+        case("db_gate")
+            call damBreakwithElasticGate(ntotal, ndummy, Particles)
+        case("water_impact")
+            call waterImpact(ntotal, ndummy, Particles)
         case("taylor_rod")
             ! call taylor_rod_dp_1(ntotal, ndummy, Particles)
             call taylor_rod_dp_2(ntotal, ndummy, Particles)
@@ -266,44 +270,46 @@ contains
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy
         type(Particle), intent(inout) :: P(:)
-        integer :: n(2) = [201, 201]
-        real(8) :: length(2) = [1, 1], origin(2) = [-0.5, -0.5]
-        real(8) :: delta(2)
+        integer :: n(2)
+        real(8) :: length(2), origin(2), delta(2)
         logical :: first_entry = .true.
         integer :: i, k
         integer :: l, layer
 
         ndummy = 0
 
-        delta = length / (n - 1)
+        length = [real(8) ::  1.000,  1.000]
+        origin = [real(8) :: -0.500, -0.500]
+        delta  = [real(8) ::  0.005,  0.005]
+        n      = int(length / delta) + 1
 
         layer = 6
         do l = 1, layer
             !!! Monaghan type dummy particle on the Upper side
-            do i = 1, n(1) + 2*(l+1)
+            do i = 1, n(1) + 2*l
                 ndummy = ndummy + 1
-                P(ntotal+ndummy)%x(1) = origin(1) + delta(1) * (i-l-2)
-                P(ntotal+ndummy)%x(2) = length(2)+origin(2) + delta(2) * (l+1)
+                P(ntotal+ndummy)%x(1) = origin(1) + delta(1) * (i-l-1)
+                P(ntotal+ndummy)%x(2) = length(2) + origin(2) + delta(2) * l
             end do
 
             !!! Monaghan type dummy particle on the Lower side
-            do i = 1, n(1) + 2*(l+1)
+            do i = 1, n(1) + 2*l
                 ndummy = ndummy + 1
-                P(ntotal+ndummy)%x(1) = origin(1) + delta(1) * (i-l-2)
-                P(ntotal+ndummy)%x(2) = origin(2) - delta(2) * (l+1)
+                P(ntotal+ndummy)%x(1) = origin(1) + delta(1) * (i-l-1)
+                P(ntotal+ndummy)%x(2) = origin(2) - delta(2) * l
             end do
 
             !!! Monaghan type dummy particle on the Left side
             do i = 1, n(2) + 2*l
                 ndummy = ndummy + 1
-                P(ntotal+ndummy)%x(1) = origin(1) - delta(1) * (l+1)
+                P(ntotal+ndummy)%x(1) = origin(1) - delta(1) * l
                 P(ntotal+ndummy)%x(2) = origin(2) + delta(2) * (i-l-1)
             end do
 
             !!! Monaghan type dummy particle on the Right side
             do i = 1, n(2) + 2*l
                 ndummy = ndummy + 1
-                P(ntotal+ndummy)%x(1) = length(1) + origin(1) + delta(1) * (l+1)
+                P(ntotal+ndummy)%x(1) = length(1) + origin(1) + delta(1) * l
                 P(ntotal+ndummy)%x(2) = origin(2) + delta(2) * (i-l-1)
             end do
         end do
@@ -312,13 +318,13 @@ contains
             do i = 1, ndummy
                 k = ntotal + i
                 P(k)%v(:)            = 0
-                P(k)%Density         = 1000
+                P(k)%Density         = 1000 * 1.1
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%InternalEnergy  = 0
+                P(k)%InternalEnergy  = 1e8
                 P(k)%Type            = -P(1)%Type
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
-                                                P(k)%Pressure)
+                                                P(k)%Pressure, P(k)%SoundSpeed)
             end do
             first_entry = .false.
         end if
@@ -526,7 +532,8 @@ contains
 
     end subroutine undex_dp_2
 
-    subroutine dam_break_dp(ntotal, ndummy, P)
+    subroutine damBreak(ntotal, ndummy, P)
+        use eos_m, only: arti_water_eos_1
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy
         type(Particle), intent(inout) :: P(:)
@@ -538,8 +545,7 @@ contains
         logical :: first_entry = .true.
         save first_entry
 
-        integer :: index
-        integer i, l
+        integer i, k, l
 
         ndummy = 0
 
@@ -557,87 +563,282 @@ contains
             Ny = floor((wall_domain(4) - wall_domain(3))/dx) + layer
             do i = 1, Ny
                 ndummy = ndummy + 1
-                index = ntotal + ndummy
-                P(index)%x(:) = [wall_domain(1) - (l-0.5)*dx, &
+                k = ntotal + ndummy
+                P(k)%x(:) = [wall_domain(1) - (l-0.5)*dx, &
                                  wall_domain(3) + (i-layer-0.5)*dx]
-                P(index)%v(:) = 0
-                P(index)%Density         = 1000
-                P(index)%Mass            = P(index)%Density * dx * dx
-                P(index)%Pressure        = 0
-                P(index)%InternalEnergy  = 0
-                P(index)%Type           = -P(1)%Type
-                P(index)%SmoothingLength = dx
+                P(k)%v(:) = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = P(k)%Density * 9.81 * max((25 - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -P(1)%Type
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
             end do
 
             !!! Dummy particle I on the Right side
             do i = 1, Ny
                 ndummy = ndummy + 1
-                index = ntotal + ndummy
-                P(index)%x(:) = [wall_domain(2) + (l-0.5)*dx, &
+                k = ntotal + ndummy
+                P(k)%x(:) = [wall_domain(2) + (l-0.5)*dx, &
                                  wall_domain(3) + (i-layer-0.5)*dx]
-                P(index)%v(:) = 0
-                P(index)%Density         = 1000
-                P(index)%Mass            = P(index)%Density * dx * dx
-                P(index)%Pressure        = 0
-                P(index)%InternalEnergy  = 0
-                P(index)%Type           = -P(1)%Type
-                P(index)%SmoothingLength = dx
+                P(k)%v(:) = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = P(k)%Density * 9.81 * max((25 - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -P(1)%Type
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
             end do
 
             !!! Dummy particle I on the Bottom
             Nx = floor((wall_domain(2) - wall_domain(1))/dx) + 1
             do i = 1, Nx
                 ndummy = ndummy + 1
-                index = ntotal + ndummy
-                P(index)%x(:) = [wall_domain(1) + (i-0.5)*dx, &
+                k = ntotal + ndummy
+                P(k)%x(:) = [wall_domain(1) + (i-0.5)*dx, &
                                  wall_domain(3) - (l-0.5)*dx]
-                P(index)%v(:) = 0
-                P(index)%Density         = 1000
-                P(index)%Mass            = P(index)%Density * dx * dx
-                P(index)%Pressure        = 0
-                P(index)%InternalEnergy  = 0
-                P(index)%Type            = -P(1)%Type
-                P(index)%SmoothingLength = dx
+                P(k)%v(:) = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((25 - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -P(1)%Type
+                P(k)%SmoothingLength = dx
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
             end do
         end do
 
-        ! !!! Dummy particle I for baffle
-        ! Nx = floor(3 / (dx / 2))
-        ! do l = 1, layer
-        !     do i = 1, Nx - l + 1
-        !         ndummy = ndummy + 1
-        !         index = ntotal + ndummy
-        !         P(index)%x(:)  = [sum(wall_domain(1:2))/2 + (i+l-1.5)*dx/2, &
-        !                           wall_domain(3) + (i-0.5)*dx/2]
-        !         P(index)%v(:)  = 0
-        !         P(index)%Density         = 1000
-        !         P(index)%Mass            = P(index)%Density * dx * dx / 4
-        !         P(index)%Pressure        = 0
-        !         P(index)%InternalEnergy  = 0
-        !         P(index)%Type            = -P(1)%Type
-        !         P(index)%SmoothingLength = dx
-        !     end do
-        ! end do
+        !!! Dummy particle I for baffle
+        Nx = floor(3 / (dx / 2))
+        do l = 1, layer
+            do i = 1, Nx - l + 1
+                ndummy = ndummy + 1
+                k = ntotal + ndummy
+                P(k)%x(:)  = [sum(wall_domain(1:2))/2 + (i+l-1.5)*dx/2, &
+                                  wall_domain(3) + (i-0.5)*dx/2]
+                P(k)%v(:)  = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx / 4
+                P(k)%Pressure        = P(k)%Density * 9.81 * max((25 - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -P(1)%Type
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+            end do
+        end do
 
         !!! Dummy particle for Lid
         Nx = floor((wall_domain(2) - wall_domain(1))/dx) + 1
         do l = 1, layer
             do i = 1, Nx
                 ndummy = ndummy + 1
-                index = ntotal + ndummy
-                P(index)%x(:)  = [wall_domain(1) + (i-0.5)*dx, &
+                k = ntotal + ndummy
+                P(k)%x(:)  = [wall_domain(1) + (i-0.5)*dx, &
                                   wall_domain(4) - (l+0.5)*dx]
-                P(index)%v(:)  = 0
-                P(index)%Density         = 1000
-                P(index)%Mass            = P(index)%Density * dx * dx
-                P(index)%Pressure        = 0
-                P(index)%InternalEnergy  = 0
-                P(index)%Type            = -P(1)%Type
-                P(index)%SmoothingLength = dx
+                P(k)%v(:)  = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -P(1)%Type
+                P(k)%SmoothingLength = dx
             end do
         end do
 
-    end subroutine dam_break_dp
+    end subroutine damBreak
+
+    subroutine damBreakwithElasticGate(ntotal, ndummy, P)
+        use eos_m, only: arti_water_eos_1
+        use geometry_m, only: rectangle_t
+        integer, intent(in) :: ntotal
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
+        type(rectangle_t) :: domain
+        real(8) :: dx, h
+        integer :: nx, ny
+
+        integer i, j, k
+
+        ndummy = 0
+        dx = 0.001
+
+        !!! Left Wall
+        domain = rectangle_t([-0.0025, 0.075], [0.005, 0.15], 0)
+        h = 0.14
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+        !!! Bottom
+        domain = rectangle_t([0.1025, -0.0025], [0.215, 0.005], 0)
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+        !!! Middle Wall
+        domain = rectangle_t([0.1025, 0.1145], [0.005, 0.071], 0)
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+        !!! Right Wall
+        domain = rectangle_t([0.2075, 0.075], [0.005, 0.15], 0)
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+    end subroutine damBreakwithElasticGate
+    
+    subroutine waterImpact(ntotal, ndummy, P)
+        use eos_m, only: arti_water_eos_1
+        use geometry_m, only: rectangle_t
+        integer, intent(in) :: ntotal
+        integer, intent(inout) :: ndummy
+        type(Particle), intent(inout) :: P(:)
+        type(rectangle_t) :: domain
+        real(8) :: dx, h
+        integer :: nx, ny
+
+        integer i, j, k
+
+        ndummy = 0
+        dx = 0.002
+
+        !!! Left Wall
+        domain = rectangle_t([-0.006, 0.183], [0.012, 0.366], 0)
+        h = 0.14
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+        !!! Bottom
+        domain = rectangle_t([0.292, -0.006], [0.608, 0.012], 0)
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+        !!! Right Wall
+        domain = rectangle_t([0.59, 0.183], [0.012, 0.366], 0)
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+
+    end subroutine waterImpact
 
     ! subroutine taylor_rod_dp_1(ntotal, ndummy, P)
     !     integer, intent(in) :: ntotal

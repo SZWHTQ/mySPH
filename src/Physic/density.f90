@@ -97,8 +97,9 @@ contains
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 drhodt(i) = drhodt(i) &
-                    + P(j)%Mass         &
-                    * sum((P(i)%v(:) - P(j)%v(:)) * P(i)%dwdx(:, k))
+                    + P(j)%Mass                                      &
+                    * sum((P(i)%v(:) - P(j)%v(:)) * P(i)%dwdx(:, k)) &
+                    * P(i)%Density / P(j)%Density
             end do
         end do
         !$OMP END PARALLEL DO

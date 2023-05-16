@@ -113,7 +113,7 @@ contains
             case (1)
                 call gas_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure, P(i)%SoundSpeed)
             case (2)
-                call arti_water_eos_1(P(i)%Density, P(i)%Pressure, P(i)%SoundSpeed)
+                call arti_water_eos_1(P(i)%Density, P(i)%Pressure)
             case (3)
                 call arti_water_eos_2(P(i)%Density, P(i)%Pressure, P(i)%SoundSpeed)
             case (4)
@@ -121,7 +121,7 @@ contains
             case (5)
                 call jwl_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             case (6)
-                call mie_gruneisen_eos_of_water(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+                call mie_gruneisen_eos_of_water(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure, P(i)%SoundSpeed)
             case (7)
                 call water_polynomial_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             case (8)
@@ -147,7 +147,9 @@ contains
             case (101)
                 call mie_gruneisen_eos_of_armcoIron(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             case (102)
-                call mie_gruneisen_eos_of_type102(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
+                call arti_eos_of_102(P(i)%Density, P(i)%Pressure)
+            case (103)
+                call arti_eos_of_103(P(i)%Density, P(i)%Pressure)
             end select
 
             !!! Deviatoric Stress Rate Tensor

@@ -65,14 +65,18 @@ contains
         case("UNDEX")
             call undex(ntotal, Particles)
         case("dam_break")
-            call dam_break(ntotal, Particles)
+            call damBreak(ntotal, Particles)
+        case("db_gate")
+            call damBreakwithElasticGate(ntotal, Particles)
+        case("water_impact")
+            call waterImpact(ntotal, Particles)
         case ("taylor_rod")
             call taylor_rod(ntotal, Particles)
         case ("can_beam")
             call cantilever_beam(ntotal, Particles)
         case ("beam_oil")
             write(*, "(A)") "!!! Unfinished Project !!!"
-            call clammped_beam_with_oil(ntotal, Particles)
+            call clammpedBeamwithOil(ntotal, Particles)
         end select
 
         call output(ini, Particles(1:ntotal))
@@ -307,39 +311,43 @@ contains
         use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        integer :: water_n(2) = [90, 90], &
-                     tnt_n(2) = [61, 61]
-        real(8) :: water_origin(2) = [-0.5, -0.5], &
-                     tnt_origin(2) = [-0.05, -0.05] !! Bottom left corner
-        real(8) :: length(2) = [1, 1], tnt_length(2) = [0.1, 0.1]
-        real(8) :: delta(2), tnt_delta(2)
+        integer :: n(2),      tnt_n(2)
+        real(8) :: origin(2), tnt_origin(2) !! Bottom left corner
+        real(8) :: length(2), tnt_length(2)
+        real(8) :: delta(2),  tnt_delta(2)
+        ! integer :: layer, boundaryType
+        ! integer :: l
+
         integer i, j, k
 
-        real(8) :: origin(2) = [-0.5, -0.5]
-        integer :: layer, n(2) = [201, 201]
-        integer l
 
         if ( Field%Dim /= 2 )  Field%Dim = 2
 
-        delta = (length - tnt_length) / (water_n*2)
-        tnt_delta = tnt_length / (tnt_n - 1)
+        origin     = [real(8) :: -0.500, -0.500]
+        length     = [real(8) ::  1.000,  1.000]
+        tnt_origin = [real(8) :: -0.050, -0.050]
+        tnt_length = [real(8) ::  0.100,  0.100]
+        delta      = [real(8) ::  0.005,  0.005]
+        tnt_delta  = delta / 3
+
+        n     = int((length - tnt_length) / 2 / delta)
+        tnt_n = int(tnt_length / tnt_delta) + 1
 
         k = 0
         ntotal = 0
         !!! Water to the left of the TNT
-        do i = 1, water_n(1)
-            do j = 1, water_n(2)*2 + int(tnt_length(2)/delta(2)+1)
-                k = ntotal + (i-1) * (water_n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
-                P(k)%x(:)            = water_origin &
-                                        + [i-1, j-1] * delta
+        do i = 1, n(1)
+            do j = 1, n(2)*2 + int(tnt_length(2)/delta(2)+1)
+                k = ntotal + (i-1) * (n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
+                P(k)%x(:)            = origin + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
                 P(k)%InternalEnergy  = 1e8
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
-                                                P(k)%Pressure)
-                if ( (P(k)%x(1) < -0.45) .or. (P(K)%x(2) > 0.45) .or. (P(K)%x(2) < -0.45) ) then
+                                                P(k)%Pressure, P(k)%SoundSpeed)
+                if ( (P(k)%x(1) <= -0.45) .or. (abs(P(K)%x(2)) > 0.45) ) then
                     P(k)%Boundary = 2
                 end if
             end do
@@ -348,18 +356,17 @@ contains
 
         !!! Water below the TNT
         do i = 1, int(tnt_length(1)/delta(1)+1)
-            do j = 1, water_n(2)
-                k = ntotal + (i-1) * water_n(2) + j
-                P(k)%x(:)            = [tnt_origin(1), water_origin(2)] &
-                                        + [i-1, j-1] * delta
+            do j = 1, n(2)
+                k = ntotal + (i-1) * n(2) + j
+                P(k)%x(:)            = [tnt_origin(1), origin(2)] + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
                 P(k)%InternalEnergy  = 1e8
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
-                                                P(k)%Pressure)
-                if ( (P(K)%x(2) < -0.45) ) then
+                                                P(k)%Pressure, P(k)%SoundSpeed)
+                if ( (P(K)%x(2) <= -0.45) ) then
                     P(k)%Boundary = 2
                 end if
             end do
@@ -368,9 +375,9 @@ contains
 
         !!! Water above the TNT
         do i = 1, int(tnt_length(1)/delta(1)+1)
-            do j = 1, water_n(2)
-                k = ntotal + (i-1) * water_n(2) + j
-                P(k)%x(:)            = [tnt_origin(1), water_origin(2)] &
+            do j = 1, n(2)
+                k = ntotal + (i-1) * n(2) + j
+                P(k)%x(:)            = [tnt_origin(1), origin(2)] &
                                         + [0._8, length(2)] + [i-1, 1-j] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
@@ -378,8 +385,8 @@ contains
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
-                                                P(k)%Pressure)
-                if ( (P(K)%x(2) > 0.45) ) then
+                                                P(k)%Pressure, P(k)%SoundSpeed)
+                if ( (P(K)%x(2) >= 0.45) ) then
                     P(k)%Boundary = 2
                 end if
             end do
@@ -387,10 +394,10 @@ contains
         ntotal = k
 
         !!! Water to the right of the TNT
-        do i = 1, water_n(1)
-            do j = 1, water_n(2)*2 + int(tnt_length(2)/delta(2)+1)
-                k = ntotal + (i-1) * (water_n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
-                P(k)%x(:)            = [tnt_origin(1)+tnt_length(1)+delta(1), water_origin(2)] &
+        do i = 1, n(1)
+            do j = 1, n(2)*2 + int(tnt_length(2)/delta(2)+1)
+                k = ntotal + (i-1) * (n(2)*2 + int(tnt_length(2)/delta(2)+1)) + j
+                P(k)%x(:)            = [tnt_origin(1)+tnt_length(1)+delta(1), origin(2)] &
                                         + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
@@ -398,8 +405,8 @@ contains
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
-                                                P(k)%Pressure)
-                if ( (P(k)%x(1) > 0.45) .or. (P(K)%x(2) > 0.45) .or. (P(K)%x(2) < -0.45) ) then
+                                                P(k)%Pressure, P(k)%SoundSpeed)
+                if ( (P(k)%x(1) >= 0.45) .or. (abs(P(K)%x(2)) > 0.45) ) then
                     P(k)%Boundary = 2
                 end if
             end do
@@ -422,7 +429,85 @@ contains
         end do
         ntotal = k
 
-        delta = length / (n - 1)
+        n = int(length / delta) + 1
+
+        ! !!! Sponge Layer
+        ! layer = 20
+        ! boundaryType = 2
+        ! do l = 1, layer
+        !     ! if ( l == layer ) then
+        !     !     boundaryType = 1
+        !     ! else
+        !     !     boundaryType = 2
+        !     ! end if
+        !     !!! Upper side
+        !     do i = 1, n(1) + 2*l
+        !         k = ntotal + i
+        !         P(k)%x(1) = origin(1) + delta(1) * (i-l-1)
+        !         P(k)%x(2) = length(2) + origin(2) + delta(2) * l
+        !         P(k)%v(:)            = 0
+        !         P(k)%Density         = 1000
+        !         P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+        !         P(k)%InternalEnergy  = 1e8
+        !         P(k)%Type            = 6
+        !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
+        !         P(k)%Boundary        = boundaryType
+        !         call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+        !                                         P(k)%Pressure, P(k)%SoundSpeed)
+        !     end do
+        !     ntotal = k
+
+        !     !!! Lower side
+        !     do i = 1, n(1) + 2*l
+        !         k = ntotal + i
+        !         P(k)%x(1) = origin(1) + delta(1) * (i-l-1)
+        !         P(k)%x(2) = origin(2) - delta(2) * l
+        !         P(k)%v(:)            = 0
+        !         P(k)%Density         = 1000
+        !         P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+        !         P(k)%InternalEnergy  = 1e8
+        !         P(k)%Type            = 6
+        !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
+        !         P(k)%Boundary        = boundaryType
+        !         call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+        !                                         P(k)%Pressure, P(k)%SoundSpeed)
+        !     end do
+        !     ntotal = k
+
+        !     !!! Left side
+        !     do i = 1, n(2) + 2*l
+        !         k = ntotal + i
+        !         P(k)%x(1) = origin(1) - delta(1) * l
+        !         P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
+        !         P(k)%v(:)            = 0
+        !         P(k)%Density         = 1000
+        !         P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+        !         P(k)%InternalEnergy  = 1e8
+        !         P(k)%Type            = 6
+        !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
+        !         P(k)%Boundary        = boundaryType
+        !         call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+        !                                         P(k)%Pressure, P(k)%SoundSpeed)
+        !     end do
+        !     ntotal = k
+
+        !     !!! Right side
+        !     do i = 1, n(2) + 2*l
+        !         k = ntotal + i
+        !         P(k)%x(1) = length(1) + origin(1) + delta(1) * l
+        !         P(k)%x(2) = origin(2) + delta(2) * (i-l-1)
+        !         P(k)%v(:)            = 0
+        !         P(k)%Density         = 1000
+        !         P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
+        !         P(k)%InternalEnergy  = 1e8
+        !         P(k)%Type            = 6
+        !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
+        !         P(k)%Boundary        = boundaryType
+        !         call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+        !                                         P(k)%Pressure, P(k)%SoundSpeed)
+        !     end do
+        !     ntotal = k
+        ! end do
 
         ! !!! Solid
         ! layer = 6
@@ -563,13 +648,14 @@ contains
 
     end subroutine undex
 
-    subroutine dam_break(ntotal, P)
+    subroutine damBreak(ntotal, P)
+        use eos_m, only: arti_water_eos_1
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         ! real(8) :: fluid_domian(4) = [0, 2, 0, 1]
         real(8) :: fluid_domian(4) = [0, 25, 0, 25]
         ! real(8) :: dx = 0.02
-        real(8) :: dx = 0.2
+        real(8) :: dx = 0.2!, bulk=2e7, rho0=1100, c
         integer :: Nx, Ny
 
         integer i, j, k
@@ -584,54 +670,192 @@ contains
                 P(K)%v(:)            = 0
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * dx * dx
-                P(k)%Pressure        = 0
+                P(k)%Pressure        = P(k)%Density * 9.81 * (fluid_domian(4) - P(k)%x(2))
                 P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 50
                 P(k)%Type            = 2
                 P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
             end do
         end do
 
         ntotal = Nx * Ny
 
-        Nx = int(0.6 / (dx))
-        Ny = int(10  / (dx))
-        do i = 1, Nx
-            do j = 1, Ny
-                k = ntotal + (i-1) * Ny + j
-                P(k)%x(:)            = [50 + (i-(Nx/2.)-0.5) * (dx), &
-                                        fluid_domian(3) + (j-0.5) * (dx)]
+        ! c = sqrt(bulk / rho0)
+        ! Nx = int(0.6 / (dx))
+        ! Ny = int(10  / (dx))
+        ! do i = 1, Nx
+        !     do j = 1, Ny
+        !         k = ntotal + (i-1) * Ny + j
+        !         P(k)%x(:)            = [50 + (i-(Nx/2.)-0.5) * (dx), &
+        !                                 fluid_domian(3) + (j-0.5) * (dx)]
+        !         P(K)%v(:)            = 0
+        !         P(k)%Density         = rho0
+        !         P(k)%Mass            = P(k)%Density * dx * dx / 4
+        !         P(k)%Pressure        = 0
+        !         P(k)%InternalEnergy  = 0
+        !         P(k)%SoundSpeed      = c
+        !         P(k)%Type            = 102
+        !         P(k)%SmoothingLength = dx
+        !         if ( j == 1 ) then
+        !             P(k)%Boundary = 1
+        !         end if
+        !     end do
+        ! end do
+
+        ! ntotal = ntotal + Nx * Ny
+
+    end subroutine damBreak
+
+    subroutine damBreakwithElasticGate(ntotal, P)
+        use eos_m, only: arti_water_eos_1
+        use geometry_m, only: rectangle_t
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
+        type(rectangle_t) :: domain
+        real(8) :: dx, h
+        integer :: nx, ny
+
+        integer i, j, k
+
+        ntotal = 0
+
+        dx = 0.001
+        h = 0.14
+
+        !!! Fluid
+        domain = rectangle_t([0.05, 0.07], [0.10, 0.14], 0)
+        nx = int((domain%length(1)) / dx)
+        ny = int((domain%length(2)) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 50
+                P(k)%Type            = 2
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+            end do
+        end do
+        ntotal = ntotal + nx * ny
+
+        !!! Solid
+        domain = rectangle_t([0.1025, 0.0395], [0.005, 0.079], 0)
+        nx = int((domain%length(1)) / dx) + 1
+        ny = int((domain%length(2)) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j+0.5] * dx
                 P(K)%v(:)            = 0
                 P(k)%Density         = 1100
-                P(k)%Mass            = P(k)%Density * dx * dx / 4
+                P(k)%Mass            = P(k)%Density * dx * dx
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 40
+                P(k)%SoundSpeed      = 134.84
                 P(k)%Type            = 102
+                P(k)%SmoothingLength = dx
+                if ( j == ny ) then
+                    P(k)%Boundary = 1
+                end if
+            end do
+        end do
+        ntotal = ntotal + nx * ny
+
+    end subroutine damBreakwithElasticGate
+
+    subroutine waterImpact(ntotal, P)
+        use eos_m, only: arti_water_eos_1
+        use geometry_m, only: rectangle_t
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
+        type(rectangle_t) :: domain
+        real(8) :: dx, h
+        integer :: nx, ny
+
+        integer i, j, k
+
+        ntotal = 0
+
+        dx = 0.002
+        h = 0.292
+
+        !!! Fluid
+        domain = rectangle_t([0.073, 0.146], [0.146, 0.292], 0)
+        nx = int((domain%length(1)) / dx) + 1
+        ny = int((domain%length(2)) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 50
+                P(k)%Type            = 2
+                P(k)%SmoothingLength = dx
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+            end do
+        end do
+        ntotal = ntotal + nx * ny
+
+        !!! Solid
+        domain = rectangle_t([0.292, 0.04], [0.012, 0.08], 0)
+        nx = int((domain%length(1)) / dx) + 1
+        ny = int((domain%length(2)) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j+0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 2500
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 11.489
+                P(k)%Type            = 103
                 P(k)%SmoothingLength = dx
                 if ( j == 1 ) then
                     P(k)%Boundary = 1
                 end if
             end do
         end do
+        ntotal = ntotal + nx * ny
 
-        ntotal = ntotal + Nx * Ny
+    end subroutine waterImpact
 
-    end subroutine dam_break
-
-    subroutine clammped_beam_with_oil(ntotal, P)
+    subroutine clammpedBeamwithOil(ntotal, P)
+        use eos_m, only: oil_eos, arti_eos_of_102
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: domain(4)
-        real(8) :: dx = 0.001
+        real(8) :: dx = 0.001, bulk=2e7, rho0=1100, c
         integer :: Nx, Ny
 
         integer i, j, k
 
         ntotal = 0
+        c = sqrt(bulk / rho0)
 
+        !!! Left side
         domain = [real(8) :: -304.5, -2, 0, 115] * 1e-3
-        Nx = int((domain(2) - domain(1)) / dx)
-        Ny = int((domain(4) - domain(3)) / dx)
+        Nx = int((domain(2) - domain(1)) / dx) - 2
+        Ny = int((domain(4) - domain(3)) / dx) + 1
         do i = 1, Nx
             do j = 1, Ny
                 k = ntotal + (i-1) * Ny + j
@@ -640,33 +864,36 @@ contains
                 P(K)%v(:)            = 0
                 P(k)%Density         = 917
                 P(k)%Mass            = P(k)%Density * dx * dx
-                P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 50
                 P(k)%Type            = 8
                 P(k)%SmoothingLength = dx
+                call oil_eos(P(k)%Density, P(k)%Pressure)
             end do
         end do
         ntotal = ntotal + Nx * Ny
 
+        !!! Right side
         domain = [real(8) :: 2, 304.5, 0, 115] * 1e-3
-        Nx = int((domain(2) - domain(1)) / dx)
-        Ny = int((domain(4) - domain(3)) / dx)
+        Nx = int((domain(2) - domain(1)) / dx) - 2
+        Ny = int((domain(4) - domain(3)) / dx) + 1
         do i = 1, Nx
             do j = 1, Ny
                 k = ntotal + (i-1) * Ny + j
-                P(k)%x(:)            = [domain(1) + (i+0.0) * dx, &
+                P(k)%x(:)            = [domain(1) + (i+2.0) * dx, &
                                         domain(3) + (j-0.5) * dx]
                 P(K)%v(:)            = 0
                 P(k)%Density         = 917
                 P(k)%Mass            = P(k)%Density * dx * dx
-                P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = 8
                 P(k)%SmoothingLength = dx
+                call oil_eos(P(k)%Density, P(k)%Pressure)
             end do
         end do
         ntotal = ntotal + Nx * Ny
 
+        !!! Solid
         domain = [real(8) :: -2, 2, 0, 115] * 1e-3
         Nx = int((domain(2) - domain(1)) / dx)
         Ny = int((domain(4) - domain(3)) / dx)
@@ -676,12 +903,12 @@ contains
                 P(k)%x(:)            = [domain(1) + (i-0.5) * dx, &
                                         domain(3) + (j-0.5) * dx]
                 P(K)%v(:)            = 0
-                P(k)%Density         = 7850
+                P(k)%Density         = rho0
                 P(k)%Mass            = P(k)%Density * dx * dx
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 5000
-                P(k)%Type            = 101
+                P(k)%SoundSpeed      = c
+                P(k)%Type            = 102
                 P(k)%SmoothingLength = dx
                 if ( j == 1 ) then
                     P(k)%Boundary = 1
@@ -690,7 +917,7 @@ contains
         end do
         ntotal = ntotal + Nx * Ny
 
-    end subroutine clammped_beam_with_oil
+    end subroutine clammpedBeamwithOil
 
     subroutine taylor_rod(ntotal, P)
         integer, intent(inout) :: ntotal
@@ -729,27 +956,29 @@ contains
     subroutine cantilever_beam(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        real(8) :: dx = 1e-2
+        real(8) :: dx = 1e-3, bulk=2e7, rho0=1100, c
         integer :: nx = 101, ny = 5
 
         integer i, j, k
+
+        c = sqrt(bulk / rho0)
 
         do i = 1, nx
             do j = 1, ny
                 k = (i-1) * ny + j
                 P(k)%x(:)            = [i-1, j-1] * dx
                 P(k)%v(:)            = 0
-                P(k)%Density         = 1100
+                P(k)%Density         = rho0
                 P(k)%Mass            = P(k)%Density * dx * dx
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 40
+                P(k)%SoundSpeed      = c
                 P(k)%Type            = 102
                 P(k)%SmoothingLength = dx * 2
+                if ( i == 1 ) then
+                    P(k)%Boundary = 1
+                end if
             end do
-            if ( i == 1 ) then
-                P(k)%Boundary = 1
-            end if
         end do
 
         ntotal = nx * ny

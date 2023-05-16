@@ -12,8 +12,9 @@ module nnps_m
     public :: search_particles, print_statistics
 
 contains
-    subroutine search_particles(nnps, Particles)
-        integer, intent(in)  :: nnps
+    subroutine search_particles(nnps, ntotal, Particles)
+        integer, intent(in) :: nnps
+        integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
 
 #if CHECK_NEIGHBOR_LIST
@@ -24,7 +25,7 @@ contains
         case (1)
             call direct_search(Particles)
         case (2)
-            call link_list_search(Particles)
+            call link_list_search(ntotal, Particles)
         case (3)
             call tree_search(Particles)
         end select
@@ -106,10 +107,11 @@ contains
 
     end subroutine direct_search
 
-    subroutine link_list_search(P)
+    subroutine link_list_search(ntotal, P)
         use back_ground_grid_m
+        integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        integer :: ntotal, kpair
+        integer :: N, kpair
         real(8) :: this_w, this_dwdx(Field%Dim)
         real(8) :: maxhsml, mhsml
         integer, allocatable   :: grid(:, :, :)
@@ -117,7 +119,7 @@ contains
         integer :: cell(3), xcell, ycell, zcell, &
                    minxcell(3), maxxcell(3), &
                    cell_num(Field%Dim), ghsmlx(Field%Dim)
-        real(8) :: dr, r, dx(Field%Dim), grid_max_coor(Field%Dim), grid_min_coor(Field%Dim)
+        real(8) :: dr, r, dx(Field%Dim), gridMaxCoor(Field%Dim), gridMinCoor(Field%Dim)
         real(8) :: scale
 
         ! logical :: flag
@@ -133,33 +135,33 @@ contains
             scale_k = 1
         end select
 
-        ntotal = size(P)
+        N = size(P)
         kpair = size(P(1)%neighborList)
 
-        allocate(cell_index(3, ntotal), source=0)
-        allocate(cell_data(ntotal), source=0)
+        allocate(cell_index(3, N), source=0)
+        allocate(cell_data(N), source=0)
 
-        grid_max_coor(:) = -huge(0._8)
-        grid_min_coor(:) =  huge(0._8)
-        do i = 1, ntotal
+        gridMaxCoor(:) = -huge(0._8)
+        gridMinCoor(:) =  huge(0._8)
+        do i = 1, N
             do d = 1, Field%Dim
-                if ( P(i)%x(d) > grid_max_coor(d) ) grid_max_coor(d) = P(i)%x(d)
-                if ( P(i)%x(d) < grid_min_coor(d) ) grid_min_coor(d) = P(i)%x(d)
+                if ( P(i)%x(d) > gridMaxCoor(d) ) gridMaxCoor(d) = P(i)%x(d)
+                if ( P(i)%x(d) < gridMinCoor(d) ) gridMinCoor(d) = P(i)%x(d)
             end do
         end do
         scale = 1.2
-        associate( d => (grid_max_coor-grid_min_coor) )
-            grid_max_coor = grid_max_coor + (scale - 1) * d
-            grid_min_coor = grid_min_coor - (scale - 1) * d
+        associate( d => (gridMaxCoor-gridMinCoor) )
+            gridMaxCoor = gridMaxCoor + (scale - 1) * d
+            gridMinCoor = gridMinCoor - (scale - 1) * d
         end associate
 
         !!! initialize grid:
         maxhsml = maxval(P%SmoothingLength)
-        call initialize_grid(ntotal, maxhsml, grid, cell_num, ghsmlx, grid_max_coor, grid_min_coor)
+        call initialize_grid(N, maxhsml, grid, cell_num, ghsmlx, gridMaxCoor, gridMinCoor)
 
         !!! position particles on grid and create linked list:
-        do i = 1, ntotal
-            call grid_geometry(i, P(i)%x(:), cell_num, grid_max_coor, grid_min_coor, cell)
+        do i = 1, N
+            call grid_geometry(i, P(i)%x(:), cell_num, gridMaxCoor, gridMinCoor, cell)
             cell_index(:, i) = cell(:)
             cell_data(i) = grid(cell(1), cell(2), cell(3))
             grid(cell(1), cell(2), cell(3)) = i
@@ -185,40 +187,40 @@ contains
                     do xcell = minxcell(1), maxxcell(1) !! Loop over all cells at x direction
                         j = grid(xcell, ycell, zcell) !! Fetch Particle j from grid
                         do while ( j > i )
-                            if ( judge(P(i)%State, P(j)%State) ) then
-                                !!! Calculate distance between particle i and j
-                                dx(1) = P(i)%x(1) - P(j)%x(1)
-                                dr = dx(1)*dx(1)
-                                do d = 2, Field%Dim
-                                    dx(d) = P(i)%x(d) - P(j)%x(d)
-                                    dr = dr + dx(d)*dx(d)
-                                end do
-                                r = sqrt(dr)
-                                mhsml = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
-                                if (r < mhsml * scale_k) then
-                                    !!! Neighbor particle ant tottal neighbor number for each particle
-                                    !$OMP CRITICAL
-                                    P(i)%neighborNum = P(i)%neighborNum + 1
-                                    P(j)%neighborNum = P(j)%neighborNum + 1
+                            ! if ( judge(P(i)%State, P(j)%State) ) then
+                            !!! Calculate distance between particle i and j
+                            dx(1) = P(i)%x(1) - P(j)%x(1)
+                            dr = dx(1)*dx(1)
+                            do d = 2, Field%Dim
+                                dx(d) = P(i)%x(d) - P(j)%x(d)
+                                dr = dr + dx(d)*dx(d)
+                            end do
+                            r = sqrt(dr)
+                            mhsml = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
+                            if (r < mhsml * scale_k) then
+                                !!! Neighbor particle ant tottal neighbor number for each particle
+                                !$OMP CRITICAL
+                                P(i)%neighborNum = P(i)%neighborNum + 1
+                                P(j)%neighborNum = P(j)%neighborNum + 1
 #if CHECK_NEIGHBOR_NUM
-                                    if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
-                                        write(err,"(A)",advance="no") ESC//"[31m"
-                                        write(err,*) i, j, P([i,j])%neighborNum, kpair
-                                        write(err,"(A)",advance="no") ESC//"[0m"
-                                        error stop "Too many neighbors"
-                                    end if
+                                if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
+                                    write(err,"(A)",advance="no") ESC//"[31m"
+                                    write(err,*) i, j, P([i,j])%neighborNum, kpair
+                                    write(err,"(A)",advance="no") ESC//"[0m"
+                                    error stop "Too many neighbors"
+                                end if
 #endif
-                                    P(i)%neighborList(P(i)%neighborNum) = j
-                                    P(j)%neighborList(P(j)%neighborNum) = i
-                                    !!! Kernel and derivations of kernel
-                                    call kernel(r, dx, mhsml, this_w, this_dwdx)
-                                    P(i)%w(P(i)%neighborNum) = this_w
-                                    P(j)%w(P(j)%neighborNum) = this_w
-                                    P(i)%dwdx(:, P(i)%neighborNum) = this_dwdx
-                                    P(j)%dwdx(:, P(j)%neighborNum) = -this_dwdx
-                                    !$OMP END CRITICAL
-                                end if !! r < mhsml * scale_k
-                            end if
+                                P(i)%neighborList(P(i)%neighborNum) = j
+                                P(j)%neighborList(P(j)%neighborNum) = i
+                                !!! Kernel and derivations of kernel
+                                call kernel(r, dx, mhsml, this_w, this_dwdx)
+                                P(i)%w(P(i)%neighborNum) = this_w
+                                P(j)%w(P(j)%neighborNum) = this_w
+                                P(i)%dwdx(:, P(i)%neighborNum) = this_dwdx
+                                P(j)%dwdx(:, P(j)%neighborNum) = -this_dwdx
+                                !$OMP END CRITICAL
+                            end if !! r < mhsml * scale_k
+                            ! end if
                             j = cell_data(j)
                         end do !! j
                     end do !! xcell
@@ -230,13 +232,13 @@ contains
         deallocate(grid)
         deallocate(cell_index, cell_data)
 
-    contains
-    pure logical function judge(iState, jState) result(iflag)
-        integer, intent(in) :: iState, jState
+    ! contains
+    ! pure logical function judge(iState, jState) result(iflag)
+    !     integer, intent(in) :: iState, jState
 
-        iflag = jState == 0 .or. (iState == 0 .and. jState == 1)
+    !     iflag = jState == 0 .or. (iState == 0 .and. jState == 1)
 
-    end function judge
+    ! end function judge
     end subroutine link_list_search
 
     subroutine tree_search(P)
@@ -399,14 +401,14 @@ contains
             if (Particles(i)%neighborNum == 0) noiac = noiac + 1
         end do
 
-        write(*,*) ">> Statistics: interactions per particles:"
+        write(*,*) ">> Statistics: number of neighbors per particle:"
         write(*,*) "   Particle "//to_string(maxp(1))// &
-                   " has maximal interactions: "//to_string(maxiac)
+                   " has maximal neighbors: "//to_string(maxiac)
         write(*,*) "   Particle "//to_string(minp(1))// &
-                   " has minimal interactions: "//to_string(miniac)
-        write(*, "(A,G0)") "    Average neighborList per particle: ", &
+                   " has minimal neighbors: "//to_string(miniac)
+        write(*, "(A,G0)") "    Average number of neighbors: ", &
                            real(sumiac)/(ntotal)
-        write(*,*) "   Particle with no interacitons: "//to_string(noiac)
+        write(*,*) "   Number of particles without neighbors: "//to_string(noiac)
 
 
 

@@ -1,6 +1,7 @@
 module bc_m
     use ctrl_dict, only: Project, Config, Field
     use sph,       only: Particle, allocateParticleList
+    use time_integration_m, only: Update
     use geometry_m
     implicit none
     private
@@ -21,9 +22,81 @@ contains
         call fixedBoundary(ntotal, P, D)
 
         call spongeLayer(ntotal, P, D)
-    
-        
+
+        ! call doNothing(ntotal, P, D)
+
+
     end subroutine boundary
+
+    subroutine fixedBoundary(ntotal, P, D)
+        integer, intent(in) :: ntotal
+        type(Particle), intent(in) :: P(:)
+        type(Update), intent(inout) :: D(:)
+
+        integer i
+
+        do i = 1, ntotal
+            if ( P(i)%Boundary == 1 ) then
+                D(i)%Velocity = 0
+            end if
+        end do
+
+    end subroutine fixedBoundary
+
+    subroutine spongeLayer(ntotal, P, D)
+        integer, intent(in) :: ntotal
+        type(Particle), intent(in) :: P(:)
+        type(Update), intent(inout) :: D(:)
+        real(8) :: boundary, thickness, distance, lambda, factor, exponential
+
+        integer i
+
+        select case(Project%nick)
+        case("undex_chamber")
+            boundary = 0.45
+            thickness = 0.05
+            exponential = 50
+            do i = 1, ntotal
+                if ( P(i)%Boundary == 2 ) then
+                    if ( P(i)%x(1) < -boundary ) then
+                        distance = -boundary - P(i)%x(1)
+                    else if ( P(i)%x(1) > boundary ) then
+                        distance = P(i)%x(1) - boundary
+                    else if ( P(i)%x(2) < -boundary ) then
+                        distance = -boundary - P(i)%x(2)
+                    else if ( P(i)%x(2) > boundary ) then
+                        distance = P(i)%x(2) - boundary
+                    else
+                        cycle
+                    end if
+                    lambda = distance / thickness
+                    factor = ( 1. - 1./(100**((0.9)**(exponential*lambda))) )
+                    D(i)%Density = factor * D(i)%Density
+                end if
+            end do
+        end select
+
+    end subroutine spongeLayer
+
+    subroutine doNothing(ntotal, P, D)
+        integer, intent(in) :: ntotal
+        type(Particle), intent(in) :: P(:)
+        type(Update), intent(inout) :: D(:)
+
+        integer i
+
+        select case(Project%nick)
+        case("undex_chamber")
+            do i = 1, ntotal
+                if ( abs(P(i)%x(1)) > 0.55 .or. abs(P(i)%x(2)) > 0.55 ) then
+                    D(i)%Density = 0
+                    D(i)%Energy = 0
+                    D(i)%Velocity = 0
+                end if
+            end do
+        end select
+
+    end subroutine doNothing
 
     subroutine gen_non_reflecting_bc(ntotal, Particles, nbuffer, Buffers)
         integer, intent(inout) :: ntotal, nbuffer
@@ -125,7 +198,8 @@ contains
                 Buffers(i)%SmoothingLength = 1.5 * dx
                 call mie_gruneisen_eos_of_water(Buffers(i)%Density,        &
                                                 Buffers(i)%InternalEnergy, &
-                                                Buffers(i)%Pressure)
+                                                Buffers(i)%Pressure,       &
+                                                Buffers(i)%SoundSpeed)
                 !! Ghosts Particle Physical Quantity
                 Ghosts(i)%x = calcGhostPosition(Buffers(i))
                 Ghosts(i)%SmoothingLength = 1.5 * dx
@@ -155,7 +229,7 @@ contains
                 if ( BufferDomainContain(Buffers(i)) ) then
                     Ghosts(i)%x = calcGhostPosition(Buffers(i))
                     Ghosts(i)%SmoothingLength = 1.5 * dx
-                else 
+                else
                     if ( FluidDomain%contain(point_t(Buffers(i)%x, 0)) ) then
                         !! Buffer Particle converts to Fluid Particle
                         Buffers(i)%State = -1
@@ -316,55 +390,6 @@ contains
         end do
 
     end subroutine solveBufferProperty
-
-    subroutine fixedBoundary(ntotal, P, D)
-        use time_integration_m, only: Update
-        integer, intent(in) :: ntotal
-        type(Particle), intent(in) :: P(:)
-        type(Update), intent(inout) :: D(:)
-
-        integer i
-
-        do i = 1, ntotal
-            if ( P(i)%Boundary == 1 ) then
-                D(i)%Velocity = 0
-            end if
-        end do
-
-    end subroutine fixedBoundary
-
-    subroutine spongeLayer(ntotal, P, D)
-        use time_integration_m, only: Update
-        integer, intent(in) :: ntotal
-        type(Particle), intent(in) :: P(:)
-        type(Update), intent(inout) :: D(:)
-        real(8) :: thickness, distance, lambda, factor
-
-        integer i
-
-        select case(Project%nick)
-        case("undex_chamber")
-            thickness = 0.05
-            do i = 1, ntotal
-                if ( P(i)%Boundary == 2 ) then
-                    if ( P(i)%x(1) < -0.45 ) then
-                        distance = -0.45 - P(i)%x(1)
-                    else if ( P(i)%x(1) > 0.45 ) then
-                        distance = P(i)%x(1) - 0.45
-                    else if ( P(i)%x(2) < -0.45 ) then
-                        distance = -0.45 - P(i)%x(2)
-                    else if ( P(i)%x(2) > 0.45 ) then
-                        distance = P(i)%x(2) - 0.45
-                    end if
-                    lambda = (distance) / thickness
-                    factor = ( 1. - 1./(100**((0.9)**(200*lambda))) )
-                    D(i)%Density = factor * D(i)%Density
-                    ! D(i)%Density = 0
-                end if
-            end do
-        end select
-        
-    end subroutine spongeLayer
 
     ! subroutine shrink(Particles, ntotal)
     !     type(Particle), intent(inout) :: Particles(:)

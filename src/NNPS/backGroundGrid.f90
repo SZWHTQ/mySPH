@@ -3,20 +3,20 @@ module back_ground_grid_m
     implicit none
     
 contains
-    pure subroutine initialize_grid(ntotal, hsml, grid, cell_num, ghsmlx, grid_max_coor, grid_min_coor)
+    pure subroutine initialize_grid(ntotal, hsml, grid, cell_num, ghsmlx, gridMaxCoor, gridMinCoor)
         integer, intent(in) :: ntotal                                !! Number of particles
         real(8), intent(in) :: hsml                                  !! Smoothing length
         integer, intent(inout), allocatable :: grid(:, :, :)         !! Grid
         integer, intent(inout) :: cell_num(:)                        !! Number of grid cells
         integer, intent(inout) :: ghsmlx(:)                          !! Smoothing length
-        real(8), intent(inout) :: grid_max_coor(:), grid_min_coor(:) !! Maximum and minium grid cell coordinates
+        real(8), intent(inout) :: gridMaxCoor(:), gridMinCoor(:) !! Maximum and minium grid cell coordinates
         integer, parameter     :: nppg = 3  !! averaged number of particles per grid cell
 
         !!! initialize parameters: maximum number of grid cells
 
         !!! range of sorting grid
 
-        associate( d=>(grid_max_coor(:) - grid_min_coor(:)) )
+        associate( d=>(gridMaxCoor(:) - gridMinCoor(:)) )
             !!! number of grid cells in x-, y- and z-direction:
             if (Field%Dim == 1) then
                 cell_num(1) = min((ntotal)/nppg + 1, 1000)
@@ -46,14 +46,14 @@ contains
 
     end subroutine initialize_grid
 
-    subroutine grid_geometry(index, coor, cell_num, grid_max_coor, grid_min_coor, cell)
+    subroutine grid_geometry(index, coor, cell_num, gridMaxCoor, gridMinCoor, cell)
         use ctrl_dict, only: Config
         use tools_m,   only: to_string
         integer, intent(in) :: index            !! Particle index
         real(8), intent(in) :: coor(:)          !! Particle coordinates
         integer, intent(in) :: cell_num(:)      !! Cell number
-        real(8), intent(in) :: grid_max_coor(:), &
-                            grid_min_coor(:) !! Maximum and minium grid cell coordinates
+        real(8), intent(in) :: gridMaxCoor(:), &
+                            gridMinCoor(:) !! Maximum and minium grid cell coordinates
         integer, intent(inout) :: cell(3)     !! Cell coordinates
 
         integer :: d
@@ -61,16 +61,16 @@ contains
         cell(:) = 1
 
         do d = 1, Field%Dim
-            if ((coor(d) > grid_max_coor(d)) .or. (coor(d) < grid_min_coor(d))) then
+            if ((coor(d) > gridMaxCoor(d)) .or. (coor(d) < gridMinCoor(d))) then
                 write(*,*) ' >> error: particle out of range'
                 write(*,*) "   Time Step:"//to_string(Config%i_time_step)
                 write(*,*) '   particle position: coor('//to_string(index)//', ' &
                             //to_string(d)//') = '//to_string(coor(d))
                 write(*,*) '   range: [xmin,xmax]('//to_string(d)//') = ['// &
-                            to_string(grid_min_coor(d))//', '//to_string(grid_max_coor(d))//']'
+                            to_string(gridMinCoor(d))//', '//to_string(gridMaxCoor(d))//']'
                 error stop
             else
-                cell(d) = int(dble(cell_num(d))*(coor(d) - grid_min_coor(d))/(grid_max_coor(d)-grid_min_coor(d)) + 1.0_8)
+                cell(d) = int(dble(cell_num(d))*(coor(d) - gridMinCoor(d))/(gridMaxCoor(d)-gridMinCoor(d)) + 1.0_8)
                 if (cell(d) > cell_num(d)) then
                     write(*,*) 'cell(d) is greater than cell_num(d)'
                     cell(d) = cell_num(d)

@@ -29,7 +29,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     type(Particle), intent(inout) :: Particles(:)
     type(Update),   intent(inout) :: Delta(:)
     real(8),        intent(inout) :: aver_v(:, :)
-    integer :: kpair, N
+    integer :: N!, kpair
     real(8), dimension(Field%Dim, Field%Maxn) :: indvdt, exdvdt, avdvdt
     real(8), dimension(Field%Maxn) :: indedt, avdedt, ahdedt
     ! real(8) :: area
@@ -74,11 +74,11 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length
     if ( Config%open_boundary_w) then
-        call BGGS(Particles(1:ntotal+ndummy), Particles(1:N), skipItsSelf=.true.)
+        call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
     else
-        call search_particles(Config%nnps, Particles(1:N))
+        call search_particles(Config%nnps, ntotal, Particles(1:N))
     end if
-    ! call BGGS(Particles(1:ntotal+ndummy), Particles(1:N), skipItsSelf=.true.)
+    ! call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
 
     !!! Density approximation or change rate
     select case (Config%pa_sph)
@@ -86,7 +86,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         if ( Config%sum_density_w ) then
             call sum_density(Particles)
         else
-            call con_density(ntotal+ndummy, Particles, Delta%Density)
+            call con_density(ntotal, Particles, Delta%Density)
         end if
     case (3)
         call con_density_riemann(Particles(1:N), Delta%Density)
@@ -101,22 +101,23 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     call detonation_wave(Config%i_time_step, Config%delta_t, Particles(1:ntotal))
 
-    call divergence(ntotal+ndummy, Particles)
+    call divergence(ntotal, Particles)
 
     !!! Internal forces
 #if SOLID
-    call internal_force(ntotal+ndummy, Particles, indvdt, indedt, Shear, dSdt)
+    call internal_force(ntotal, Particles, indvdt, indedt, Shear, dSdt)
 #else
-    call internal_force(ntotal+ndummy, Particles, indvdt, indedt)
+    call internal_force(ntotal, Particles, indvdt, indedt)
 #endif
 
-    !!! Artificial viscosity
-    if ( Config%arti_visc_w ) call arti_visc(ntotal+ndummy, Particles, avdvdt, avdedt)
-
     !!! External force
-    if ( Config%ex_force_w ) call external_force(ntotal+ndummy, Particles, exdvdt)
+    if ( Config%ex_force_w ) call external_force(ntotal, Particles, exdvdt)
 
-    if ( Config%arti_heat_w ) call arti_heat(ntotal+ndummy, Particles, ahdedt)
+    !!! Artificial viscosity
+    if ( Config%arti_visc_w ) call arti_visc(ntotal, Particles, avdvdt, avdedt)
+
+    !!! Artificial heat
+    if ( Config%arti_heat_w ) call arti_heat(ntotal, Particles, ahdedt)
 
     !!! Calculating average velocity of each particle for avoiding penetration
     if ( Config%aver_velocity_w ) call aver_velo(ntotal, Particles, aver_v)
@@ -132,7 +133,6 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     call boundary(ntotal, Particles, Delta)
 
-
     if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then
         !!! Statistics for the interaction
         if (Config%print_statistics_w) then
@@ -144,12 +144,12 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
                 write(*,*) ">> Statistics: Particles Number:"
                 write(*,*) "   Number of particles: ", to_string(ntotal)
             end if
-            call print_statistics(Particles(1:ntotal+ndummy))
+            call print_statistics(Particles(1:ntotal))
         end if
 
         ! index = 0
         ! number = 0
-        ! do i = 1, ntotal+ndummy
+        ! do i = 1, ntotal
         !     if ( P(i)%Type == 2 ) then
         !         number = number + 1
         !         index(number) = i
@@ -158,7 +158,8 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         ! call calculate_area(number, mass(index(1:number)), rho(index(1:number)), area)
         ! write(*,"(A, I0, ES15.7)") " >> Statistics: Target Area: ", number, area
 
-        write(*,*) ">> Information for particle ", to_string(Config%monitor_particle)
+        write(*,*) ">> Information for Particle ", to_string(Config%monitor_particle), &
+                    " Type ", to_string(Particles(Config%monitor_particle)%Type)
         write(*,1001) "Internal a ", "Artificial a", "External a", "Total a"
         do i = 1, Field%Dim
             write(*,1002) indvdt(i, Config%monitor_particle), avdvdt(i, Config%monitor_particle), &
@@ -166,17 +167,23 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         end do
     end if
 
-    kpair = maxval(Particles%neighborNum)
-    if ( kpair > Field%pairNum ) then
-        call allocateNeighborList(Particles, Field%Dim, kpair + 3)
-    else
-        do i = 1, size(Particles)
-            Particles(i)%neighborNum = 0
-            Particles(i)%neighborList = 0
-            Particles(i)%w = 0
-            Particles(i)%dwdx = 0
-        end do
-    end if
+    ! kpair = maxval(Particles%neighborNum)
+    ! if ( kpair > Field%pairNum ) then
+    !     call allocateNeighborList(Particles, Field%Dim, kpair + 3)
+    ! else
+    !     do i = 1, size(Particles)
+    !         Particles(i)%neighborNum = 0
+    !         Particles(i)%neighborList = 0
+    !         Particles(i)%w = 0
+    !         Particles(i)%dwdx = 0
+    !     end do
+    ! end if
+    do i = 1, ntotal + ndummy + nbuffer
+        Particles(i)%neighborNum  = 0
+        Particles(i)%neighborList = 0
+        Particles(i)%w            = 0
+        Particles(i)%dwdx         = 0
+    end do
 
     1001 format(A17, A14, 2(A15))
     1002 format(1X, 4(2X, ES13.6))

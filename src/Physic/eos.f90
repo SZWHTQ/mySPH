@@ -20,16 +20,23 @@ contains
     !!! Artificial equation of state for the artificial compressibility
     !!! Artificial EOS, Form 1 (Monaghan, 1994) !! Modified for dam break
     !!! Type = 2
-    elemental subroutine arti_water_eos_1(rho, p, c)
-        real(8), intent(in)  :: rho
-        real(8), intent(inout) :: p, c
+    elemental subroutine arti_water_eos_1(rho, p, Density)
+        real(8), intent(inout)  :: rho
+        real(8), intent(inout) :: p
+        logical, intent(in), optional :: Density
+        real(8) :: c !! Artificial/Lagrangian sound speed
         real(8), parameter :: gamma = 7
         real(8), parameter :: rho0 = 1000
         real(8) :: b
 
-        c = 50 !! Artificial/Lagrangian sound speed for "Two-dimensional dam break"
+        ! c = 10
+        c = 50 !!for "Two-dimensional dam break"
         b = c**2 * rho0 / gamma
-        p = b * ((rho/rho0)**gamma - 1)
+        if ( present(Density) .and. Density ) then
+            rho = (p / b + 1)**(1._8/gamma) * rho0
+        else
+            p = b * ((rho/rho0)**gamma - 1)
+        end if
 
     end subroutine arti_water_eos_1
 
@@ -76,11 +83,11 @@ contains
 
     !!! Water EOS/Mie-Gruneisen
     !!! Type = 6
-    elemental subroutine mie_gruneisen_eos_of_water(rho, e, p)
+    elemental subroutine mie_gruneisen_eos_of_water(rho, e, p, c)
         real(8), intent(in)  :: rho, e
-        real(8), intent(inout) :: p
+        real(8), intent(inout) :: p, c
         real(8) :: ratio, mu
-        real(8), parameter :: rho0 = 1000, c0 = 1480
+        real(8), parameter :: rho0 = 1000, c0 = 1480, bulk = 2.2e9
         real(8), parameter :: gamma0 = 0.5, a = 0
         real(8), parameter :: s(3) = [2.56, 1.986, 1.2268]
 
@@ -94,6 +101,8 @@ contains
         else
             p = rho0*c0**2*mu + (gamma0+a*mu)*e
         end if
+
+        c = sqrt(bulk / rho)
 
         ! if ( p < 0 ) p = 0
 
@@ -125,16 +134,13 @@ contains
 
     !!! Artificial equation of state for oil
     !!! Type = 8
-    elemental subroutine oil_eos(rho, p, c)
+    elemental subroutine oil_eos(rho, p)
         real(8), intent(in)  :: rho
-        real(8), intent(inout) :: p, c
-        real(8), parameter :: gamma = 7
+        real(8), intent(inout) :: p
+        real(8), parameter :: c = 50
         real(8), parameter :: rho0 = 917
-        real(8) :: b
 
-        c = 50 !! Artificial/Lagrangian sound speed for "Two-dimensional dam break"
-        b = c**2 * rho0 / gamma
-        p = b * ((rho/rho0)**gamma - 1)
+        p = c**2 * (rho - rho0)
 
     end subroutine oil_eos
 
@@ -176,44 +182,27 @@ contains
 
         end function hugoniot_curve
     end subroutine mie_gruneisen_eos_of_armcoIron
-    
+
     !!! Solid EOS/Mie-Gruneisen
     !!! Type = 102
-    elemental subroutine mie_gruneisen_eos_of_type102(rho, e, p)
-        real(8), intent(in)  :: rho, e
+    elemental subroutine arti_eos_of_102(rho, p)
+        real(8), intent(in)  :: rho
         real(8), intent(inout) :: p
-        real(8) :: mu
-        real(8) :: p_H
-        real(8), parameter :: rho0 = 1100
-        real(8), parameter :: Gamma = 1.81
+        real(8), parameter :: rho0 = 1100, K = 2e7, c2 = K / rho0
 
-        mu = rho/rho0 - 1
-        p_H = hugoniot_curve(mu)
+        p = c2 * (rho - rho0)
 
-        p = (1 - 0.5 * Gamma * mu) * p_H &
-          + Gamma * rho * e
+    end subroutine arti_eos_of_102
 
-        !   if ( p < 0 ) p = 0
+    !!! Solid EOS/Mie-Gruneisen
+    !!! Type = 103
+    elemental subroutine arti_eos_of_103(rho, p)
+        real(8), intent(in)  :: rho
+        real(8), intent(inout) :: p
+        real(8), parameter :: rho0 = 2500, K = 0.33e6, c2 = K / rho0
 
-    contains
-        elemental function hugoniot_curve(eta) result(re)
-            real(8), intent(in) :: eta
-            real(8) :: re
-            real(8), parameter :: Cs = 3630
-            real(8), parameter :: Ss = 1.8
-            real(8) :: para(3)
+        p = c2 * (rho - rho0)
 
-            para(1) = rho0 * Cs**2
-            para(2) = para(1) * (1 + 2 * (Ss - 1))
-            para(3) = para(1) * (2 * (Ss - 1) + 3 * (Ss - 1)**2)
-
-            if ( eta > 0 ) then
-                re = sum(para*[eta, eta**2, eta**3])
-            else
-                re = para(1) * eta
-            end if
-
-        end function hugoniot_curve
-    end subroutine mie_gruneisen_eos_of_type102
+    end subroutine arti_eos_of_103
 
 end module eos_m

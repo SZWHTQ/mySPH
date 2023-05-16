@@ -43,7 +43,7 @@ saveInterval = 1000
 maxTimeStep = 100000
 
 ## Time Step
-deltaT = 1e-7
+deltaT = 1e-6
 
 summationDensity    = false
 dummyParticle       = true
@@ -51,7 +51,7 @@ viscosity           = true # Must be true for Solid
 gravity             = true
 artificialViscosity = true
 # artificialHeat      = true
-# averageVelocity     = true
+averageVelocity     = true
 # normalizeDensity    = true
 
 

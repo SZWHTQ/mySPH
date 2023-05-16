@@ -1,0 +1,36 @@
+## Project Name
+name = "Two-dimensional dam break with elastic gate"
+nick = "db_gate"
+
+[Parameter]
+
+DIM = 2
+maxN = 20000
+kPair = 50
+SPH = 2
+NNPS = 2
+SLE = 0
+SKF = 1
+monitorParticle = 14171
+printInterval = 2000
+saveInterval  = 1000
+maxTimeStep   = 400000
+
+## Time Step
+deltaT = 1e-6
+
+summationDensity    = false
+# averageVelocity     = true
+dummyParticle       = true
+viscosity           = true
+gravity             = true
+artificialViscosity = true
+# normalizeDensity    = true
+
+
+[Parallel]
+
+# OMP_NUM_THREADS = 8  # Overwrite the environment variable OMP_NUM_THREADS
+
+[postProcess]
+writeDummyParticle2VTK = true

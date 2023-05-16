@@ -1,0 +1,37 @@
+## Project Name
+name = "Two-dimensional water impact"
+nick = "water_impact"
+
+[Parameter]
+
+DIM   = 2
+maxN  = 15000
+kPair = 40
+SPH  = 2
+NNPS = 2
+SLE  = 0
+SKF  = 1
+monitorParticle = 1
+printStatistics = true
+printInterval = 200
+saveInterval  = 200
+maxTimeStep   = 200000
+
+## Time Step
+deltaT = 5e-6
+
+summationDensity    = false
+# averageVelocity     = true
+dummyParticle       = true
+viscosity           = true
+gravity             = true
+artificialViscosity = true
+# normalizeDensity    = true
+
+
+[Parallel]
+
+# OMP_NUM_THREADS = 8  # Overwrite the environment variable OMP_NUM_THREADS
+
+[postProcess]
+writeDummyParticle2VTK = true

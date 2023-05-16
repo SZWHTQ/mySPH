@@ -26,6 +26,9 @@ contains
         end do
 
         do i = 1, ntotal
+            if ( p(i)%Boundary == 1 ) then
+                cycle
+            end if
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 

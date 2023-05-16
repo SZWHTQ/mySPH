@@ -11,6 +11,7 @@ project(
 )
 # set(CMAKE_GENERATOR "Ninja")
 add_definitions("-std=f2018 -cpp")
+# add_definitions("-cpp")
 
 set(srcs)
 add_subdirectory("src")

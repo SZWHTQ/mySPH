@@ -11,6 +11,7 @@ contains
         real(8) :: dx(Field%Dim), dr, r
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
+        real(8), save :: delta, eta, chi, factor_c
         logical, save :: first_entry = .true.
         real(8) :: alpha, ax, ay
 
@@ -30,8 +31,18 @@ contains
                 ax = -9.81 * sin(alpha)
                 ay = -9.81 * cos(alpha)
                 do i = 1, ntotal
+                    if ( P(i)%Type > 100 ) then
+                        cycle
+                    end if
                     dvdt(1, i) = ax
                     dvdt(2, i) = ay
+                end do
+            case ("db_gate")
+                do i = 1, ntotal
+                    if ( P(i)%Type > 100 ) then
+                        cycle
+                    end if
+                    dvdt(Field%Dim, i) = -9.81
                 end do
             case default
                 do i = 1, ntotal
@@ -59,14 +70,18 @@ contains
                 factor_s = 1e4
                 r0 = abs(P(2)%x(1) - P(1)%x(1))
             case ("undex_chamber")
-                factor_s = 1e5
-                r0 = abs(P(2)%x(1) - P(1)%x(1))! * 0.5
+                factor_s = 1e4
+                r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
             case ("dam_break")
                 factor_s = 10
                 r0 = abs(P(2)%x(1) - P(2)%x(2)) * 1
+                delta = 0.2
             case ("taylor_rod")
                 factor_s = 1e-2
                 r0 = abs(P(2)%x(1) - P(2)%x(2)) * 1
+            case ("db_gate")
+                ! factor_p = 1e4
+                delta = 0.001
             end select
 
             first_entry = .false.
@@ -95,20 +110,47 @@ contains
                     end if
                 end if
                 !!! Interaction between different phase particles
-                if ( (P(i)%Type > 0 .and. P(j)%Type > 0) .and. P(i)%Type /= P(j)%Type ) then
-                    !!! Calculate the distance 'r' between particle i and j
-                    dx(1) = P(i)%x(1) - P(j)%x(1)
-                    dr = dx(1)*dx(1)
-                    do d = 2, Field%Dim
-                        dx(d) = P(i)%x(d) - P(j)%x(d)
-                        dr = dr + dx(d)*dx(d)
-                    end do
-                    r = sqrt(dr)
-                    !!! Calculate the force between particle i and j
-                    pe = (P(i)%SmoothingLength + P(j)%SmoothingLength) / (2 * r)
-                    if ( pe >= 1 ) then
-                        dvdt(:, i) = dvdt(:, i) &
-                            + factor_p * (pe**n1 - pe**n2) * dx(:) / r**2
+                if ( (P(i)%Type /= P(j)%Type) .and. P(j)%Type > 0 ) then
+                    if ( (P(i)%Type < 100 .and. P(j)%Type < 100) ) then
+                        !!! Calculate the distance 'r' between particle i and j
+                        dx(1) = P(i)%x(1) - P(j)%x(1)
+                        dr = dx(1)*dx(1)
+                        do d = 2, Field%Dim
+                            dx(d) = P(i)%x(d) - P(j)%x(d)
+                            dr = dr + dx(d)*dx(d)
+                        end do
+                        r = sqrt(dr)
+                        !!! Calculate the force between particle i and j
+                        pe = (P(i)%SmoothingLength + P(j)%SmoothingLength) / (2 * r)
+                        if ( pe >= 1 ) then
+                            dvdt(:, i) = dvdt(:, i) &
+                                + factor_p * (pe**n1 - pe**n2) * dx(:) / r**2
+                        end if
+                    else if ( .not. (P(i)%Type > 100 .and. P(j)%Type > 100) ) then
+                        !!! Calculate the distance 'r' between particle i and j
+                        dx(1) = P(i)%x(1) - P(j)%x(1)
+                        dr = dx(1)*dx(1)
+                        do d = 2, Field%Dim
+                            dx(d) = P(i)%x(d) - P(j)%x(d)
+                            dr = dr + dx(d)*dx(d)
+                        end do
+                        r = sqrt(dr)
+                        eta = r / 0.75 / ((P(i)%SmoothingLength + P(j)%SmoothingLength)*0.5)
+                        chi = 1 - r / delta
+
+                        if ( eta <= 0 .or. eta >= 2 ) then
+                            factor_c = 0
+                        else if ( eta <= 2._8 / 3 ) then
+                            factor_c = 2._8 / 3
+                        else if ( eta <= 1 ) then
+                            factor_c = 2 * eta - 1.5 * eta*eta
+                        else if ( eta < 2 ) then
+                            factor_c = 0.5*(2-eta)**2
+                        end if
+
+                        dvdt(:, i) = dvdt(:, i)                    &
+                            + 0.01 * P(i)%SmoothingLength**2 * chi &
+                                * factor_c * dx(:) / r**2
                     end if
                 end if
             end do !! k

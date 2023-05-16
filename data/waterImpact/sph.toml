@@ -6,7 +6,7 @@ nick = "water_impact"
 
 DIM   = 2
 maxN  = 15000
-kPair = 40
+kPair = 100
 SPH  = 2
 NNPS = 2
 SLE  = 0

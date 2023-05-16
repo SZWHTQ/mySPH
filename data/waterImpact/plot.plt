@@ -19,9 +19,9 @@ set cbrange [0:1]
 
 do for [i=1:400:1] {
     set title sprintf('%.0fms', i)
-    plot sprintf('./output/Type_2_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 7 ps 0.5 palette, \
-         sprintf('./output/Type_-2_%d.dat', i) using 4:5 pt 1 ps 0.5 lt rgb "#ffaa00", \
-         sprintf('./output/Type_103_%d.dat', i) using 4:5 pt 7 ps 0.5 lt rgb "#23a9f2"
+    plot sprintf('./output/Type_2_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 7 ps 0.4 palette, \
+         sprintf('./output/Type_-2_%d.dat', i) using 4:5 pt 1 ps 0.4 lt rgb "#ffaa00", \
+         sprintf('./output/Type_103_%d.dat', i) using 4:5 pt 7 ps 0.4 lt rgb "#23a9f2"
     pause 0.02
 }
 

@@ -13,8 +13,8 @@ SLE  = 0
 SKF  = 1
 monitorParticle = 1
 printStatistics = true
-printInterval = 200
-saveInterval  = 200
+printInterval = 2000
+saveInterval  = 1000
 maxTimeStep   = 200000
 
 ## Time Step

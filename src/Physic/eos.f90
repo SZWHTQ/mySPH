@@ -20,17 +20,17 @@ contains
     !!! Artificial equation of state for the artificial compressibility
     !!! Artificial EOS, Form 1 (Monaghan, 1994) !! Modified for dam break
     !!! Type = 2
-    elemental subroutine arti_water_eos_1(rho, p, Density)
-        real(8), intent(inout)  :: rho
-        real(8), intent(inout) :: p
+    elemental subroutine arti_water_eos_1(rho, p, c, Density)
+        real(8), intent(inout) :: rho
+        real(8), intent(inout) :: p, c
         logical, intent(in), optional :: Density
-        real(8) :: c !! Artificial/Lagrangian sound speed
+        ! real(8) :: c !! Artificial/Lagrangian sound speed
         real(8), parameter :: gamma = 7
         real(8), parameter :: rho0 = 1000
         real(8) :: b
 
         ! c = 10
-        c = 50 !!for "Two-dimensional dam break"
+        ! c = 50 !!for "Two-dimensional dam break"
         b = c**2 * rho0 / gamma
         if ( present(Density) .and. Density ) then
             rho = (p / b + 1)**(1._8/gamma) * rho0

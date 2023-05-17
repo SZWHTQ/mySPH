@@ -573,7 +573,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -P(1)%Type
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
 
             !!! Dummy particle I on the Right side
@@ -589,7 +589,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -P(1)%Type
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
 
             !!! Dummy particle I on the Bottom
@@ -606,7 +606,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -P(1)%Type
                 P(k)%SmoothingLength = dx
-                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
 
@@ -625,7 +625,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -P(1)%Type
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
 
@@ -682,7 +682,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ndummy = ndummy + nx * ny
@@ -704,7 +704,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ndummy = ndummy + nx * ny
@@ -726,7 +726,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ndummy = ndummy + nx * ny
@@ -748,7 +748,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ndummy = ndummy + nx * ny
@@ -788,7 +788,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -2
                 P(k)%SmoothingLength = dx
-                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ndummy = ndummy + nx * ny
@@ -810,7 +810,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -2
                 P(k)%SmoothingLength = dx
-                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ndummy = ndummy + nx * ny
@@ -832,7 +832,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%Type            = -2
                 P(k)%SmoothingLength = dx
-                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure)
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ndummy = ndummy + nx * ny

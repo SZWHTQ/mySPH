@@ -18,7 +18,7 @@ set cbrange [0:2]
 # unset colorbox
 
 do for [i=1:147:1] {
-    set title sprintf('%.0fms', i)
+    set title sprintf('%.0fms', 5*i)
     plot sprintf('./output/Type_2_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 7 ps 0.4 palette, \
          sprintf('./output/Type_-2_%d.dat', i) using 4:5 pt 1 ps 0.4 lt rgb "#ffaa00", \
          sprintf('./output/Type_103_%d.dat', i) using 4:5 pt 7 ps 0.4 lt rgb "#23a9f2"

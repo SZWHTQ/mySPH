@@ -62,6 +62,8 @@ contains
             n1 = 6
             n2 = 4
 
+            delta = 0.001
+
             select case (Project%nick)
             case ("shock_tube")
                 factor_s = 10
@@ -82,6 +84,8 @@ contains
             case ("db_gate")
                 ! factor_p = 1e4
                 delta = 0.001
+            case ("water_impact")
+                delta = 0.002
             end select
 
             first_entry = .false.

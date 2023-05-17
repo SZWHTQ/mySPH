@@ -675,7 +675,7 @@ contains
                 P(k)%SoundSpeed      = 50
                 P(k)%Type            = 2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
 
@@ -741,7 +741,7 @@ contains
                 P(k)%SoundSpeed      = 50
                 P(k)%Type            = 2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ntotal = ntotal + nx * ny
@@ -804,10 +804,10 @@ contains
                 P(k)%Mass            = P(k)%Density * dx * dx
                 P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
                 P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 50
+                P(k)%SoundSpeed      = 10
                 P(k)%Type            = 2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
             end do
         end do
         ntotal = ntotal + nx * ny
@@ -821,7 +821,7 @@ contains
                 k = ntotal + (i-1) * ny + j
                 P(k)%x(:)            = domain%center        &
                                         - domain%length / 2 &
-                                        + [i-0.5, j+0.5] * dx
+                                        + [i-0.5, j-0.5] * dx
                 P(K)%v(:)            = 0
                 P(k)%Density         = 2500
                 P(k)%Mass            = P(k)%Density * dx * dx

@@ -81,7 +81,9 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     end if
     ! call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
 
-    ! call kernelGradientCorrection(ntotal, Particles)
+    if ( Config%kernel_correciton_w ) then
+        call kernelGradientCorrection(ntotal, Particles)
+    end if
 
     !!! Density approximation or change rate
     select case (Config%pa_sph)

@@ -6,7 +6,7 @@ nick = "water_impact"
 
 DIM   = 2
 maxN  = 15000
-kPair = 100
+kPair = 200
 SPH  = 2
 NNPS = 2
 SLE  = 0
@@ -27,6 +27,7 @@ viscosity           = true
 gravity             = true
 artificialViscosity = true
 # normalizeDensity    = true
+# kernelCorrection = true
 
 
 [Parallel]

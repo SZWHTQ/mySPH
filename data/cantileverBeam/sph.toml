@@ -36,14 +36,14 @@ monitorParticle = 500
 
 printStatistics = true
 
-printInterval = 5000
+printInterval = 10000
 
-saveInterval = 1000
+saveInterval = 2000
 
-maxTimeStep = 100000
+maxTimeStep = 200000
 
 ## Time Step
-deltaT = 1e-6
+deltaT = 2e-6
 
 summationDensity    = false
 dummyParticle       = true
@@ -53,6 +53,7 @@ artificialViscosity = true
 # artificialHeat      = true
 averageVelocity     = true
 # normalizeDensity    = true
+kernelCorrection    = true
 
 
 [Parallel]

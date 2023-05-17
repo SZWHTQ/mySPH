@@ -113,7 +113,7 @@ contains
             case (1)
                 call gas_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure, P(i)%SoundSpeed)
             case (2)
-                call arti_water_eos_1(P(i)%Density, P(i)%Pressure, P(i)%SoundSpeed)
+                call arti_water_eos_1(P(i)%Density, P(i)%Pressure)
             case (3)
                 call arti_water_eos_2(P(i)%Density, P(i)%Pressure, P(i)%SoundSpeed)
             case (4)

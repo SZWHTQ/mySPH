@@ -44,6 +44,7 @@ module ctrl_dict
         logical :: write_dp_vtk_w   !! Whether to write dummy particles to VTK files
         logical :: print_statistics_w  !! Control the Output of the SPH Particle Interaction State
         logical :: open_boundary_w
+        logical :: kernel_correciton_w
 
         !!! symmetry of the problem
         !!! nsym = 0 : no symmetry,

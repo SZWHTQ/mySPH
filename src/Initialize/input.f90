@@ -580,73 +580,131 @@ contains
     end subroutine undex_chamber
 
     subroutine undex(ntotal, P)
-        use geometry_m
+        use geometry_m, only: rectangle_t, circle_t, point_t
+        use eos_m, only: mie_gruneisen_eos_of_water
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        real(8) :: fluid_domian(4) = [0.0, 0.1, -0.045, 0.045]
-        real(8) :: confined = 1
-        type(rectangle_t) :: confined_domian
-        real(8) :: dx = 5e-4
-        real(8) :: tnt_center(2) = [0.05, 0.0]
-        real(8) :: tnt_radius = 0.001397433858052
-        type(circle_t) :: tnt_domain
-        integer :: Nx, Ny
+        type(rectangle_t) :: water
+        type(circle_t)    :: tnt, solid
+        real(8) :: dx, dtheta
+        integer :: nx, ny
 
-        integer i, j
+        integer i, j, k
 
         ntotal = 0
-        confined_domian = rectangle_t(tnt_center, [4, 4]*tnt_radius, 0)
-        tnt_domain = circle_t(tnt_center, tnt_radius, 0)
-        Nx = floor((fluid_domian(2) - fluid_domian(1)) / dx) + 1
-        Ny = floor((fluid_domian(4) - fluid_domian(3)) / dx) + 1
-        do i = 1, Nx
-            do j = 1, Ny
-                ntotal = ntotal + 1
-                P(ntotal)%x(:)  = [fluid_domian(1) + i * dx, &
-                                 fluid_domian(3) + j * dx]
-                if ( confined_domian%contain(point_t(P(ntotal)%x(:), 0)) ) then
-                    ntotal = ntotal - 1
+        water = rectangle_t([0.0, 0.0], [4.0, 2.0], 0)
+        tnt   = circle_t([-1.0, 0.0], 0.1, 0)
+        solid = circle_t([ 0.5, 0.0], 0.6, 0)
+
+        dx = 0.02
+        nx = int((water%length(1)) / dx) + 1
+        ny = int((water%length(2)) / dx) + 1
+        k = 0
+        do i = 1, nx
+            do j = 1, ny
+                k = k + ntotal + 1
+                P(k)%x(:) = water%center - water%length/2 + [i-0.5, j-0.5] * dx
+                if ( tnt%contain(point_t(P(k)%x(:), 0)) &
+                    .or. solid%contain(point_t(P(k)%x(:), 0)) ) then
+                    k = k - 1
                     cycle
                 end if
-                P(ntotal)%Density   = 1000
-                P(ntotal)%Pressure     = 0
-                P(ntotal)%InternalEnergy     = 2e7
-                P(ntotal)%Type = 6
-                P(ntotal)%Mass  = P(ntotal)%Density * dx*dx
-                P(ntotal)%SmoothingLength  = dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%InternalEnergy  = 1e8
+                P(k)%SoundSpeed      = 10
+                P(k)%Type            = 2
+                P(k)%SmoothingLength = dx
+                call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                P(k)%Pressure, P(k)%SoundSpeed)
             end do
         end do
+        ntotal = ntotal + nx * ny
 
-        Nx = floor(confined_domian%length(1) / (dx/confined))
-        Ny = floor(confined_domian%length(2) / (dx/confined))
-        do i = 1, Nx
-            do j = 1, Ny
-                ntotal = ntotal + 1
-                P(ntotal)%x(:) = confined_domian%center   &
-                             - confined_domian%length/2 &
-                             + [i-0.3, j-0.3] * (dx/confined)
-                ! if ( tnt_domain%contain(point_t(x(:,ntotal), 0)) ) then
-                    !!! TNT
-                    P(ntotal)%Density   = 1630
-                    P(ntotal)%Pressure     = 0
-                    P(ntotal)%InternalEnergy     = 4.29e6
-                    P(ntotal)%Type = 5
-                ! else
-                !     ! ntotal = ntotal - 1
-                !     !!! Water
-                !     P(ntotal)%Density   = 1000
-                !     P(ntotal)%Pressure     = 0
-                !     P(ntotal)%InternalEnergy     = 0
-                !     P(ntotal)%Type = 6
-                ! end if
-                P(ntotal)%Mass = P(ntotal)%Density * dx*dx / (confined**2)
-                P(ntotal)%SmoothingLength = dx / (confined**2)
+        dx = 0.005
+        dtheta = 6
+        nx = int((tnt%radius) / dx) + 1
+        ny = int(360 / dtheta)
+        k = 0
+        do i = 1, nx
+            do j = 0, ny - 1
+                k = k + ntotal + 1
+                P(k)%x(1) = tnt%center(1) + (i-0.5) * dx
+                P(k)%x(2) = tnt%center(2) + tnt%radius * sin(j * dtheta / 180 * pi)
             end do
         end do
-
-        ! write(*,*) ntotal
 
     end subroutine undex
+
+    ! subroutine undex(ntotal, P)
+    !     use geometry_m
+    !     integer, intent(inout) :: ntotal
+    !     type(Particle), intent(inout) :: P(:)
+    !     real(8) :: fluid_domian(4) = [0.0, 0.1, -0.045, 0.045]
+    !     real(8) :: confined = 1
+    !     type(rectangle_t) :: confined_domian
+    !     real(8) :: dx = 5e-4
+    !     real(8) :: tnt_center(2) = [0.05, 0.0]
+    !     real(8) :: tnt_radius = 0.001397433858052
+    !     type(circle_t) :: tnt_domain
+    !     integer :: Nx, Ny
+
+    !     integer i, j
+
+    !     ntotal = 0
+    !     confined_domian = rectangle_t(tnt_center, [4, 4]*tnt_radius, 0)
+    !     tnt_domain = circle_t(tnt_center, tnt_radius, 0)
+    !     Nx = floor((fluid_domian(2) - fluid_domian(1)) / dx) + 1
+    !     Ny = floor((fluid_domian(4) - fluid_domian(3)) / dx) + 1
+    !     do i = 1, Nx
+    !         do j = 1, Ny
+    !             ntotal = ntotal + 1
+    !             P(ntotal)%x(:)  = [fluid_domian(1) + i * dx, &
+    !                              fluid_domian(3) + j * dx]
+    !             if ( confined_domian%contain(point_t(P(ntotal)%x(:), 0)) ) then
+    !                 ntotal = ntotal - 1
+    !                 cycle
+    !             end if
+    !             P(ntotal)%Density   = 1000
+    !             P(ntotal)%Pressure     = 0
+    !             P(ntotal)%InternalEnergy     = 2e7
+    !             P(ntotal)%Type = 6
+    !             P(ntotal)%Mass  = P(ntotal)%Density * dx*dx
+    !             P(ntotal)%SmoothingLength  = dx
+    !         end do
+    !     end do
+
+    !     Nx = floor(confined_domian%length(1) / (dx/confined))
+    !     Ny = floor(confined_domian%length(2) / (dx/confined))
+    !     do i = 1, Nx
+    !         do j = 1, Ny
+    !             ntotal = ntotal + 1
+    !             P(ntotal)%x(:) = confined_domian%center   &
+    !                          - confined_domian%length/2 &
+    !                          + [i-0.3, j-0.3] * (dx/confined)
+    !             ! if ( tnt_domain%contain(point_t(x(:,ntotal), 0)) ) then
+    !                 !!! TNT
+    !                 P(ntotal)%Density   = 1630
+    !                 P(ntotal)%Pressure     = 0
+    !                 P(ntotal)%InternalEnergy     = 4.29e6
+    !                 P(ntotal)%Type = 5
+    !             ! else
+    !             !     ! ntotal = ntotal - 1
+    !             !     !!! Water
+    !             !     P(ntotal)%Density   = 1000
+    !             !     P(ntotal)%Pressure     = 0
+    !             !     P(ntotal)%InternalEnergy     = 0
+    !             !     P(ntotal)%Type = 6
+    !             ! end if
+    !             P(ntotal)%Mass = P(ntotal)%Density * dx*dx / (confined**2)
+    !             P(ntotal)%SmoothingLength = dx / (confined**2)
+    !         end do
+    !     end do
+
+    !     ! write(*,*) ntotal
+
+    ! end subroutine undex
 
     subroutine damBreak(ntotal, P)
         use eos_m, only: arti_water_eos_1
@@ -675,7 +733,7 @@ contains
                 P(k)%SoundSpeed      = 50
                 P(k)%Type            = 2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
             end do
         end do
 
@@ -741,7 +799,7 @@ contains
                 P(k)%SoundSpeed      = 50
                 P(k)%Type            = 2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
             end do
         end do
         ntotal = ntotal + nx * ny
@@ -804,10 +862,10 @@ contains
                 P(k)%Mass            = P(k)%Density * dx * dx
                 P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
                 P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 10
+                P(k)%SoundSpeed      = 1483.2
                 P(k)%Type            = 2
                 P(k)%SmoothingLength = dx
-                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, P(k)%SoundSpeed, Density=.true.)
+                call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
             end do
         end do
         ntotal = ntotal + nx * ny

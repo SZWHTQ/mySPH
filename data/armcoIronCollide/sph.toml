@@ -53,6 +53,7 @@ artificialViscosity = true
 # artificialHeat      = true
 # averageVelocity     = true
 # normalizeDensity    = true
+kernelCorrection    = true
 
 
 [Parallel]

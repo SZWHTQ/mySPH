@@ -68,9 +68,9 @@ contains
             case ("shock_tube")
                 factor_s = 10
                 r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
-            ! case ("tnt_bar")
-            !     ! factor_s = 1e4
-            !     ! r0 = abs(P(2)%x(1) - P(1)%x(1))
+            case ("tnt_bar")
+                factor_s = 1e4
+                r0 = abs(P(2)%x(1) - P(1)%x(1))
             case ("undex_chamber")
                 factor_s = 1e4
                 r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
@@ -114,7 +114,7 @@ contains
                     end if
                 end if
                 !!! Interaction between different phase particles
-                if ( (P(i)%Type /= P(j)%Type) .and. P(j)%Type > 0 ) then
+                if ( (P(i)%Type /= P(j)%Type) .and. (P(i)%Type > 0 .and. P(j)%Type > 0) ) then
                     if ( (P(i)%Type < 100 .and. P(j)%Type < 100) ) then
                         !!! Calculate the distance 'r' between particle i and j
                         dx(1) = P(i)%x(1) - P(j)%x(1)

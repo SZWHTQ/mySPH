@@ -12,7 +12,7 @@ NNPS = 2
 SLE = 0
 SKF = 1
 monitorParticle = 14171
-printInterval = 2000
+printInterval = 100
 saveInterval  = 1000
 maxTimeStep   = 400000
 

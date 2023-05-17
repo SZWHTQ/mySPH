@@ -278,17 +278,19 @@ contains
         write (*, FMT, advance='no') char(13), char(8), char(13)
     end subroutine
     
-    subroutine MCPE(A,B,X) !列主元消去法(Maximal Column Pivoting Elimination)
+    subroutine MCPE(A, B, X, flag) !列主元消去法(Maximal Column Pivoting Elimination)
         implicit none
-        real(8) :: A(:,:), B(:), X(:), buffer, temp
-        real(8), allocatable :: bakA(:,:), bakB(:)
+        real(8), intent(inout) :: A(:,:), B(:), X(:)
+        integer, intent(out), optional :: flag
+        real(8) :: buffer, temp
+        ! real(8), allocatable :: bakA(:,:), bakB(:)
         integer :: n, p
-        integer :: i, j, k, flag
+        integer :: i, j, k
 
         !初始化及数据备份
         n = size(A,2)
-        allocate(bakA(n,n), bakB(n))
-        bakA=A; bakB=B
+        ! allocate(bakA(n,n), bakB(n))
+        ! bakA=A; bakB=B
 
         !重排主元
         do i = 1, n
@@ -339,9 +341,9 @@ contains
             X(i)=B(i)/A(i,i)
         end do
 
-        !恢复并释放内存
-        A=bakA; B=bakB
-        deallocate(bakA, bakB)
+        ! !恢复并释放内存
+        ! A=bakA; B=bakB
+        ! deallocate(bakA, bakB)
 
     end subroutine MCPE
 

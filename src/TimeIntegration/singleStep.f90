@@ -8,6 +8,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     use sph,                only: Particle, allocateNeighborList, allocateParticleList
     use nnps_m,             only: search_particles, print_statistics
     use APS_M,              only: BGGS !! Asymmetric Particle Search
+    use KGC_m,              only: kernelGradientCorrection
     use density_m,          only: sum_density, con_density, con_density_riemann, &
                                   sum_density_dsph, norm_density
     use visc_m,             only: viscosity
@@ -76,17 +77,19 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     if ( Config%open_boundary_w) then
         call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
     else
-        call search_particles(Config%nnps, ntotal, Particles(1:N))
+        call search_particles(Config%nnps, N, Particles(1:N))
     end if
     ! call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
+
+    ! call kernelGradientCorrection(ntotal, Particles)
 
     !!! Density approximation or change rate
     select case (Config%pa_sph)
     case (1, 2)
         if ( Config%sum_density_w ) then
-            call sum_density(Particles)
+            call sum_density(ntotal, Particles(1:N))
         else
-            call con_density(ntotal, Particles, Delta%Density)
+            call con_density(ntotal, Particles(1:N), Delta%Density)
         end if
     case (3)
         call con_density_riemann(Particles(1:N), Delta%Density)

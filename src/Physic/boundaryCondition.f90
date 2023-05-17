@@ -337,7 +337,7 @@ contains
         type(Particle), intent(inout) :: buffer
         type(Particle), intent(in)    :: ghost
         type(Particle), intent(in)    :: Particles(:)
-        real(8), allocatable :: A(:,:), Solve(:, :), h(:)
+        real(8), allocatable :: A(:,:), B(:), Solve(:, :), h(:)
         real(8) :: sum, temp
         ! real(8) :: wi
         integer :: m
@@ -345,7 +345,7 @@ contains
         integer j, l, d
 
         m = Field%Dim + 1
-        allocate(A(m, m), Solve(m, Field%Dim+6), h(m), source=0._8)
+        allocate(A(m, m), B(Field%Dim), Solve(m, Field%Dim+6), h(m), source=0._8)
         h = 0
         sum = 0
         do j = 1, ghost%neighborNum
@@ -375,8 +375,9 @@ contains
 
         h = 0
         do j = 1, Field%Dim + 6
+            B = Solve(:,j)
             ! call DGESV(m,1, A,m, h, Solve(:, j),m, flag)
-            call MCPE(A, Solve(:,j)*1, Solve(:,j))
+            call MCPE(A, B, Solve(:,j))
         end do
 
         buffer%Mass               = Solve(1, 1) + dot_product((buffer%x - ghost%x), Solve(2:m, 1))

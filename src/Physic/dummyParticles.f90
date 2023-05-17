@@ -210,12 +210,13 @@ contains
     end subroutine shock_tube_dp_2
 
     subroutine tnt_bar_dp_1(ntotal, ndummy, P)
+        use eos_m, only: jwl_eos
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy
         type(Particle), intent(inout) :: P(:)
         real(8) :: space_x
-        real :: rho0 = 1630, E0 = 4.29e6
-        integer :: layer = 2
+        real :: rho0 = 1200, E0 = 3.5e6
+        integer :: layer = 3
         integer i
 
         space_x = 0.1 / ntotal
@@ -229,12 +230,15 @@ contains
             P(ntotal+ndummy)%Type           =  -P(1)%Type
             P(ntotal+ndummy)%InternalEnergy  =  E0
             P(ntotal+ndummy)%Density         =  rho0
-            P(ntotal+ndummy)%Pressure        =  0
+            P(ntotal+ndummy)%Pressure        = 0
+            ! call jwl_eos(P(ntotal+ndummy)%Density, P(ntotal+ndummy)%InternalEnergy, &
+            !              P(ntotal+ndummy)%Pressure)
         end do
 
     end subroutine tnt_bar_dp_1
 
     subroutine tnt_bar_dp_2(ntotal, ndummy, P)
+        use eos_m, only: jwl_eos
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy
         type(Particle), intent(inout) :: P(:)
@@ -259,7 +263,9 @@ contains
                 P(ntotal+ndummy)%x(1) = 2*P(ntotal+n_dp_1)%x(1) - P(i)%x(1)
                 P(ntotal+ndummy)%v(1) = -P(i)%v(1)
                 P(ntotal+ndummy)%Type= -P(i)%Type
-
+                P(ntotal+ndummy)%Pressure        = 0
+                ! call jwl_eos(P(ntotal+ndummy)%Density, P(ntotal+ndummy)%InternalEnergy, &
+                !              P(ntotal+ndummy)%Pressure)
             end if
         end do
 

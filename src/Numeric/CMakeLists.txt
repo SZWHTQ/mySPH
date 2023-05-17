@@ -11,6 +11,7 @@ list(
     "${dir}/divergence.f90"
     "${dir}/hsml.f90"
     "${dir}/kernel.f90"
+    "${dir}/kernelGradientCorrection.f90"
 )
 
 set(srcs "${srcs}" PARENT_SCOPE)

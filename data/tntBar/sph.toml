@@ -39,7 +39,7 @@ printStatistics = true
 
 ## Time Step
 deltaT = 1e-9
-printInterval = 1000
+printInterval = 100
 saveInterval  = 100
 maxTimeStep   = 15000
 

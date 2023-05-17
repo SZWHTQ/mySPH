@@ -68,9 +68,9 @@ contains
             case ("shock_tube")
                 factor_s = 10
                 r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
-            case ("tnt_bar")
-                factor_s = 1e4
-                r0 = abs(P(2)%x(1) - P(1)%x(1))
+            ! case ("tnt_bar")
+            !     ! factor_s = 1e4
+            !     ! r0 = abs(P(2)%x(1) - P(1)%x(1))
             case ("undex_chamber")
                 factor_s = 1e4
                 r0 = abs(P(2)%x(1) - P(1)%x(1)) * 0.5
@@ -153,7 +153,7 @@ contains
                         end if
 
                         dvdt(:, i) = dvdt(:, i)                    &
-                            + 0.01 * P(i)%SmoothingLength**2 * chi &
+                            + 0.01 * P(i)%SoundSpeed**2 * chi &
                                 * factor_c * dx(:) / r**2
                     end if
                 end if

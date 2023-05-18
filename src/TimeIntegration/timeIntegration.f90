@@ -28,9 +28,9 @@ contains
         ! use ctrl_dict, only: Config
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-    
+
         call leap_frog(ntotal, P)
-        
+
     end subroutine time_integration
 
     !!! Frog-Leap time integration
@@ -44,14 +44,14 @@ contains
         integer :: ndummy, nbuffer
         type(Update), allocatable :: Prev(:), Delta(:)
         real(8) :: aver_v(Field%Dim, Field%Maxn)
-        real(8) :: time = 0
+        real(8) :: time!, maxTime
         real(8) :: aver_courant = 0, max_courant = 0, cntemp
 #if SOLID
         real(8), dimension(Field%Dim, Field%Dim, Field%Maxn) :: Shear_prev, Shear, dSdt
         real(8) :: J2, SigmaY
 #endif
-
-        integer i, k
+        logical first
+        integer i!, k
 
         ndummy = 0
         nbuffer = 3500
@@ -74,10 +74,6 @@ contains
 #endif
         end do
 
-#if SOLID
-        SigmaY = 6e8
-#endif
-
 #ifdef _OPENMP
         call omp_set_num_threads(Config%nthreads)
 #endif
@@ -85,8 +81,31 @@ contains
         call pbout(0, Config%max_time_step, .true.)
         call pbflush()
 
-        do k = 1, Config%max_time_step
-            Config%i_time_step = k
+        ! do k = 1, Config%max_time_step
+        !     Config%i_time_step = k
+        time = 0
+        ! maxTime = Config%delta_t * Config%max_time_step
+        first = .true.
+        Config%i_time_step = 0
+        do while ( Config%i_time_step < Config%max_time_step )
+            Config%i_time_step = Config%i_time_step + 1
+
+            select case (Project%nick)
+            case("water_impact")
+                if ( time < 0.12 ) then
+                    Config%delta_t = 5e-5
+                    Config%print_interval = 200
+                    Config%save_interval = 100
+                else
+                    if ( first ) then
+                        Config%i_time_step = Config%i_time_step * 10
+                        first = .false.
+                    end if
+                    Config%delta_t = 5e-6
+                    Config%print_interval = 2000
+                    Config%save_interval = 1000
+                end if
+            end select
 
             if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then
                 call pbflush()
@@ -99,7 +118,7 @@ contains
                                        " max: ", max_courant
                 write(*,*) "Time step = ", to_string(Config%i_time_step)
                 write(*, "(A, G0, A)") " deltaT = ", Config%delta_t, "s"
-                write(*, "(A, G0, A)") " Time   = ", time + Config%delta_t, "s"
+                write(*, "(A, G0, A)") " Time   = ", time, "s"
             end if
 
             !!! If not first time step, then update thermal energy, density
@@ -117,12 +136,23 @@ contains
                     Prev(i)%Velocity = P(i)%v(:)
                     P(i)%v(:) = P(i)%v(:) + (Config%delta_t/2) * Delta(i)%Velocity(:)
 #if SOLID
-                    if ( abs(P(i)%Type) > 100 ) then
+                    select case (P(i)%Type)
+                    case (101)
+                        SigmaY = 6e8
                         Shear_prev(:, :, i) = Shear(:, :, i)
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2)*dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
-                    end if
+                    case (102, 103)
+                        Shear_prev(:, :, i) = Shear(:, :, i)
+                        Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2)*dSdt(:, :, i)
+                    case (104)
+                        SigmaY = 3e8
+                        Shear_prev(:, :, i) = Shear(:, :, i)
+                        Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2)*dSdt(:, :, i)
+                        J2 = sum( Shear(:, :, i)**2 )
+                        Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
+                    end select
 #endif
                 end do
                 !$OMP END PARALLEL DO
@@ -147,11 +177,20 @@ contains
                     P(i)%Displacement(:) = Config%delta_t * P(i)%v(:)
                     P(i)%x(:) = P(i)%x(:) + P(i)%Displacement(:)
 #if SOLID
-                    if ( abs(P(i)%Type) > 100 ) then
+                    select case (P(i)%Type)
+                    case (101)
+                        SigmaY = 6e8
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2) * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
-                    end if
+                    case (102, 103)
+                        Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2) * dSdt(:, :, i)
+                    case (104)
+                        SigmaY = 3e8
+                        Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2) * dSdt(:, :, i)
+                        J2 = sum( Shear(:, :, i)**2 )
+                        Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
+                    end select
 #endif
                 end do
                 !$OMP END PARALLEL DO
@@ -173,11 +212,20 @@ contains
                     P(i)%Displacement(:) = P(i)%Displacement(:) + Config%delta_t * P(i)%v(:)
                     P(i)%x(:) = P(i)%x(:) + Config%delta_t * P(i)%v(:)
 #if SOLID
-                    if ( abs(P(i)%Type) > 100 ) then
+                    select case (P(i)%Type)
+                    case (101)
+                        SigmaY = 6e8
                         Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
-                    end if
+                    case (102, 103)
+                        Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
+                    case (104)
+                        SigmaY = 6e8
+                        Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
+                        J2 = sum( Shear(:, :, i)**2 )
+                        Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
+                    end select
 #endif
                     cntemp = courant_num(P(i)%SmoothingLength, P(i)%divergenceVelocity, P(i)%SoundSpeed)
                     aver_courant = aver_courant + cntemp

@@ -278,7 +278,7 @@ contains
         write (*, FMT, advance='no') char(13), char(8), char(13)
     end subroutine
     
-    subroutine MCPE(A, B, X, flag) !列主元消去法(Maximal Column Pivoting Elimination)
+    pure subroutine MCPE(A, B, X, flag) !列主元消去法(Maximal Column Pivoting Elimination)
         implicit none
         real(8), intent(inout) :: A(:,:), B(:), X(:)
         integer, intent(out), optional :: flag
@@ -322,10 +322,10 @@ contains
                 B(j)=B(j)-B(i)*buffer
                 if ( temp==0 ) then
                     if ( B(j)==0 ) then
-                        flag=2
+                        if ( present(flag) ) flag = 1
                         return
                     else
-                        flag=3
+                        if ( present(flag) ) flag = 2
                         return
                     end if
                 end if

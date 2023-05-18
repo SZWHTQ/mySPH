@@ -17,6 +17,7 @@ contains
         allocate(A(Field%Dim, Field%Dim, ntotal), Temp(Field%Dim, Field%Dim), source=0._8)
         allocate(B(Field%Dim), source=0._8)
 
+        !$omp parallel do private(i, j, k, d, e, dx, Temp, B) reduction(+:A)
         do i = 1, ntotal
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
@@ -29,7 +30,9 @@ contains
                 end do
             end do
         end do
+        !$omp end parallel do
 
+        !$omp parallel do private(i, k, Temp, B)
         do i = 1, ntotal
             do k = 1, P(i)%neighborNum
                 Temp = A(:, :, i)
@@ -37,6 +40,7 @@ contains
                 call MCPE(Temp, B, P(i)%dwdx(:, k)) !! Temp will change with call MCPE
             end do
         end do
+        !$omp end parallel do
 
         deallocate(dx)
         deallocate(A, Temp)

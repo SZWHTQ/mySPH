@@ -139,6 +139,8 @@ contains
         call get_value(subtable, 'normalizeDensity',    Config%norm_dens_w,        .false.)
         call get_value(subtable, 'openBoundary',        Config%open_boundary_w,    .false.)
         call get_value(subtable, 'kernelCorrection',    Config%kernel_correciton_w,.false.)
+        call get_value(subtable, 'shifting',            Config%shifting_w,         .false.)
+        call get_value(subtable, 'artificialStress',    Config%arti_stress_w,      .false.)
 
         if ( Config%dummy_parti_w .or. Config%gravity_w ) then
             Config%ex_force_w = .true.

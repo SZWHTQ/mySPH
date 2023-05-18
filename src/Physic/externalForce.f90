@@ -141,6 +141,9 @@ contains
                         r = sqrt(dr)
                         eta = r / 0.75 / ((P(i)%SmoothingLength + P(j)%SmoothingLength)*0.5)
                         chi = 1 - r / delta
+                        if ( chi < 0 .or. chi > 1 ) then
+                            chi = 0
+                        end if
 
                         if ( eta <= 0 .or. eta >= 2 ) then
                             factor_c = 0
@@ -152,7 +155,7 @@ contains
                             factor_c = 0.5*(2-eta)**2
                         end if
 
-                        dvdt(:, i) = dvdt(:, i)                    &
+                        dvdt(:, i) = dvdt(:, i)               &
                             + 0.01 * P(i)%SoundSpeed**2 * chi &
                                 * factor_c * dx(:) / r**2
                     end if

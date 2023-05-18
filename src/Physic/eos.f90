@@ -29,7 +29,6 @@ contains
         real(8), parameter :: gamma = 7
         real(8), parameter :: rho0 = 1000
         real(8) :: b
-        logical :: flag
 
         ! c = 10
         ! c = 50 !!for "Two-dimensional dam break"
@@ -156,6 +155,25 @@ contains
         p = c**2 * (rho - rho0)
 
     end subroutine oil_eos
+    
+    !!! PETN gas EOS/Jones-Wilkins-Lee
+    !!! Type = 9
+    elemental subroutine jwl_eos_of_PETN(rho, e, p)
+        real(8), intent(in)  :: rho, e
+        real(8), intent(inout) :: p
+        real(8) :: ratio
+        real(8), parameter :: rho0 = 1770
+        real(8), parameter :: A  = 6.17e11, B  = 16.9e9
+        real(8), parameter :: R1 = 4.4,     R2 = 1.2
+        real(8), parameter :: omega = 0.25
+
+        ratio = rho/rho0
+
+        p = A*(1-omega*ratio/R1)*exp(-R1/ratio) &
+          + B*(1-omega*ratio/R2)*exp(-R2/ratio) &
+          + omega * rho * e     !! + (ω·θ·ρ0·e)
+
+    end subroutine jwl_eos_of_PETN
 
     !!! Solid EOS/Mie-Gruneisen For Armco Iron
     !!! Type = 101
@@ -196,26 +214,37 @@ contains
         end function hugoniot_curve
     end subroutine mie_gruneisen_eos_of_armcoIron
 
-    !!! Solid EOS/Mie-Gruneisen
+    !!! Solid EoS
     !!! Type = 102
     elemental subroutine arti_eos_of_102(rho, p)
         real(8), intent(in)  :: rho
         real(8), intent(inout) :: p
-        real(8), parameter :: rho0 = 1100, K = 2e7, c2 = K / rho0
+        real(8), parameter :: rho0 = 1100, K = 2e7, cc = K / rho0
 
-        p = c2 * (rho - rho0)
+        p = cc * (rho - rho0)
 
     end subroutine arti_eos_of_102
 
-    !!! Solid EOS/Mie-Gruneisen
+    !!! Solid EoS
     !!! Type = 103
     elemental subroutine arti_eos_of_103(rho, p)
         real(8), intent(in)  :: rho
         real(8), intent(inout) :: p
-        real(8), parameter :: rho0 = 2500, K = 0.33e6, c2 = K / rho0
+        real(8), parameter :: rho0 = 2500, K = 0.33e6, cc = K / rho0
 
-        p = c2 * (rho - rho0)
+        p = cc * (rho - rho0)
 
     end subroutine arti_eos_of_103
+
+    !!! Aluminium(Al5086) EoS
+    !!! Type = 104
+    elemental subroutine arti_eos_of_Aluminium(rho, p)
+    real(8), intent(in)  :: rho
+    real(8), intent(inout) :: p
+    real(8), parameter :: rho0 = 2700, K = 7.235e10, cc = K / rho0
+
+    p = cc * (rho - rho0)
+
+end subroutine arti_eos_of_Aluminium
 
 end module eos_m

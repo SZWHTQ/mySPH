@@ -4,17 +4,17 @@ nick = "UNDEX"
 
 [Parameter]
 DIM = 2
-maxN   = 40000
-kPair  = 15
+maxN   = 25000
+kPair  = 200
 NNPS   = 2
 SKF    = 1
 SLE    = 0
 deltaT = 1e-7
-printInterval = 10
-saveInterval  = 1
+printInterval = 100
+saveInterval  = 100
 maxTimeStep   = 14000
 monitorParticle = 1
-dummyParticle       = true
+dummyParticle       = false
 artificialViscosity = true
 # gravity = true
 

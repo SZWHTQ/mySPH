@@ -523,7 +523,7 @@ contains
         !         P(k)%Pressure        = 0
         !         P(k)%InternalEnergy  = 0
         !         P(k)%SoundSpeed      = 5000
-        !         P(k)%Type            = 8
+        !         P(k)%Type            = 101
         !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
         !     end do
         !     ntotal = k
@@ -539,7 +539,7 @@ contains
         !         P(k)%Pressure        = 0
         !         P(k)%InternalEnergy  = 0
         !         P(k)%SoundSpeed      = 5000
-        !         P(k)%Type            = 8
+        !         P(k)%Type            = 101
         !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
         !     end do
         !     ntotal = k
@@ -555,7 +555,7 @@ contains
         !         P(k)%Pressure        = 0
         !         P(k)%InternalEnergy  = 0
         !         P(k)%SoundSpeed      = 5000
-        !         P(k)%Type            = 8
+        !         P(k)%Type            = 101
         !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
         !     end do
         !     ntotal = k
@@ -571,7 +571,7 @@ contains
         !         P(k)%Pressure        = 0
         !         P(k)%InternalEnergy  = 0
         !         P(k)%SoundSpeed      = 5000
-        !         P(k)%Type            = 8
+        !         P(k)%Type            = 101
         !         P(k)%SmoothingLength = 1.5 * sum(delta)/2
         !     end do
         !     ntotal = k
@@ -581,31 +581,31 @@ contains
 
     subroutine undex(ntotal, P)
         use geometry_m, only: rectangle_t, circle_t, point_t
-        use eos_m, only: mie_gruneisen_eos_of_water
+        use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos_of_PETN
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        type(rectangle_t) :: water
-        type(circle_t)    :: tnt, solid
-        real(8) :: dx, dtheta
+        type(rectangle_t) :: water, petn, aluminium
+        real(8) :: dx
         integer :: nx, ny
 
         integer i, j, k
 
         ntotal = 0
-        water = rectangle_t([0.0, 0.0], [4.0, 2.0], 0)
-        tnt   = circle_t([-1.0, 0.0], 0.1, 0)
-        solid = circle_t([ 0.5, 0.0], 0.6, 0)
+        k = 0
 
-        dx = 0.02
+        water  = rectangle_t([0.0, 0.0], [0.089, 0.2286], 0)
+        petn    = rectangle_t([0.0, 0.0], [0.00126, 0.00126], 0)
+        aluminium  = rectangle_t([0.0, 0.0], [0.1016, 0.2286], 0)
+
+        !!! Water
+        dx = 0.001
         nx = int((water%length(1)) / dx) + 1
         ny = int((water%length(2)) / dx) + 1
-        k = 0
         do i = 1, nx
             do j = 1, ny
                 k = k + ntotal + 1
                 P(k)%x(:) = water%center - water%length/2 + [i-0.5, j-0.5] * dx
-                if ( tnt%contain(point_t(P(k)%x(:), 0)) &
-                    .or. solid%contain(point_t(P(k)%x(:), 0)) ) then
+                if ( petn%contain(point_t(P(k)%x(:), 0)) ) then
                     k = k - 1
                     cycle
                 end if
@@ -620,22 +620,170 @@ contains
                                                 P(k)%Pressure, P(k)%SoundSpeed)
             end do
         end do
-        ntotal = ntotal + nx * ny
 
-        dx = 0.005
-        dtheta = 6
-        nx = int((tnt%radius) / dx) + 1
-        ny = int(360 / dtheta)
-        k = 0
+        !!! PETN
+        dx = 0.0001
+        nx = int((petn%length(1)) / dx) + 1
+        ny = int((petn%length(2)) / dx) + 1
         do i = 1, nx
-            do j = 0, ny - 1
+            do j = 1, ny
                 k = k + ntotal + 1
-                P(k)%x(1) = tnt%center(1) + (i-0.5) * dx
-                P(k)%x(2) = tnt%center(2) + tnt%radius * sin(j * dtheta / 180 * pi)
+                P(k)%x(:) = petn%center - petn%length/2 + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1770
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%InternalEnergy  = 2.9876e7
+                P(k)%Type            = 9
+                P(k)%SmoothingLength = dx * 1.5
+                call jwl_eos_of_PETN(P(k)%Density, P(k)%InternalEnergy, &
+                                     P(k)%Pressure)
+            end do
+        end do
+
+        ntotal = k
+
+        !!! PETN
+        dx = 0.001
+        nx = int((aluminium%length(1)) / dx) + 1
+        ny = int((aluminium%length(2)) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = k + ntotal + 1
+                P(k)%x(:) = aluminium%center - aluminium%length/2 + [i-0.5, j-0.5] * dx
+                if ( water%contain(point_t(P(k)%x(:), 0)) ) then
+                    k = k - 1
+                    cycle
+                end if
+                P(K)%v(:)            = 0
+                P(k)%Density         = 2770
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = 104
+                P(k)%SmoothingLength = dx * 1.5
             end do
         end do
 
     end subroutine undex
+
+    ! subroutine undex(ntotal, P)
+    !     use geometry_m, only: rectangle_t, circle_t, point_t
+    !     use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos
+    !     integer, intent(inout) :: ntotal
+    !     type(Particle), intent(inout) :: P(:)
+    !     type(rectangle_t) :: water, sponge
+    !     type(circle_t)    :: tnt, solid
+    !     real(8) :: dx, dtheta
+    !     real(8) :: thick
+    !     integer :: nx, ny
+
+    !     integer i, j, k
+
+    !     ntotal = 0
+    !     k = 0
+
+    !     water  = rectangle_t([0.0, 0.0], [4.0, 2.0], 0)
+    !     tnt    = circle_t([-1.0, 0.0], 0.1, 0)
+    !     solid  = circle_t([0.5, 0.0], 0.6, 0)
+    !     sponge = rectangle_t([0.0, 0.0], [4.4, 2.4], 0)
+
+    !     !!! Water
+    !     dx = 0.02
+    !     nx = int((water%length(1)) / dx) + 1
+    !     ny = int((water%length(2)) / dx) + 1
+    !     do i = 1, nx
+    !         do j = 1, ny
+    !             k = k + ntotal + 1
+    !             P(k)%x(:) = water%center - water%length/2 + [i-0.5, j-0.5] * dx
+    !             if ( tnt%contain(point_t(P(k)%x(:), 0)) &
+    !                 .or. solid%contain(point_t(P(k)%x(:), 0)) ) then
+    !                 k = k - 1
+    !                 cycle
+    !             end if
+    !             P(K)%v(:)            = 0
+    !             P(k)%Density         = 1000
+    !             P(k)%Mass            = P(k)%Density * dx * dx
+    !             P(k)%InternalEnergy  = 1e8
+    !             P(k)%SoundSpeed      = 10
+    !             P(k)%Type            = 2
+    !             P(k)%SmoothingLength = dx
+    !             call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+    !                                             P(k)%Pressure, P(k)%SoundSpeed)
+    !         end do
+    !     end do
+
+    !     !!! TNT
+    !     dx = 0.005
+    !     dtheta = 6
+    !     nx = int((tnt%radius) / dx)
+    !     ny = int(360 / dtheta)
+    !     do i = 1, nx
+    !         do j = 0, ny - 1
+    !             k = k + 1
+    !             P(k)%x(1) = tnt%center(1) + (i-0.5) * dx * cos(j * dtheta / 180 * pi)
+    !             P(k)%x(2) = tnt%center(2) + (i-0.5) * dx * sin(j * dtheta / 180 * pi)
+    !             P(k)%v(:)            = 0
+    !             P(k)%Density          = 1630
+    !             P(k)%Mass             = P(k)%Density * dx**2
+    !             P(k)%InternalEnergy   = 4.29e6
+    !             P(k)%Type             = 5
+    !             P(k)%SmoothingLength  = 1.5 * dx
+    !             call jwl_eos(P(k)%Density, P(k)%InternalEnergy, P(k)%Pressure)
+    !         end do
+    !     end do
+
+    !     !!! Solid
+    !     dx = 0.005
+    !     dtheta = 2
+    !     thick = 0.1
+    !     nx = int((tnt%radius) / dx)
+    !     ny = int(360 / dtheta)
+    !     do i = 1, nx
+    !         do j = 0, ny - 1
+    !             k = k + 1
+    !             P(k)%x(1) = solid%center(1) + ((i-0.5) * dx + solid%radius - 0.1) &
+    !                         * cos(j * dtheta / 180 * pi)
+    !             P(k)%x(2) = solid%center(2) + ((i-0.5) * dx + solid%radius - 0.1) &
+    !                         * sin(j * dtheta / 180 * pi)
+    !             P(k)%v(:)            = 0
+    !             P(k)%Density         = 7850
+    !             P(k)%Mass            = P(k)%Density * dx**2
+    !             P(k)%Pressure        = 0
+    !             P(k)%InternalEnergy  = 0
+    !             P(k)%SoundSpeed      = 5000
+    !             P(k)%Type            = 101
+    !             P(k)%SmoothingLength = 1.5 * dx
+    !         end do
+    !     end do
+
+    !     !!! Sponge
+    !     dx = 0.02
+    !     nx = int((water%length(1)) / dx) + 1
+    !     ny = int((water%length(2)) / dx) + 1
+    !     do i = 1, nx
+    !         do j = 1, ny
+    !             k = k + 1
+    !             P(k)%x(:) = water%center - water%length/2 + [i-0.5, j-0.5] * dx
+    !             if ( water%contain(point_t(P(k)%x(:), 0)) ) then
+    !                 k = k - 1
+    !                 cycle
+    !             end if
+    !             P(K)%v(:)            = 0
+    !             P(k)%Density         = 1000
+    !             P(k)%Mass            = P(k)%Density * dx * dx
+    !             P(k)%InternalEnergy  = 1e8
+    !             P(k)%SoundSpeed      = 10
+    !             P(k)%Type            = 2
+    !             P(k)%SmoothingLength = dx
+    !             P(k)%Boundary        = 2
+    !             call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+    !                                             P(k)%Pressure, P(k)%SoundSpeed)
+    !         end do
+    !     end do
+
+    !     ntotal = k
+
+    ! end subroutine undex
 
     ! subroutine undex(ntotal, P)
     !     use geometry_m
@@ -862,7 +1010,7 @@ contains
                 P(k)%Mass            = P(k)%Density * dx * dx
                 P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
                 P(k)%InternalEnergy  = 0
-                P(k)%SoundSpeed      = 1483.2
+                P(k)%SoundSpeed      = 10
                 P(k)%Type            = 2
                 P(k)%SmoothingLength = dx
                 call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
@@ -887,7 +1035,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%SoundSpeed      = 11.489
                 P(k)%Type            = 103
-                P(k)%SmoothingLength = dx
+                P(k)%SmoothingLength = dx * 1.2
                 if ( j == 1 ) then
                     P(k)%Boundary = 1
                 end if

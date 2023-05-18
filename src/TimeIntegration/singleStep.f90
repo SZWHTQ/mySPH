@@ -9,15 +9,17 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     use nnps_m,             only: search_particles, print_statistics
     use APS_M,              only: BGGS !! Asymmetric Particle Search
     use KGC_m,              only: kernelGradientCorrection
+    use shifting_m,         only: shifting
     use density_m,          only: sum_density, con_density, con_density_riemann, &
                                   sum_density_dsph, norm_density
     use visc_m,             only: viscosity
     use divergence_m,       only: divergence
     use in_force_m,         only: internal_force
     use arti_visc_m,        only: arti_visc
+    use arti_heat_m,        only: arti_heat
+    use AT_m,               only: artificialStress
     use ex_force_m,         only: external_force
     use hsml_m,             only: h_upgrade
-    use arti_heat_m,        only: arti_heat
     use corr_velo_m,        only: aver_velo
     use dummy_part_m,       only: gen_dummy_particle
     use he_m,               only: detonation_wave
@@ -31,7 +33,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     type(Update),   intent(inout) :: Delta(:)
     real(8),        intent(inout) :: aver_v(:, :)
     integer :: N!, kpair
-    real(8), dimension(Field%Dim, Field%Maxn) :: indvdt, exdvdt, avdvdt
+    real(8), dimension(Field%Dim, Field%Maxn) :: indvdt, exdvdt, avdvdt, asdvdt
     real(8), dimension(Field%Maxn) :: indedt, avdedt, ahdedt
     ! real(8) :: area
     ! integer :: number, index(maxn)
@@ -48,6 +50,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         indedt(i)    = 0
         exdvdt(:, i) = 0
         avdvdt(:, i) = 0
+        asdvdt(:, i) = 0
         avdedt(i)    = 0
         ahdedt(i)    = 0
     end do
@@ -77,13 +80,13 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     if ( Config%open_boundary_w) then
         call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
     else
-        call search_particles(Config%nnps, N, Particles(1:N))
+        call search_particles(ntotal, Particles(1:N))
     end if
     ! call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
 
-    if ( Config%kernel_correciton_w ) then
-        call kernelGradientCorrection(ntotal, Particles)
-    end if
+    if ( Config%kernel_correciton_w ) call kernelGradientCorrection(ntotal, Particles)
+
+    if ( Config%shifting_w ) call shifting(ntotal, Particles)
 
     !!! Density approximation or change rate
     select case (Config%pa_sph)
@@ -123,6 +126,9 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     !!! Artificial heat
     if ( Config%arti_heat_w ) call arti_heat(ntotal, Particles, ahdedt)
+    
+    !!! Artificial stress
+    if ( Config%arti_stress_w ) call artificialStress(ntotal, Particles, asdvdt)
 
     !!! Calculating average velocity of each particle for avoiding penetration
     if ( Config%aver_velocity_w ) call aver_velo(ntotal, Particles, aver_v)
@@ -132,7 +138,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     !!! Convert velocity, force and energy to f and dfdt
     do i = 1, ntotal
-        Delta(i)%Velocity = indvdt(:, i) + avdvdt(:, i) + exdvdt(:, i)
+        Delta(i)%Velocity = indvdt(:, i) + avdvdt(:, i) + exdvdt(:, i) + asdvdt(:, i)
         Delta(i)%Energy   = indedt(i)    + avdedt(i)    + ahdedt(i)
     end do
 
@@ -165,10 +171,11 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
         write(*,*) ">> Information for Particle ", to_string(Config%monitor_particle), &
                     " Type ", to_string(Particles(Config%monitor_particle)%Type)
-        write(*,1001) "Internal a ", "Artificial a", "External a", "Total a"
+        write(*,1001) "Internal a ", "Artificial a", "External a", "AS a", "Total a"
         do i = 1, Field%Dim
             write(*,1002) indvdt(i, Config%monitor_particle), avdvdt(i, Config%monitor_particle), &
-                          exdvdt(i, Config%monitor_particle), Delta(Config%monitor_particle)%Velocity(i)
+                          exdvdt(i, Config%monitor_particle), asdvdt(i, Config%monitor_particle), &
+                          Delta(Config%monitor_particle)%Velocity(i)
         end do
     end if
 
@@ -190,7 +197,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         Particles(i)%dwdx         = 0
     end do
 
-    1001 format(A17, A14, 2(A15))
-    1002 format(1X, 4(2X, ES13.6))
+    1001 format(A17, A14, 3(A15))
+    1002 format(1X, 5(2X, ES13.6))
 
 end subroutine single_step

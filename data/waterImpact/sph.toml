@@ -5,13 +5,13 @@ nick = "water_impact"
 [Parameter]
 
 DIM   = 2
-maxN  = 15000
-kPair = 200
+maxN  = 20582
+kPair = 100
 SPH  = 2
 NNPS = 2
 SLE  = 0
 SKF  = 1
-monitorParticle = 1
+monitorParticle = 10898
 printStatistics = true
 printInterval = 2000
 saveInterval  = 1000

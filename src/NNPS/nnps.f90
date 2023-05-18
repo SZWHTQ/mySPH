@@ -12,8 +12,7 @@ module nnps_m
     public :: search_particles, print_statistics
 
 contains
-    subroutine search_particles(nnps, ntotal, Particles)
-        integer, intent(in) :: nnps
+    subroutine search_particles(ntotal, Particles)
         integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: Particles(:)
 
@@ -21,7 +20,7 @@ contains
         integer :: i, j, k
 #endif
 
-        select case (nnps)
+        select case (Config%nnps)
         case (1)
             call direct_search(Particles)
         case (2)

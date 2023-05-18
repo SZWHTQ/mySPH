@@ -28,7 +28,7 @@ contains
             ! call undex_chamber_dp_2(ntotal, ndummy, Particles)
         case("UNDEX")
             call undex_dp_1(ntotal, ndummy, Particles)
-            call undex_dp_2(ntotal, ndummy, Particles)
+            ! call undex_dp_2(ntotal, ndummy, Particles)
         case("dam_break")
             call damBreak(ntotal, ndummy, Particles)
         case("db_gate")
@@ -466,77 +466,77 @@ contains
 
     end subroutine undex_dp_1
 
-    subroutine undex_dp_2(ntotal, ndummy, P)
-        integer, intent(in) :: ntotal
-        integer, intent(inout) :: ndummy
-        type(Particle), intent(inout) :: P(:)
-        real(8), save :: boundary(2, 2)
-        integer :: scale_k, n_dp_1
-        logical, save :: first_entry = .true.
-        integer i
+    ! subroutine undex_dp_2(ntotal, ndummy, P)
+    !     integer, intent(in) :: ntotal
+    !     integer, intent(inout) :: ndummy
+    !     type(Particle), intent(inout) :: P(:)
+    !     real(8), save :: boundary(2, 2)
+    !     integer :: scale_k, n_dp_1
+    !     logical, save :: first_entry = .true.
+    !     integer i
 
-        scale_k = 0
-        boundary = reshape([-huge(0._8), -huge(0._8),  &
-                             huge(0._8),  huge(0._8)], &
-                             shape(boundary))
-        if ( first_entry ) then
-            do i = 1, ntotal+ndummy
-                if ( P(i)%x(1) > boundary(1,1) ) then
-                    boundary(1,1) = P(i)%x(1)
-                end if
-                if ( p(i)%x(2) > boundary(2,1) ) then
-                    boundary(2,1) = P(i)%x(2)
-                end if
-                if ( p(i)%x(1) < boundary(1,2) ) then
-                    boundary(1,2) = P(i)%x(1)
-                end if
-                if ( p(i)%x(2) < boundary(2,2) ) then
-                    boundary(2,2) = P(i)%x(2)
-                end if
-            end do
-            first_entry = .false.
-        end if
+    !     scale_k = 0
+    !     boundary = reshape([-huge(0._8), -huge(0._8),  &
+    !                          huge(0._8),  huge(0._8)], &
+    !                          shape(boundary))
+    !     if ( first_entry ) then
+    !         do i = 1, ntotal+ndummy
+    !             if ( P(i)%x(1) > boundary(1,1) ) then
+    !                 boundary(1,1) = P(i)%x(1)
+    !             end if
+    !             if ( p(i)%x(2) > boundary(2,1) ) then
+    !                 boundary(2,1) = P(i)%x(2)
+    !             end if
+    !             if ( p(i)%x(1) < boundary(1,2) ) then
+    !                 boundary(1,2) = P(i)%x(1)
+    !             end if
+    !             if ( p(i)%x(2) < boundary(2,2) ) then
+    !                 boundary(2,2) = P(i)%x(2)
+    !             end if
+    !         end do
+    !         first_entry = .false.
+    !     end if
 
-        n_dp_1 = ndummy
+    !     n_dp_1 = ndummy
 
-        select case (Config%skf)
-        case (1)
-            scale_k = 2
-        case (2, 3)
-            scale_k = 3
-        end select
+    !     select case (Config%skf)
+    !     case (1)
+    !         scale_k = 2
+    !     case (2, 3)
+    !         scale_k = 3
+    !     end select
 
-        do i = 1, ntotal
-            !!! Dummy particle II Upside
-            if ( boundary(2, 1) - P(i)%x(2) < P(i)%SmoothingLength * scale_k ) then
-                ndummy = ndummy + 1
-                P(ntotal+ndummy) = P(i)
-                P(ntotal+ndummy)%x(2) =  2*boundary(2, 1) - P(i)%x(2)
-            end if
+    !     do i = 1, ntotal
+    !         !!! Dummy particle II Upside
+    !         if ( boundary(2, 1) - P(i)%x(2) < P(i)%SmoothingLength * scale_k ) then
+    !             ndummy = ndummy + 1
+    !             P(ntotal+ndummy) = P(i)
+    !             P(ntotal+ndummy)%x(2) =  2*boundary(2, 1) - P(i)%x(2)
+    !         end if
 
-            !!! Dummy particle II Downside
-            if ( P(i)%x(2) - boundary(2, 2) < P(i)%SmoothingLength * scale_k ) then
-                ndummy = ndummy + 1
-                P(ntotal+ndummy) = P(i)
-                P(ntotal+ndummy)%x(2) =  2*boundary(2, 2) - P(i)%x(2)
-            end if
+    !         !!! Dummy particle II Downside
+    !         if ( P(i)%x(2) - boundary(2, 2) < P(i)%SmoothingLength * scale_k ) then
+    !             ndummy = ndummy + 1
+    !             P(ntotal+ndummy) = P(i)
+    !             P(ntotal+ndummy)%x(2) =  2*boundary(2, 2) - P(i)%x(2)
+    !         end if
 
-            !!! Monaghan type dummy particle on the Right side
-            if ( boundary(1, 1) - P(i)%x(1) < P(i)%SmoothingLength * scale_k ) then
-                ndummy = ndummy + 1
-                P(ntotal+ndummy) = P(i)
-                P(ntotal+ndummy)%x(1) =  2*boundary(1, 1) - P(i)%x(1)
-            end if
+    !         !!! Monaghan type dummy particle on the Right side
+    !         if ( boundary(1, 1) - P(i)%x(1) < P(i)%SmoothingLength * scale_k ) then
+    !             ndummy = ndummy + 1
+    !             P(ntotal+ndummy) = P(i)
+    !             P(ntotal+ndummy)%x(1) =  2*boundary(1, 1) - P(i)%x(1)
+    !         end if
 
-            ! !!! Monaghan type dummy particle on the Left side
-            ! if ( P(i)%x(1) - boundary(1, 2) < P(i)%SmoothingLength * scale_k ) then
-            !     ndummy = ndummy + 1
-            !     P(ntotal+ndummy) = P(i)
-            !     P(ntotal+ndummy)%x(1) =  2*boundary(1, 2) - P(i)%x(1)
-            ! end if
-        end do
+    !         ! !!! Monaghan type dummy particle on the Left side
+    !         ! if ( P(i)%x(1) - boundary(1, 2) < P(i)%SmoothingLength * scale_k ) then
+    !         !     ndummy = ndummy + 1
+    !         !     P(ntotal+ndummy) = P(i)
+    !         !     P(ntotal+ndummy)%x(1) =  2*boundary(1, 2) - P(i)%x(1)
+    !         ! end if
+    !     end do
 
-    end subroutine undex_dp_2
+    ! end subroutine undex_dp_2
 
     subroutine damBreak(ntotal, ndummy, P)
         use eos_m, only: arti_water_eos_1
@@ -760,7 +760,7 @@ contains
         ndummy = ndummy + nx * ny
 
     end subroutine damBreakwithElasticGate
-    
+
     subroutine waterImpact(ntotal, ndummy, P)
         use eos_m, only: arti_water_eos_1
         use geometry_m, only: rectangle_t
@@ -800,7 +800,7 @@ contains
         ndummy = ndummy + nx * ny
 
         !!! Bottom
-        domain = rectangle_t([0.292, -0.006], [0.608, 0.012], 0)
+        domain = rectangle_t([0.292, -0.006], [0.630, 0.012], 0)
         nx = int(domain%length(1) / dx) + 1
         ny = int(domain%length(2) / dx) + 1
         do i = 1, nx
@@ -843,6 +843,69 @@ contains
         end do
         ndummy = ndummy + nx * ny
 
+        !!! Lid
+        domain = rectangle_t([0.292, 0.600], [0.630, 0.012], 0)
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+        domain = rectangle_t([-0.029, 0.297], [0.012, 0.618], 0)
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
+
+        domain = rectangle_t([0.613, 0.297], [0.012, 0.618], 0)
+        nx = int(domain%length(1) / dx) + 1
+        ny = int(domain%length(2) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = ntotal + ndummy + (i-1) * ny + j
+                P(k)%x(:)            = domain%center        &
+                                        - domain%length / 2 &
+                                        + [i-0.5, j-0.5] * dx
+                P(K)%v(:)            = 0
+                P(k)%Density         = 1000
+                P(k)%Mass            = P(k)%Density * dx * dx
+                ! P(k)%Pressure        = P(k)%Density * 9.81 * max((h - P(k)%x(2)), 0._8)
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = -2
+                P(k)%SmoothingLength = dx
+                ! call arti_water_eos_1(P(k)%Density, P(k)%Pressure, Density=.true.)
+            end do
+        end do
+        ndummy = ndummy + nx * ny
 
     end subroutine waterImpact
 

@@ -24,37 +24,43 @@ contains
             dedt(i)    = 0
         end do
         
-
-        select case(Project%nick)
-        ! case ("dam_break")
-        !     alpha = 1
-        !     beta  = 1
-        !     psi   = 0.1
-        ! case("shear_cavity","shock_tube")
-        !     alpha = 1
-        !     beta  = 1
-        !     psi   = 0.1
-        case("tnt_bar", "tnt_cylinder", "undex_cylinder", "undex_chamber")
-            alpha = 1
-            beta  = 10
-            psi   = 0.1
-        case("taylor_rod")
-            alpha = 0.5
-            beta  = 0.5
-            psi   = 0.01
-        case("can_beam", "beam_oil", "water_impact")
-            alpha = 0.5
-            beta  = 0.5
-            psi   = 0.1
-        case default
-            alpha = 1
-            beta  = 1
-            psi   = 0.1
-        end select
-        
         !!! Calculate SPH sum for artificial viscous
         !$OMP PARALLEL DO PRIVATE(i, j, k, dx, dv, xv, hsml_ij, rho_ij, c_ij, phi_ij, PI_ij)
         do i = 1, ntotal
+            select case(Project%nick)
+            ! case ("dam_break")
+            !     alpha = 1
+            !     beta  = 1
+            !     psi   = 0.1
+            ! case("shear_cavity","shock_tube")
+            !     alpha = 1
+            !     beta  = 1
+            !     psi   = 0.1
+            case("tnt_bar", "tnt_cylinder", "undex_cylinder", "undex_chamber")
+                alpha = 1
+                beta  = 10
+                psi   = 0.1
+            case("taylor_rod")
+                alpha = 0.5
+                beta  = 0.5
+                psi   = 0.01
+            case("can_beam", "beam_oil")
+                alpha = 0.5
+                beta  = 0.5
+                psi   = 0.1
+            case("water_impact")
+                alpha = 1
+                beta  = 1
+                psi   = 0.1
+                if ( P(i)%Type > 100 ) then
+                    alpha = 2
+                    beta  = 2
+                end if
+            case default
+                alpha = 1
+                beta  = 1
+                psi   = 0.1
+            end select
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 

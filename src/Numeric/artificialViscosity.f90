@@ -48,6 +48,10 @@ contains
                 alpha = 0.5
                 beta  = 0.5
                 psi   = 0.1
+            case("UNDEX")
+                alpha = 1
+                beta  = 1
+                psi   = 0.1
             case("water_impact")
                 alpha = 1
                 beta  = 1

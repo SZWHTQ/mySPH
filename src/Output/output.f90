@@ -154,45 +154,45 @@ contains
 
         ntotal = size(Particles)
         open(11, file = fileDir)
-        1001 format(*(ES12.5, 3X))
+        1001 format(*(ES24.16e3, 3X))
 
         !!! Write Header and particle coordinates
         write (11, "(A)") "# vtk DataFile Version 3.0, "//now()
         write (11, "(A)") "paraview_vtk_output"
         write (11, "(A)") "ASCII"
         write (11, "(A)") "DATASET UNSTRUCTURED_GRID"
-        write (11, '(A, I0, A)') "POINTS ", ntotal, " double"
+        write (11, '(A, I0, A)') "POINTS ", ntotal, " float"
         do i = 1, ntotal
-            write(11, 1001) Particles(i)%x(:), (0.0, d = 1, 3-Field%Dim)
+            write(11, 1001) real(Particles(i)%x(:)), (0.0, d = 1, 3-Field%Dim)
         end do
         write (11, "(A, I0)") "POINT_DATA ", ntotal
 
         !!! Write particle mass
-        write (11, "(A)") "SCALARS Mass double 1"
+        write (11, "(A)") "SCALARS Mass float 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
-            write (11, 1001) Particles(i)%Mass
+            write (11, 1001) real(Particles(i)%Mass)
         end do
 
         !!! Write particle density
-        write (11, "(A)") "SCALARS Density double 1"
+        write (11, "(A)") "SCALARS Density float 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
-            write (11, 1001) Particles(i)%Density
+            write (11, 1001) real(Particles(i)%Density)
         end do
 
         !!! Write particle pressure
-        write (11, "(A)") "SCALARS Pressure double 1"
+        write (11, "(A)") "SCALARS Pressure float 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
-            write (11, 1001) Particles(i)%Pressure
+            write (11, 1001) real(Particles(i)%Pressure)
         end do
 
         !!! Write particle Internal Energy
-        write (11, "(A)") "SCALARS InternalEnergy double 1"
+        write (11, "(A)") "SCALARS InternalEnergy float 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
-            write (11, 1001) Particles(i)%InternalEnergy
+            write (11, 1001) real(Particles(i)%InternalEnergy)
         end do
 
         !!! Write particle type
@@ -210,35 +210,35 @@ contains
         end do
 
         !!! Write particle smoothed length
-        write (11, "(A)") "SCALARS SmoothingLength double 1"
+        write (11, "(A)") "SCALARS SmoothingLength float 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
-            write (11, 1001) Particles(i)%SmoothingLength
+            write (11, 1001) real(Particles(i)%SmoothingLength)
         end do
 
         !!! Write particle distance divergence
-        write (11, "(A)") "SCALARS DivDistance double 1"
+        write (11, "(A)") "SCALARS DivDistance float 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
         do i = 1, ntotal
-            write (11, 1001) Particles(i)%divergencePosition
+            write (11, 1001) real(Particles(i)%divergencePosition)
         end do
 
         !!! Write particle velocity
-        write (11, "(A)") "VECTORS U double"
+        write (11, "(A)") "VECTORS U float"
         do i = 1, ntotal
-            write(11, 1001) Particles(i)%v(:), (0.0, d = 1, 3-Field%Dim)
+            write(11, 1001) real(Particles(i)%v(:)), (0.0, d = 1, 3-Field%Dim)
         end do
 
         !!! Write particle velocity
-        write (11, "(A)") "VECTORS Displacement double"
+        write (11, "(A)") "VECTORS Displacement float"
         do i = 1, ntotal
-            write(11, 1001) Particles(i)%Displacement(:), (0.0, d = 1, 3-Field%Dim)
+            write(11, 1001) real(Particles(i)%Displacement(:)), (0.0, d = 1, 3-Field%Dim)
         end do
 
         !!! Write particle stress
-        write (11, "(A)") "TENSORS Stress double"
+        write (11, "(A)") "TENSORS Stress float"
         do i = 1, ntotal
-            write(11, 1001) ((Particles(i)%Stress(d,dd),d=1,Field%Dim),dd=1,Field%Dim), &
+            write(11, 1001) ((real(Particles(i)%Stress(d,dd)),d=1,Field%Dim),dd=1,Field%Dim), &
                             (0.0, d = 1, 9-Field%Dim**2)
         end do
 

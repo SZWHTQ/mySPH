@@ -18,6 +18,7 @@ monitorParticle = 1
 summationDensity    = false
 dummyParticle       = false
 artificialViscosity = true
+externalForce       = true
 # gravity = true
 # normalizeDensity = false
 openBoundary        = false

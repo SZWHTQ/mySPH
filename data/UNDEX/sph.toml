@@ -4,22 +4,25 @@ nick = "UNDEX"
 
 [Parameter]
 DIM = 2
-maxN   = 25000
-kPair  = 200
+maxN   = 150000
+kPair  = 100
 NNPS   = 2
 SKF    = 1
 SLE    = 0
-deltaT = 1e-7
-printInterval = 100
-saveInterval  = 100
-maxTimeStep   = 14000
+deltaT = 2.5e-9
+printInterval = 1000
+saveInterval  = 200
+maxTimeStep   = 40000
 monitorParticle = 1
+
+summationDensity    = false
 dummyParticle       = false
 artificialViscosity = true
+externalForce       = true
 # gravity = true
 
 [Parallel]
-OMP_NUM_THREADS = 1
+# OMP_NUM_THREADS = 1
 
 [postProcess]
 writeDummyParticle2VTK = true

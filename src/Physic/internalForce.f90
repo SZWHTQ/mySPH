@@ -125,6 +125,9 @@ contains
             case (7)
                 call water_polynomial_eos(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             case (8)
+                call oil_eos(P(i)%Density, P(i)%Pressure)
+            case (9)
+                call jwl_eos_of_PETN(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             end select !! abs(P(i)%Type)
 
 #if SOLID
@@ -150,6 +153,8 @@ contains
                 call arti_eos_of_102(P(i)%Density, P(i)%Pressure)
             case (103)
                 call arti_eos_of_103(P(i)%Density, P(i)%Pressure)
+            case (104)
+                call arti_eos_of_Aluminium(P(i)%Density, P(i)%Pressure)
             end select
 
             !!! Deviatoric Stress Rate Tensor

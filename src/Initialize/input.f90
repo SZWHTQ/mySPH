@@ -584,7 +584,8 @@ contains
         use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos_of_PETN
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        type(rectangle_t) :: water, petn, aluminium
+        type(rectangle_t) :: water, aluminium
+        type(circle_t) :: petn
         real(8) :: dx
         integer :: nx, ny
 
@@ -592,13 +593,13 @@ contains
 
         ntotal = 0
         k = 0
+        dx = (42._8 + 1._8/3) * 1e-5
 
-        water  = rectangle_t([0.0, 0.0], [0.089, 0.2286], 0)
-        petn    = rectangle_t([0.0, 0.0], [0.00126, 0.00126], 0)
-        aluminium  = rectangle_t([0.0, 0.0], [0.1016, 0.2286], 0)
+        water  = rectangle_t([0.0, 0.0], [0.0889, 0.2286], 0)
+        ! petn   = rectangle_t([0.0, 0.0], [0.01165, 0.01165], 0)
+        petn   = circle_t([0.0, 0.0], 0.007228, 0)
 
         !!! Water
-        dx = 0.001
         nx = int((water%length(1)) / dx) + 1
         ny = int((water%length(2)) / dx) + 1
         do i = 1, nx
@@ -606,44 +607,49 @@ contains
                 k = k + ntotal + 1
                 P(k)%x(:) = water%center - water%length/2 + [i-0.5, j-0.5] * dx
                 if ( petn%contain(point_t(P(k)%x(:), 0)) ) then
-                    k = k - 1
+                    P(K)%v(:)            = 0
+                    P(k)%Density         = 1770
+                    P(k)%Mass            = P(k)%Density * dx * dx
+                    P(k)%InternalEnergy  = 4.62273154e6
+                    P(k)%Type            = 9
+                    P(k)%SmoothingLength = dx * 1.5
+                    call jwl_eos_of_PETN(P(k)%Density, P(k)%InternalEnergy, &
+                                         P(k)%Pressure)
                     cycle
                 end if
                 P(K)%v(:)            = 0
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * dx * dx
-                P(k)%InternalEnergy  = 1e8
-                P(k)%SoundSpeed      = 10
-                P(k)%Type            = 2
+                P(k)%InternalEnergy  = 0
+                P(k)%Type            = 6
                 P(k)%SmoothingLength = dx
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
                                                 P(k)%Pressure, P(k)%SoundSpeed)
             end do
         end do
 
-        !!! PETN
-        dx = 0.0001
-        nx = int((petn%length(1)) / dx) + 1
-        ny = int((petn%length(2)) / dx) + 1
-        do i = 1, nx
-            do j = 1, ny
-                k = k + ntotal + 1
-                P(k)%x(:) = petn%center - petn%length/2 + [i-0.5, j-0.5] * dx
-                P(K)%v(:)            = 0
-                P(k)%Density         = 1770
-                P(k)%Mass            = P(k)%Density * dx * dx
-                P(k)%InternalEnergy  = 2.9876e7
-                P(k)%Type            = 9
-                P(k)%SmoothingLength = dx * 1.5
-                call jwl_eos_of_PETN(P(k)%Density, P(k)%InternalEnergy, &
-                                     P(k)%Pressure)
-            end do
-        end do
+        ! !!! PETN
+        ! petn = rectangle_t([0.0, 0.0], [0.01165, 0.01165], 0)
+        ! dx = 0.0003
+        ! nx = int((petn%length(1)) / dx) + 1
+        ! ny = int((petn%length(2)) / dx) + 1
+        ! do i = 1, nx
+        !     do j = 1, ny
+        !         k = k + ntotal + 1
+        !         P(k)%x(:) = petn%center - petn%length/2 + [i-0.5, j-0.5] * dx
+        !         P(K)%v(:)            = 0
+        !         P(k)%Density         = 1770
+        !         P(k)%Mass            = P(k)%Density * dx * dx
+        !         P(k)%InternalEnergy  = 2.9876e7
+        !         P(k)%Type            = 9
+        !         P(k)%SmoothingLength = dx * 1.5
+        !         call jwl_eos_of_PETN(P(k)%Density, P(k)%InternalEnergy, &
+        !                              P(k)%Pressure)
+        !     end do
+        ! end do
 
-        ntotal = k
-
-        !!! PETN
-        dx = 0.001
+        !!! Left Aluminium
+        aluminium  = rectangle_t([real(8) :: -0.047625-dx, 0.0], [0.00635, 0.2286], 0)
         nx = int((aluminium%length(1)) / dx) + 1
         ny = int((aluminium%length(2)) / dx) + 1
         do i = 1, nx
@@ -659,10 +665,88 @@ contains
                 P(k)%Mass            = P(k)%Density * dx * dx
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5177
                 P(k)%Type            = 104
-                P(k)%SmoothingLength = dx * 1.5
+                P(k)%SmoothingLength = dx * 2
+                if ( j == 1 .or. j == ny ) then
+                    P(k)%Boundary = 1
+                end if
             end do
         end do
+
+        !!! Right Aluminium
+        aluminium  = rectangle_t([real(8) :: 0.047625+dx, 0.0], [0.00635, 0.2286], 0)
+        nx = int((aluminium%length(1)) / dx) + 1
+        ny = int((aluminium%length(2)) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = k + ntotal + 1
+                P(k)%x(:) = aluminium%center - aluminium%length/2 + [i-0.5, j-0.5] * dx
+                if ( water%contain(point_t(P(k)%x(:), 0)) ) then
+                    k = k - 1
+                    cycle
+                end if
+                P(K)%v(:)            = 0
+                P(k)%Density         = 2770
+                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = 5177
+                P(k)%Type            = 104
+                P(k)%SmoothingLength = dx * 2
+                if ( j == 1 .or. j == ny ) then
+                    P(k)%Boundary = 1
+                end if
+            end do
+        end do
+
+        ! !!! Top Aluminium
+        ! aluminium  = rectangle_t([0._8, 0.11755_8+dx], [0.1025, 0.0065], 0)
+        ! dx = 0.0005
+        ! nx = int((aluminium%length(1)) / dx) + 1
+        ! ny = int((aluminium%length(2)) / dx) + 1
+        ! do i = 1, nx
+        !     do j = 1, ny
+        !         k = k + ntotal + 1
+        !         P(k)%x(:) = aluminium%center - aluminium%length/2 + [i-0.5, j-0.5] * dx
+        !         if ( water%contain(point_t(P(k)%x(:), 0)) ) then
+        !             k = k - 1
+        !             cycle
+        !         end if
+        !         P(K)%v(:)            = 0
+        !         P(k)%Density         = 2770
+        !         P(k)%Mass            = P(k)%Density * dx * dx
+        !         P(k)%Pressure        = 0
+        !         P(k)%InternalEnergy  = 0
+        !         P(k)%Type            = 104
+        !         P(k)%SmoothingLength = dx * 2
+        !     end do
+        ! end do
+
+        ! !!! Bottom Aluminium
+        ! aluminium  = rectangle_t([0._8, 0.11755_8-dx], [0.1025, 0.0065], 0)
+        ! dx = 0.0005
+        ! nx = int((aluminium%length(1)) / dx) + 1
+        ! ny = int((aluminium%length(2)) / dx) + 1
+        ! do i = 1, nx
+        !     do j = 1, ny
+        !         k = k + ntotal + 1
+        !         P(k)%x(:) = aluminium%center - aluminium%length/2 + [i-0.5, j-0.5] * dx
+        !         if ( water%contain(point_t(P(k)%x(:), 0)) ) then
+        !             k = k - 1
+        !             cycle
+        !         end if
+        !         P(K)%v(:)            = 0
+        !         P(k)%Density         = 2770
+        !         P(k)%Mass            = P(k)%Density * dx * dx
+        !         P(k)%Pressure        = 0
+        !         P(k)%InternalEnergy  = 0
+        !         P(k)%Type            = 104
+        !         P(k)%SmoothingLength = dx * 2
+        !     end do
+        ! end do
+
+        ntotal = k
 
     end subroutine undex
 

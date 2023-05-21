@@ -24,6 +24,11 @@ module sph
         generic, public :: read(formatted)  => read
     end type Particle
 
+    type, public ::  Update
+        real(8), allocatable :: Velocity(:)
+        real(8) :: Density, Energy
+    end type Update
+
     public :: allocateParticleList, allocateNeighborList
 
 contains

@@ -4,14 +4,16 @@ module output_m
     implicit none
 
 contains
-    subroutine output(index, Particles)
+    subroutine output(index, Particles, Delta)
         use sph
         ! use ctrl_dict,    only: write_vtk_w
         use tools_m,      only: to_string
         integer, intent(in) :: index
-        type(Particle), intent(inout) :: Particles(:)
+        type(Particle), intent(in) :: Particles(:)
+        type(Update), intent(in), optional :: Delta(:)
         integer :: ntotal
         type(Particle), allocatable :: this(:)
+        type(Update), allocatable :: thisDelta(:)
         integer :: particleType, num(-200:200)
         integer, allocatable :: type_list(:), type_indice(:, :)
         character(:), allocatable :: fileName
@@ -20,6 +22,14 @@ contains
 
         ntotal = size(Particles)
         call allocateParticleList(this, ntotal, Field%Dim, size(Particles(1)%neighborList))
+        if ( present(Delta) ) then
+            allocate(thisDelta(ntotal))
+            do i = 1, ntotal
+                thisDelta(i)%Density = 0
+                thisDelta(i)%Energy  = 0
+                allocate(thisDelta(i)%Velocity(Field%Dim), source=0._8)
+            end do
+        end if
         num = 0
         allocate(type_indice(-200:200, ntotal), source=0)
         do i = 1, ntotal
@@ -52,9 +62,17 @@ contains
             do j = 1, num(particleType)
                 k = type_indice(particleType, j)
                 this(j) = Particles(k)
+                if ( present(Delta) ) then
+                    thisDelta(j) = Delta(k)
+                end if
             end do
-            call write_file(Project%out_path//"/"//fileName//'.dat', this(1:num(particleType)), type_indice(particleType, :))
-            call write_vtk(Project%vtk_path//"/"//fileName//'.vtk',  this(1:num(particleType)))
+            if ( present(Delta) ) then
+                call write_file(Project%out_path//"/"//fileName//'.dat', this(1:num(particleType)), type_indice(particleType, :))
+                call write_vtk(Project%vtk_path//"/"//fileName//'.vtk',  this(1:num(particleType)), thisDelta(1:num(particleType)))
+            else
+                call write_file(Project%out_path//"/"//fileName//'.dat', this(1:num(particleType)), type_indice(particleType, :))
+                call write_vtk(Project%vtk_path//"/"//fileName//'.vtk',  this(1:num(particleType)))
+            end if
             deallocate(fileName)
         end do
 
@@ -143,12 +161,13 @@ contains
 
     end subroutine write_file
 
-    subroutine write_vtk(fileDir, Particles)
+    subroutine write_vtk(fileDir, Particles, Delta)
         ! use ctrl_dict, only: write_dp_vtk_w
         use tools_m,   only: now
         use sph
         character(len=*), intent(in) :: fileDir
         type(Particle), intent(in) :: Particles(:)
+        type(Update), intent(in), optional :: Delta(:)
         integer :: ntotal
         integer i, d, dd
 
@@ -209,6 +228,13 @@ contains
             write (11, "(I0)") Particles(i)%State
         end do
 
+        !!! Write particle state
+        write (11, "(A)") "SCALARS Boundary int 1"
+        write (11, "(A)") "LOOKUP_TABLE DEFAULT"
+        do i = 1, ntotal
+            write (11, "(I0)") Particles(i)%Boundary
+        end do
+
         !!! Write particle smoothed length
         write (11, "(A)") "SCALARS SmoothingLength float 1"
         write (11, "(A)") "LOOKUP_TABLE DEFAULT"
@@ -241,6 +267,14 @@ contains
             write(11, 1001) ((real(Particles(i)%Stress(d,dd)),d=1,Field%Dim),dd=1,Field%Dim), &
                             (0.0, d = 1, 9-Field%Dim**2)
         end do
+
+        if ( present(Delta) ) then
+            !!! Write particle acceleration
+            write (11, "(A)") "VECTORS Acceleration float"
+            do i = 1, ntotal
+                write(11, 1001) real(Delta(i)%Velocity(:)), (0.0, d = 1, 3-Field%Dim)
+            end do
+        end if
 
     end subroutine write_vtk
 

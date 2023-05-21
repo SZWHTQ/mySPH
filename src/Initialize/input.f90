@@ -64,6 +64,8 @@ contains
             call undex_chamber(ntotal, Particles)
         case("UNDEX")
             call undex(ntotal, Particles)
+        case("undex_plate")
+            call undex_plate(ntotal, Particles)
         case("dam_break")
             call damBreak(ntotal, Particles)
         case("db_gate")
@@ -342,7 +344,7 @@ contains
                 P(k)%x(:)            = origin + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%InternalEnergy  = 1e8
+                P(k)%InternalEnergy  = 0
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
@@ -361,7 +363,7 @@ contains
                 P(k)%x(:)            = [tnt_origin(1), origin(2)] + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%InternalEnergy  = 1e8
+                P(k)%InternalEnergy  = 0
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
@@ -381,7 +383,7 @@ contains
                                         + [0._8, length(2)] + [i-1, 1-j] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%InternalEnergy  = 1e8
+                P(k)%InternalEnergy  = 0
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
@@ -401,7 +403,7 @@ contains
                                         + [i-1, j-1] * delta
                 P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
-                P(k)%InternalEnergy  = 1e8
+                P(k)%InternalEnergy  = 0
                 P(k)%Type            = 6
                 P(k)%SmoothingLength = 1.5 * sum(delta)/2
                 call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
@@ -937,6 +939,82 @@ contains
     !     ! write(*,*) ntotal
 
     ! end subroutine undex
+
+    subroutine undex_plate(ntotal, P)
+        use geometry_m, only: rectangle_t, circle_t, point_t
+        use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
+        type(rectangle_t) :: water, solid, sponge
+        type(circle_t) :: tnt
+        real(8) :: dx
+        integer :: nx, ny
+
+        integer i, j, k
+
+        dx = 0.0025
+        ntotal = 0
+        k = 0
+
+        water  = rectangle_t([ 0.00, 0.00], [4.00, 2.00], 0)
+        tnt    = circle_t(   [ 0.275, 0.00], 0.05, 0)
+        solid  = rectangle_t([-0.3, 0.00], [0.02, 0.40], 0)
+        sponge = rectangle_t([ 0.00, 0.00], [4.10, 2.10], 0)
+
+        !!! Water
+        nx = int((sponge%length(1)) / dx) + 1
+        ny = int((sponge%length(2)) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = k + ntotal + 1
+                P(k)%x(:) = sponge%center - sponge%length/2 + [i-0.5, j-0.5] * dx
+                if ( tnt%contain(point_t(P(k)%x, 0)) ) then
+                    P(k)%v(:)             = 0
+                    P(k)%Density          = 1630
+                    P(k)%Mass             = P(k)%Density * dx * dx
+                    P(k)%InternalEnergy   = 4.29e6
+                    P(k)%Type             = 5
+                    P(k)%SmoothingLength  = 1.5 * dx
+                    call jwl_eos(P(k)%Density, P(k)%InternalEnergy, P(k)%Pressure)
+                else if ( solid%contain(point_t(P(k)%x, 0)) ) then
+                    P(k)%v(:)            = 0
+                    P(k)%Density         = 7850
+                    P(k)%Mass            = P(k)%Density * dx * dx
+                    P(k)%Pressure        = 0
+                    P(k)%InternalEnergy  = 0
+                    P(k)%SoundSpeed      = 5000
+                    P(k)%Type            = 101
+                    P(k)%SmoothingLength = dx * 2
+                    if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx) ) then
+                        P(K)%Boundary = 1
+                    end if
+
+                else if ( water%contain(point_t(P(k)%x, 0)) ) then
+                    P(K)%v(:)            = 0
+                    P(k)%Density         = 1000
+                    P(k)%Mass            = P(k)%Density * dx * dx
+                    P(k)%InternalEnergy  = 0
+                    P(k)%Type            = 6
+                    P(k)%SmoothingLength = dx
+                    call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                    P(k)%Pressure, P(k)%SoundSpeed)
+                else
+                    P(K)%v(:)            = 0
+                    P(k)%Density         = 1000
+                    P(k)%Mass            = P(k)%Density * dx * dx
+                    P(k)%InternalEnergy  = 0
+                    P(k)%Type            = 6
+                    P(k)%SmoothingLength = dx
+                    P(k)%Boundary        = 2
+                    call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                    P(k)%Pressure, P(k)%SoundSpeed)
+                end if
+            end do
+        end do
+
+        ntotal = k
+
+    end subroutine undex_plate
 
     subroutine damBreak(ntotal, P)
         use eos_m, only: arti_water_eos_1

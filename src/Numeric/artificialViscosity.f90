@@ -60,6 +60,14 @@ contains
                     alpha = 2
                     beta  = 2
                 end if
+            case("undex_plate")
+                alpha = 1
+                beta  = 1
+                psi   = 0.1
+                if ( P(i)%Type > 100 ) then
+                    alpha = 0.5
+                    beta  = 0.5
+                end if
             case default
                 alpha = 1
                 beta  = 1

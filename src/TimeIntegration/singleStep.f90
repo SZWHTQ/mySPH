@@ -3,9 +3,8 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     use, intrinsic :: iso_fortran_env, only: err => error_unit
     !$ use omp_lib
     use ctrl_dict,          only: Config, Field
-    use time_integration_m, only: Update
     use tools_m,            only: to_string
-    use sph,                only: Particle, allocateNeighborList, allocateParticleList
+    use SPH,                only: Particle, Update, allocateNeighborList, allocateParticleList
     use nnps_m,             only: search_particles, print_statistics
     use APS_M,              only: BGGS !! Asymmetric Particle Search
     use KGC_m,              only: kernelGradientCorrection

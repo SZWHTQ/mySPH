@@ -4,11 +4,6 @@ module time_integration_m
     use tools_m
     implicit none
 
-    type Update
-        real(8), allocatable :: Velocity(:)
-        real(8) :: Density, Energy
-    end type Update
-
     interface single_step
         subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear, dSdt)
             import Particle, Update
@@ -243,7 +238,12 @@ contains
             time = time + Config%delta_t
 
             if (mod(Config%i_time_step, Config%save_interval) == 0) then
-                call output((Config%i_time_step/Config%save_interval), P(1:ntotal+ndummy+nbuffer))
+                select case(Project%nick)
+                case ("undex_plate")
+                    call output((Config%i_time_step/Config%save_interval), P(1:ntotal+ndummy+nbuffer), Delta)
+                case default
+                    call output((Config%i_time_step/Config%save_interval), P(1:ntotal+ndummy+nbuffer))
+                end select
             end if
 
             if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then

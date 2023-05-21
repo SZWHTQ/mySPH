@@ -324,7 +324,7 @@ contains
             do i = 1, ndummy
                 k = ntotal + i
                 P(k)%v(:)            = 0
-                P(k)%Density         = 1000 * 1.1
+                P(k)%Density         = 1000
                 P(k)%Mass            = P(k)%Density * delta(1)*delta(2)
                 P(k)%InternalEnergy  = 1e8
                 P(k)%Type            = -P(1)%Type

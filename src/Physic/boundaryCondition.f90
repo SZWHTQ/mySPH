@@ -1,7 +1,6 @@
 module bc_m
     use ctrl_dict, only: Project, Config, Field
-    use sph,       only: Particle, allocateParticleList
-    use time_integration_m, only: Update
+    use sph,       only: Particle, Update, allocateParticleList
     use geometry_m
     implicit none
     private
@@ -51,6 +50,8 @@ contains
 
         integer i
 
+        exponential = 50
+
         select case(Project%nick)
         case("undex_chamber")
             boundary = 0.45
@@ -73,6 +74,27 @@ contains
                     factor = ( 1. - 1./(100**((0.9)**(exponential*lambda))) )
                     D(i)%Density = factor * D(i)%Density
                 end if
+            end do
+        case("undex_plate")
+            thickness = 0.05
+            exponential = 50
+            do i = 1, ntotal
+                if ( P(i)%Boundary == 2 ) then
+                    if ( P(i)%x(1) < -2  ) then
+                        distance = -2 - P(i)%x(1)
+                    else if ( P(i)%x(1) > 2 ) then
+                        distance = P(i)%x(1) - 2
+                    else if ( P(i)%x(2) < -1 ) then
+                        distance = -1 - P(i)%x(2)
+                    else if ( P(i)%x(2) > 1 ) then
+                        distance = P(i)%x(2) - 1
+                    else
+                        cycle
+                    end if
+                end if
+                lambda = distance / thickness
+                factor = ( 1. - 1./(100**((0.9)**(exponential*lambda))) )
+                D(i)%Density = factor * D(i)%Density
             end do
         end select
 

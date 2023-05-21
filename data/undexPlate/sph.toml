@@ -1,22 +1,22 @@
 ## Project Name
-name = "Underwater Explosion in a Confined Chamber"
-nick = "undex_chamber"
+name = "Underwater Explosion impact plate"
+nick = "undex_plate"
 
 [Parameter]
 DIM = 2
-maxN   = 140000
+maxN   = 1400000
 kPair  = 100
 NNPS   = 2
 SKF    = 1
-SLE    = 2
-deltaT = 5e-7
-printInterval = 100
-saveInterval  = 50
-maxTimeStep   = 5000
-monitorParticle = 1
+SLE    = 0
+deltaT = 1e-7
+printInterval = 2
+saveInterval  = 25
+maxTimeStep   = 7500
+monitorParticle = 32596
 
 summationDensity    = false
-dummyParticle       = true
+dummyParticle       = false
 artificialViscosity = true
 externalForce       = true
 # gravity = true

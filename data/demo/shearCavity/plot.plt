@@ -16,8 +16,8 @@ set cbtics 1e-4 font ",12"
 
 do for [i=0:500:1] {
     set title sprintf('%.3fs', i*5e-3)
-    # plot sprintf('./output/Type_3_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 6 lt palette#, \
-        #  sprintf('./output/Type_-3_%d.dat', i) using 4:5 pt 2 lt rgb "orange"
-    plot sprintf('./output/Type_3_%d.dat', i) using 4:5:($6/5):($7/5) with vectors head lt rgb 'black'
+    plot sprintf('./output/Type_3_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 6 lt palette#, \
+         sprintf('./output/Type_-3_%d.dat', i) using 4:5 pt 2 lt rgb "orange"
+    # plot sprintf('./output/Type_3_%d.dat', i) using 4:5:($6/5):($7/5) with vectors head lt rgb 'black'
     pause 0.05
 }

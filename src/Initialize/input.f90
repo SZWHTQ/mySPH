@@ -956,10 +956,10 @@ contains
         ntotal = 0
         k = 0
 
-        water  = rectangle_t([ 0.00, 0.00], [4.00, 2.00], 0)
+        water  = rectangle_t([ 0.00, 0.00], [1.00, 0.50], 0)
         tnt    = circle_t(   [ 0.275, 0.00], 0.05, 0)
         solid  = rectangle_t([-0.3, 0.00], [0.02, 0.40], 0)
-        sponge = rectangle_t([ 0.00, 0.00], [4.10, 2.10], 0)
+        sponge = rectangle_t([ 0.00, 0.00], [1.10, 0.60], 0)
 
         !!! Water
         nx = int((sponge%length(1)) / dx) + 1
@@ -984,11 +984,17 @@ contains
                     P(k)%InternalEnergy  = 0
                     P(k)%SoundSpeed      = 5000
                     P(k)%Type            = 101
-                    P(k)%SmoothingLength = dx * 2
+                    P(k)%SmoothingLength = dx! * 2
                     if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx) ) then
+                        k = k - 1
+                        cycle
+                    else if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx*2) ) then
                         P(K)%Boundary = 1
                     end if
-
+                    if ( abs(P(k)%x(1) - solid%center(1)) > (solid%length(1)/2-dx) ) then
+                        k = k - 1
+                        cycle
+                    end if
                 else if ( water%contain(point_t(P(k)%x, 0)) ) then
                     P(K)%v(:)            = 0
                     P(k)%Density         = 1000

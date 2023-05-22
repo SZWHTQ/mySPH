@@ -55,12 +55,13 @@ contains
         ndummy = 0
         mp     = 40
         xl     = 1.0e-3
-        dx     = xl / mp
-        if ( Config%i_time_step <= 10000 ) then
-            drive = 0
-        else
-            drive = 1.0e-3
-        end if
+        ! dx     = xl / mp
+        ! if ( Config%i_time_step <= 10000 ) then
+        !     drive = 0
+        ! else
+        !     drive = 1.0e-3
+        ! end if
+        drive = 1.0e-3
         layer = 1
 
         do l = 1, layer

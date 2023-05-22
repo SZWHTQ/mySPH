@@ -40,10 +40,10 @@ printInterval = 500
 
 saveInterval = 100
 
-maxTimeStep = 50000
+maxTimeStep = 5000
 
 ## Time Step
-deltaT = 5.0e-5
+deltaT = 5.0e-6
 
 summationDensity    = true
 averageVelocity     = true
@@ -56,7 +56,8 @@ gravity             = false
 artificialViscosity = false
 artificialHeat      = false
 normalizeDensity    = true
-kernelCorrection    = true
+# kernelCorrection    = true
+# shifting = true
 
 
 [Parallel]

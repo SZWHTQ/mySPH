@@ -86,6 +86,8 @@ contains
                 delta = 0.001
             case ("water_impact")
                 delta = 0.002
+            case ("undex_plate")
+                delta = 0.0025
             end select
 
             first_entry = .false.

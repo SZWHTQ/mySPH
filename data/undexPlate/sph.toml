@@ -4,24 +4,22 @@ nick = "undex_plate"
 
 [Parameter]
 DIM = 2
-maxN   = 1400000
+maxN   = 140000
 kPair  = 100
 NNPS   = 2
 SKF    = 1
 SLE    = 0
-deltaT = 1e-7
-printInterval = 2
-saveInterval  = 25
-maxTimeStep   = 7500
+deltaT = 1e-8
+printInterval = 1000
+saveInterval  = 250
+maxTimeStep   = 25000
 monitorParticle = 32596
 
 summationDensity    = false
 dummyParticle       = false
+viscosity           = true
 artificialViscosity = true
 externalForce       = true
-# gravity = true
-# normalizeDensity = false
-openBoundary        = false
 
 [Parallel]
 OMP_NUM_THREADS = 6

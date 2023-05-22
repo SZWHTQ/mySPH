@@ -9,7 +9,7 @@ contains
         type(Particle), intent(inout) :: P(:)
         real(8), allocatable :: concentration(:), shift(:)
         real(8) :: diffusion
-        real(8), parameter :: lambda = 0.5
+        real(8), parameter :: lambda = 0.1
 
         integer i, j, k
 

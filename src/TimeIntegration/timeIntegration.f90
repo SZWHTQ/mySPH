@@ -30,7 +30,7 @@ contains
 
     !!! Frog-Leap time integration
     subroutine leap_frog(ntotal, P)
-        use ctrl_dict, only: Config, Field
+        use ctrl_dict!, only: Config, Field
         use cour_num_m
         use output_m
         implicit none

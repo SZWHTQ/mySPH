@@ -79,7 +79,7 @@ contains
             thickness = 0.05
             exponential = 50
             do i = 1, ntotal
-                if ( P(i)%Boundary == 0.5 ) then
+                if ( P(i)%Boundary == 2 ) then
                     if ( P(i)%x(1) < -0.5  ) then
                         distance = -0.5 - P(i)%x(1)
                     else if ( P(i)%x(1) > 0.5 ) then

@@ -101,7 +101,7 @@ contains
                     Config%save_interval = 1000
                 end if
             case("undex_plate")
-                if ( time < 3e-5 ) then
+                if ( time < 8.25e-5 ) then
                 ! if ( time < 1.3e-5 ) then
                 ! if ( time < 0.6e-5 ) then
                     Config%delta_t = 1e-7

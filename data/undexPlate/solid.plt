@@ -4,8 +4,8 @@ set terminal qt size 900, 900 position 200, 50 font "Times New Roman, 24"
 
 # set output "solid.gif"
 
-array center = [-0.1,0]
-startTime = 27
+array center = [-0.15,0]
+startTime = 28
 # array center = [-0.05,0]
 # startTime = 12
 # array center = [-0.025,0]
@@ -30,7 +30,7 @@ do for [i=startTime:200:1] {
     plot sprintf('./output/Type_104_%d.dat', i) using 4:5:16 pt 7 ps 1 palette, \
          sprintf('./output/Type_6_%d.dat', i)   using 4:5    pt 7 ps 1 lt rgb "#7bbeff", \
          sprintf('./output/Type_5_%d.dat', i)   using 4:5    pt 7 ps 1 lt rgb "#bf2029"
-    pause 0.1
+    pause 1
 }
 
 pause -1

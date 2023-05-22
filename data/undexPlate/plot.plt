@@ -17,7 +17,7 @@ set cblabel "Pressure/MPa" offset 1, 0
 
 do for [i=1:100:1] {
     set title sprintf('%.1fμs', i*2.5)
-    plot sprintf('./output/Type_101_%d.dat', i) using 4:5            pt 7 ps 0.45 lt rgb "#ffaa00", \
+    plot sprintf('./output/Type_104_%d.dat', i) using 4:5            pt 7 ps 0.45 lt rgb "#ffaa00", \
          sprintf('./output/Type_5_%d.dat', i)   using 4:5:($10*1e-6) pt 7 ps 0.45 palette, \
          sprintf('./output/Type_6_%d.dat', i)   using 4:5:($10*1e-6) pt 7 ps 0.45 palette
     # pause 0.05

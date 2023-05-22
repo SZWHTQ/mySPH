@@ -12,7 +12,7 @@ SLE    = 0
 deltaT = 1e-8
 printInterval = 1000
 saveInterval  = 250
-maxTimeStep   = 25000
+maxTimeStep   = 50000
 monitorParticle = 32596
 
 summationDensity    = false

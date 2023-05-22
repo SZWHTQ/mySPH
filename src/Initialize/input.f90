@@ -957,8 +957,8 @@ contains
         k = 0
 
         water  = rectangle_t([ 0.00, 0.00], [1.00, 0.50], 0)
-        tnt    = circle_t(   [ 0.275, 0.00], 0.05, 0)
-        solid  = rectangle_t([-0.3, 0.00], [0.02, 0.40], 0)
+        tnt    = circle_t(   [ 0.06875, 0.00], 0.0125, 0)
+        solid  = rectangle_t([-0.075, 0.00], [0.02, 0.40], 0)
         sponge = rectangle_t([ 0.00, 0.00], [1.10, 0.60], 0)
 
         !!! Water
@@ -978,12 +978,12 @@ contains
                     call jwl_eos(P(k)%Density, P(k)%InternalEnergy, P(k)%Pressure)
                 else if ( solid%contain(point_t(P(k)%x, 0)) ) then
                     P(k)%v(:)            = 0
-                    P(k)%Density         = 7850
+                    P(k)%Density         = 2700
                     P(k)%Mass            = P(k)%Density * dx * dx
                     P(k)%Pressure        = 0
                     P(k)%InternalEnergy  = 0
-                    P(k)%SoundSpeed      = 5000
-                    P(k)%Type            = 101
+                    P(k)%SoundSpeed      = 5177
+                    P(k)%Type            = 104
                     P(k)%SmoothingLength = dx! * 2
                     if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx) ) then
                         k = k - 1

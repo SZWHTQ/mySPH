@@ -101,9 +101,9 @@ contains
                     Config%save_interval = 1000
                 end if
             case("undex_plate")
-                ! if ( time < 2e-4 ) then
-                ! if ( time < 2e-4 ) then
-                if ( time < 4e-5 ) then
+                if ( time < 2e-4 ) then
+                ! if ( time < 8e-5 ) then
+                ! if ( time < 4e-5 ) then
                     Config%delta_t = 1e-7
                     Config%print_interval = 100
                     Config%save_interval = 25
@@ -232,7 +232,7 @@ contains
                     case (102, 103)
                         Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
                     case (104)
-                        SigmaY = 6e8
+                        SigmaY = 3e8
                         Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))

@@ -24,6 +24,8 @@ contains
                 eta(i) = 4.27e6
             case (103)
                 eta(i) = 0.5e6
+            case (104)
+                eta(i) = 2.77443609023e10
             case default
                 eta(i) = 0
             end select

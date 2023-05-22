@@ -947,19 +947,21 @@ contains
         type(Particle), intent(inout) :: P(:)
         type(rectangle_t) :: water, solid, sponge
         type(circle_t) :: tnt
-        real(8) :: dx
+        real(8) :: dx, distance, radius
         integer :: nx, ny
 
         integer i, j, k
 
         dx = 0.0025
+        distance = 0.6
+        radius = 0.05
         ntotal = 0
         k = 0
 
-        water  = rectangle_t([ 0.00, 0.00], [1.00, 0.50], 0)
-        tnt    = circle_t(   [ 0.06875, 0.00], 0.0125, 0)
-        solid  = rectangle_t([-0.075, 0.00], [0.02, 0.40], 0)
-        sponge = rectangle_t([ 0.00, 0.00], [1.10, 0.60], 0)
+        water  = rectangle_t([real(8) :: 0.00, 0.00], [1.00, 0.50], 0)
+        tnt    = circle_t(   [real(8) :: distance/2-radius/2, 0.00], radius, 0)
+        solid  = rectangle_t([real(8) ::-distance/2, 0.00], [0.02, 0.40], 0)
+        sponge = rectangle_t([real(8) :: 0.00, 0.00], [1.10, 0.60], 0)
 
         !!! Water
         nx = int((sponge%length(1)) / dx) + 1

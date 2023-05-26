@@ -49,13 +49,13 @@ summationDensity    = false
 dummyParticle       = true
 viscosity           = true # Must be true for Solid
 # gravity             = true
-artificialViscosity = false
+artificialViscosity = true
 # artificialHeat      = true
 # averageVelocity     = true
 # normalizeDensity    = true
-# kernelCorrection    = true
+kernelCorrection    = true
 # shifting            = true
-artificialStress    = true
+# artificialStress    = true
 
 
 [Parallel]

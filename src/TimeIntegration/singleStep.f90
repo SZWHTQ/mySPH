@@ -170,12 +170,21 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
         write(*,*) ">> Information for Particle ", to_string(Config%monitor_particle), &
                     " Type ", to_string(Particles(Config%monitor_particle)%Type)
-        write(*,1001) "Internal a ", "Artificial a", "External a", "AS a", "Total a"
-        do i = 1, Field%Dim
-            write(*,1002) indvdt(i, Config%monitor_particle), avdvdt(i, Config%monitor_particle), &
-                          exdvdt(i, Config%monitor_particle), asdvdt(i, Config%monitor_particle), &
-                          Delta(Config%monitor_particle)%Velocity(i)
-        end do
+        if ( Particles(Config%monitor_particle)%Type > 100 ) then
+            write(*,1001) "Internal a ", "Artificial a", "External a", "AS a", "Total a"
+            do i = 1, Field%Dim
+                write(*,1002) indvdt(i, Config%monitor_particle), avdvdt(i, Config%monitor_particle), &
+                              exdvdt(i, Config%monitor_particle), asdvdt(i, Config%monitor_particle), &
+                              Delta(Config%monitor_particle)%Velocity(i)
+            end do
+        else
+            write(*,1001) "Internal a ", "Artificial a", "External a", "Total a"
+            do i = 1, Field%Dim
+                write(*,1002) indvdt(i, Config%monitor_particle), avdvdt(i, Config%monitor_particle), &
+                              exdvdt(i, Config%monitor_particle), &
+                              Delta(Config%monitor_particle)%Velocity(i)
+            end do
+        end if
     end if
 
     ! kpair = maxval(Particles%neighborNum)
@@ -196,7 +205,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
         Particles(i)%dwdx         = 0
     end do
 
-    1001 format(A17, A14, 3(A15))
-    1002 format(1X, 5(2X, ES13.6))
+    1001 format(A17, A14, *(A15))
+    1002 format(1X, *(2X, ES13.6))
 
 end subroutine single_step

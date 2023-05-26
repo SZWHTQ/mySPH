@@ -16,6 +16,9 @@ contains
         allocate(concentration(Field%Dim), shift(Field%Dim), source=0._8)
         
         do i = 1, ntotal
+            if ( p(i)%Boundary == 1 ) then
+                cycle
+            end if
             concentration = 0
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)

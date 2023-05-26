@@ -40,7 +40,7 @@ printInterval = 10000
 
 saveInterval = 2000
 
-maxTimeStep = 200000
+maxTimeStep = 100000
 
 ## Time Step
 deltaT = 2e-6
@@ -51,10 +51,11 @@ viscosity           = true # Must be true for Solid
 gravity             = true
 artificialViscosity = true
 # artificialHeat      = true
-averageVelocity     = true
+# averageVelocity     = true
 # normalizeDensity    = true
 kernelCorrection    = true
-
+# shifting = true
+# artificialStress = true
 
 [Parallel]
 

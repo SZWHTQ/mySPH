@@ -27,6 +27,8 @@ contains
         select case(Project%nick)
         case ("waterImpact")
             delta = 0.002
+        case ("can_beam")
+            delta = 1e-3
         end select
 
         allocate(principalStress(Field%Dim), R(Field%Dim, Field%Dim, ntotal), source=0._8)
@@ -36,6 +38,7 @@ contains
         case (1)
             error stop "Artificial stress for 1D problem is still incomplete."
         case (2)
+            !$omp parallel do private(i, j, k, d, theta, c, s, aux, principalStress, Temp)
             do i = 1, ntotal
                 if ( P(i)%Type < 100 ) then
                     cycle
@@ -64,28 +67,30 @@ contains
                 R(1, 2, i) = s * c * (Temp(1) - Temp(2))
                 R(2, 1, i) = R(1, 2, i)
             end do
+            !$omp end parallel do
+
+            !$omp parallel do private(i, j, k, d, e, wd, F)
             do i = 1, ntotal
-                if ( P(i)%Type < 100 ) then
-                    cycle
-                end if
                 do k = 1, P(i)%neighborNum
                     j = P(i)%neighborList(k)
                     if ( P(j)%Type < 100 ) then
                         cycle
                     end if
 
+                    Temp = 0
                     call kernel(delta, 1*Temp, P(i)%SmoothingLength, wd, Temp)
                     F = (P(i)%w(k) / wd) ** exponential
 
                     do d = 1, Field%Dim
                         do e = 1, Field%Dim
                             dvdt(d, i) = dvdt(d, i) + &
-                                P(j)%Mass + (R(d, e, i) + R(d, e, j)) * F * P(i)%dwdx(e, k)
+                                P(j)%Mass * (R(d, e, i) + R(d, e, j)) * F * P(i)%dwdx(e, k)
                         end do
                     end do
 
                 end do
             end do
+            !$omp end parallel do
         case (3)
             error stop "Artificial stress for 3D problem is still incomplete."
         end select

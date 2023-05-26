@@ -9,6 +9,7 @@ contains
         type(Particle), intent(in) :: P(:)
         real(8), intent(inout) :: dvdt(:, :)
         real(8) :: dx(Field%Dim), dr, r
+        real(8) :: gravity
         real(8), save :: factor_s, r0, p1, p2
         real(8), save :: factor_p, pe, n1, n2
         real(8), save :: delta, eta, chi, factor_c
@@ -23,13 +24,14 @@ contains
             end do
         end do
 
+        gravity = -9.81_8
         !!! Consider gravity or not
         if ( Config%gravity_w ) then
             select case (Project%nick)
             case ("beam_oil")
                 alpha = slosh(Config%i_time_step * Config%delta_t)
-                ax = -9.81 * sin(alpha)
-                ay = -9.81 * cos(alpha)
+                ax = gravity * sin(alpha)
+                ay = gravity * cos(alpha)
                 do i = 1, ntotal
                     if ( P(i)%Type > 100 ) then
                         cycle
@@ -42,11 +44,16 @@ contains
                     if ( P(i)%Type > 100 ) then
                         cycle
                     end if
-                    dvdt(Field%Dim, i) = -9.81
+                    dvdt(Field%Dim, i) = gravity
+                end do
+            case("can_beam")
+                do i = 1, ntotal
+                    dvdt(Field%Dim, i) = gravity! * &
+                        ! step(real(Config%i_time_step,8), real(Config%print_interval,8))
                 end do
             case default
                 do i = 1, ntotal
-                    dvdt(Field%Dim, i) = -9.81
+                    dvdt(Field%Dim, i) = gravity
                 end do
             end select
         end if
@@ -57,7 +64,7 @@ contains
             r0 = 1.25e-5
             p1 = 12
             p2 = 4
-    
+
             factor_p = 1e5
             n1 = 6
             n2 = 4
@@ -171,7 +178,7 @@ contains
             use tools_m, only: PI
             real(8), intent(in) :: t
             real(8) :: rad
-        
+
             if ( t < 0.56 ) then
                 rad = -143.42*(t**4) + 110.16*(t**3) - 5.866*(t**2) + 0.9767*t + 0.0077
             else
@@ -179,8 +186,23 @@ contains
             end if
 
             rad = rad / 180 * PI
-            
+
         end function slosh
+
+        function step(x, a) result(retval)
+            use tools_m, only: PI
+            real(8), intent(in) :: x, a
+            real(8) :: retval
+
+            if ( x >= 2*a ) then
+                retval = 1
+            else if ( x <= 0 ) then
+                retval = 0
+            else
+                retval = 0.5_8 * (sin(PI/(2*a)*x - PI/2) + 1)
+            end if
+
+        end function step
     end subroutine external_force
 
 end module ex_force_m

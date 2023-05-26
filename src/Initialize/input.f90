@@ -1342,7 +1342,7 @@ contains
         do i = 1, nx
             do j = 1, ny
                 k = (i-1) * ny + j
-                P(k)%x(:)            = [i-1, j-1] * dx
+                P(k)%x(:)            = [i-1, j-1 - ny/2] * dx
                 P(k)%v(:)            = 0
                 P(k)%Density         = rho0
                 P(k)%Mass            = P(k)%Density * dx * dx

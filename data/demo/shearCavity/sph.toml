@@ -8,7 +8,7 @@ nick = "shear_cavity"
 DIM = 2
 
 ## Maximum Number of Particles
-maxN = 1920
+maxN = 1928
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
 kPair = 100
@@ -40,10 +40,10 @@ printInterval = 500
 
 saveInterval = 100
 
-maxTimeStep = 5000
+maxTimeStep = 50000
 
 ## Time Step
-deltaT = 5.0e-6
+deltaT = 5.0e-5
 
 summationDensity    = true
 averageVelocity     = true

@@ -132,6 +132,7 @@ contains
     end subroutine shock_tube
 
     subroutine shear_cavity(ntotal, P)
+        use eos_m, only: arti_water_eos_2
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         integer :: m, n, mp, np, k
@@ -167,8 +168,9 @@ contains
             P(i)%Mass            = dx * dy * P(i)%Density
             P(i)%Pressure        = 0
             P(i)%InternalEnergy  = 357.1
-            P(i)%Type           = 3
+            P(i)%Type            = 3
             P(i)%SmoothingLength = dx
+            call arti_water_eos_2(P(i)%Density, P(i)%Pressure, P(i)%SoundSpeed)
         end do
 
 

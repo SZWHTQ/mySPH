@@ -45,6 +45,7 @@ contains
     end subroutine gen_dummy_particle
 
     subroutine shear_cavity_dp(ntotal, ndummy, P)
+        use eos_m, only: arti_water_eos_2
         ! use ctrl_dict, only: i_time_step
         integer, intent(in) :: ntotal
         integer, intent(inout) :: ndummy
@@ -55,13 +56,13 @@ contains
         ndummy = 0
         mp     = 40
         xl     = 1.0e-3
-        ! dx     = xl / mp
+        dx     = xl / mp
         ! if ( Config%i_time_step <= 10000 ) then
         !     drive = 0
         ! else
-        !     drive = 1.0e-3
+        !     drive = 1e-3
         ! end if
-        drive = 1.0e-3
+        drive = 1e-3
         layer = 1
 
         do l = 1, layer
@@ -112,6 +113,7 @@ contains
             P(ntotal+i)%InternalEnergy  = 357.1
             P(ntotal+i)%Type            = -P(1)%Type
             P(ntotal+i)%SmoothingLength = dx
+            call arti_water_eos_2(P(ntotal+i)%Density, P(ntotal+i)%Pressure, P(ntotal+i)%SoundSpeed)
         end do
 
 

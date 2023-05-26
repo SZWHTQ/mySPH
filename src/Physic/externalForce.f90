@@ -24,9 +24,9 @@ contains
             end do
         end do
 
-        gravity = -9.81_8
         !!! Consider gravity or not
         if ( Config%gravity_w ) then
+            gravity = -9.81_8
             select case (Project%nick)
             case ("beam_oil")
                 alpha = slosh(Config%i_time_step * Config%delta_t)

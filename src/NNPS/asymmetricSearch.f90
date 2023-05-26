@@ -18,7 +18,7 @@ module APS_M
         procedure :: locate     => locate
     end type grid_t
 
-    real(8), parameter :: GMR = 1.1 !! Grid Magnification Ratio
+    real(8), parameter :: GMR = 1.2 !! Grid Magnification Ratio
     integer, parameter :: NPG = 3   !! Number of particles Per Grid cell
 
     public :: BGGS

@@ -67,39 +67,39 @@ contains
 
         do l = 1, layer
             !!! Monaghan type dummy particle on the Upper side
-            do i = 1, 2*(mp+l) - 1
+            do i = 1, 2*(mp+l) + 1
                 ndummy = ndummy + 1
                 index = ntotal+ndummy
-                P(index)%x(1) = dx * (i-l) / 2
-                P(index)%x(2) = xl + dx / 2 * (l-1)
+                P(index)%x(1) = dx * (i-l-1) / 2
+                P(index)%x(2) = xl + dx / 2 * l
                 P(index)%v(1) = drive
                 P(index)%v(2) = 0
             end do
 
             !!! Monaghan type dummy particle on the Lower side
-            do i = 1, 2*(mp+l) - 1
+            do i = 1, 2*(mp+l) + 1
                 ndummy = ndummy + 1
                 index = ntotal+ndummy
-                P(index)%x(1) = dx * (i-l) / 2
-                P(index)%x(2) = 0 - dx / 2 * (l-1)
+                P(index)%x(1) = dx * (i-l-1) / 2
+                P(index)%x(2) = 0 - dx / 2 * l
                 P(index)%v(1) = 0
                 P(index)%v(2) = 0
             end do
 
             !!! Monaghan type dummy particle on the Left side
-            do i = 1, 2*(mp+l) - 3
+            do i = 1, 2*(mp+l) - 1
                 ndummy = ndummy + 1
                 index = ntotal+ndummy
-                P(index)%x(1) = 0 - dx / 2 * (l-1)
+                P(index)%x(1) = 0 - dx / 2 * l
                 P(index)%x(2) = dx * (i-l+1) / 2
                 P(index)%v(1) = 0
                 P(index)%v(2) = 0
             end do
 
-            do i = 1, 2*(mp+l) - 3
+            do i = 1, 2*(mp+l) - 1
                 ndummy = ndummy + 1
                 index = ntotal+ndummy
-                P(index)%x(1) = xl + dx / 2*(l-1)
+                P(index)%x(1) = xl + dx / 2 * l
                 P(index)%x(2) = dx * (i-l+1) / 2
                 P(index)%v(1) = 0
                 P(index)%v(2) = 0

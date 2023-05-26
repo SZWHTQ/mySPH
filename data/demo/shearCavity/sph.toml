@@ -32,7 +32,7 @@ SLE = 0
 SKF = 1
 
 ## Serial Number of the Monitored Particle
-monitorParticle = 1
+monitorParticle = 1599
 
 printStatistics = true
 
@@ -56,7 +56,7 @@ gravity             = false
 artificialViscosity = false
 artificialHeat      = false
 normalizeDensity    = true
-# kernelCorrection    = true
+kernelCorrection    = true
 # shifting = true
 
 

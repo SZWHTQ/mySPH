@@ -8,10 +8,10 @@ nick = "can_beam"
 DIM = 2
 
 ## Maximum Number of Particles
-maxN = 505
+maxN = 2020
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 45
+kPair = 60
 
 ## Indicator Variables for Particle Approximation
 SPH = 2
@@ -40,7 +40,7 @@ printInterval = 10000
 
 saveInterval = 2000
 
-maxTimeStep = 100000
+maxTimeStep = 200000
 
 ## Time Step
 deltaT = 2e-6
@@ -51,11 +51,11 @@ viscosity           = true # Must be true for Solid
 gravity             = true
 artificialViscosity = true
 # artificialHeat      = true
-# averageVelocity     = true
+averageVelocity     = false
 # normalizeDensity    = true
 kernelCorrection    = true
 # shifting = true
-# artificialStress = true
+artificialStress = false
 
 [Parallel]
 

@@ -87,18 +87,18 @@ contains
 
             select case (Project%nick)
             case("water_impact")
-                if ( time < 0.12 ) then
+                if ( time < 0.13 ) then
                     Config%delta_t = 5e-5
                     Config%print_interval = 200
                     Config%save_interval = 100
                 else
                     if ( first ) then
-                        Config%i_time_step = Config%i_time_step * 10
+                        Config%i_time_step = Config%i_time_step * 100
                         first = .false.
                     end if
-                    Config%delta_t = 5e-6
-                    Config%print_interval = 2000
-                    Config%save_interval = 1000
+                    Config%delta_t = 5e-7
+                    Config%print_interval = 20000
+                    Config%save_interval  = 10000
                 end if
             case("undex_plate")
                 if ( time < 8.25e-5 ) then

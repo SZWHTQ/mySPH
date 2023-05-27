@@ -26,25 +26,28 @@ contains
         real(8) :: vab, vba
         real(8), allocatable :: rdot(:, :, :), aver_edot(:, :)
 #endif
+        integer :: N
         integer i, j, k, d, dd, ddd
+
+        N = size(P)
 
         !!! Initialization of Strain Rate Tensor, velocity divergence,
         !!! viscous energy, internal energy, acceleration
-        allocate(tdsdt(ntotal), source=0._8)
-        allocate(edot(Field%Dim, Field%Dim, ntotal), source=0._8)
+        allocate(tdsdt(N), source=0._8)
+        allocate(edot(Field%Dim, Field%Dim, N), source=0._8)
 
 #if SOLID
-        allocate(rdot(Field%Dim, Field%Dim, ntotal), source=0._8)
+        allocate(rdot(Field%Dim, Field%Dim, N), source=0._8)
         allocate(aver_edot(Field%Dim, Field%Dim), source=0._8)
 #endif
 
         !!! Dynamic viscosity
-        if ( Config%viscosity_w ) call viscosity(P(1:ntotal)%Type, P(1:ntotal)%Viscosity)
+        if ( Config%viscosity_w ) call viscosity(P(1:N)%Type, P(1:N)%Viscosity)
 
 
         if ( Config%viscosity_w ) then
             !$OMP PARALLEL DO PRIVATE(i, j, k, d, dd, ddd, dv, rhoij, aux, vab, vba)
-            do i = 1, ntotal !! All particles
+            do i = 1, N !! All particles
             !!! Calculate SPH sum for Strain Rate Tensor of Fluid
             !!! εab = va,b + vb,a - 2/3*delta_ab*vc,c
 #if SOLID
@@ -98,7 +101,7 @@ contains
 
 
         !$OMP PARALLEL DO PRIVATE(i, aux, aver_edot, j, k, d, dd, ddd)
-        do i = 1, ntotal !! All particles
+        do i = 1, N !! All particles
 #if SOLID
         if ( abs(P(i)%Type) <= 100 ) then !! Fluid
 #endif

@@ -15,7 +15,7 @@ monitorParticle = 10898
 printStatistics = true
 printInterval = 2000
 saveInterval  = 1000
-maxTimeStep   = 200000
+maxTimeStep   = 2000000
 
 ## Time Step
 deltaT = 5e-6
@@ -28,6 +28,7 @@ gravity             = true
 artificialViscosity = true
 # normalizeDensity    = true
 # kernelCorrection = true
+# artificialStress = true
 
 
 [Parallel]

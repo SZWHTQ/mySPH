@@ -39,7 +39,7 @@
         }
     },
     "cmake.debugConfig": {
-        "args": ["../data/demo/shearCavity"],
+        "args": ["../data/waterImpact"],
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "latex-workshop.latex.autoBuild.run": "onSave",

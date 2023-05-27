@@ -39,7 +39,7 @@ contains
                     dvdt(1, i) = ax
                     dvdt(2, i) = ay
                 end do
-            case ("db_gate")
+            case ("db_gate", "water_impact")
                 do i = 1, ntotal
                     if ( P(i)%Type > 100 ) then
                         cycle

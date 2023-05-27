@@ -1334,8 +1334,8 @@ contains
     subroutine cantilever_beam(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        real(8) :: dx = 1e-3, bulk=2e7, rho0=1100, c
-        integer :: nx = 101, ny = 5
+        real(8) :: dx = 5e-4, bulk=2e7, rho0=1100, c
+        integer :: nx = 201, ny = 9
 
         integer i, j, k
 
@@ -1344,7 +1344,7 @@ contains
         do i = 1, nx
             do j = 1, ny
                 k = (i-1) * ny + j
-                P(k)%x(:)            = [i-1, j-1 - ny/2] * dx
+                P(k)%x(:)            = [i-1, j-1-ny/2] * dx
                 P(k)%v(:)            = 0
                 P(k)%Density         = rho0
                 P(k)%Mass            = P(k)%Density * dx * dx
@@ -1352,7 +1352,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%SoundSpeed      = c
                 P(k)%Type            = 102
-                P(k)%SmoothingLength = dx * 2
+                P(k)%SmoothingLength = dx! * 2
                 if ( i == 1 ) then
                     P(k)%Boundary = 1
                 end if

@@ -32,7 +32,11 @@ contains
         case (1)
             call get_command_argument(1, buffer)
             allocate(Project%in_path, source=trim(adjustl(buffer)))
-            inquire(file=Project%in_path//"/sph.toml", exist=alive)
+#ifdef __INTEL_COMPILER
+            inquire(Directory=Project%in_path//"/sph.toml", Exist=alive)
+#elif __GNUC__
+            inquire(File=Project%in_path//"/sph.toml", Exist=alive)
+#endif
             if ( .not. alive ) then
                 write(*, "(A)") ESC//"[31m"
                 write(*,*) "Target 'sph.toml' does not exist."
@@ -44,7 +48,11 @@ contains
             do i = 1, argument_num
                 call get_command_argument(i, buffer)
                 allocate(Project%in_path, source=trim(adjustl(buffer)))
-                inquire(file=Project%in_path//"/sph.toml", exist=alive)
+#ifdef __INTEL_COMPILER
+                inquire(Directory=Project%in_path//"/sph.toml", Exist=alive)
+#elif __GNUC__
+                inquire(File=Project%in_path//"/sph.toml", Exist=alive)
+#endif
                 if ( alive ) then
                     flag = .true.
                     exit

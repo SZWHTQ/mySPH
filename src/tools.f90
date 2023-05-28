@@ -161,16 +161,16 @@ contains
         character(len=*), intent(in) :: name
         character(len=*), intent(inout), optional :: info
         character(len=:), allocatable :: buffer
-        logical :: exist
+        logical :: alive
 
         allocate(buffer, source=trim(adjustl(name)))
 
 #ifdef __INTEL_COMPILER
-        inquire(Directory=buffer, Exist=exist)
+        inquire(Directory=buffer, Exist=alive)
 #elif __GNUC__
-        inquire(File=buffer, Exist=exist)
+        inquire(File=buffer, Exist=alive)
 #endif
-            if ( .not. exist ) then
+            if ( .not. alive ) then
                 if ( present(info) ) then
                     info = "Created directory: "//trim(adjustl(buffer))
                 end if

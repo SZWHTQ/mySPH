@@ -22,6 +22,8 @@ contains
 
         call spongeLayer(ntotal, P, D)
 
+        call prescribedDisplacement(ntotal, P, D)
+
         ! call doNothing(ntotal, P, D)
 
 

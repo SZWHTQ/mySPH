@@ -8,10 +8,10 @@ nick = "can_beam_3d"
 DIM = 3
 
 ## Maximum Number of Particles
-maxN = 9045
+maxN = 1515
 
 ## Number of average particle interaction pairs: max_interaction = kpair*maxn
-kPair = 300
+kPair = 200
 
 ## Indicator Variables for Particle Approximation
 SPH = 2

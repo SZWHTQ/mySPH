@@ -94,68 +94,129 @@ contains
         ntotal = size(Particles)
         open(11, file = fileDir)
 
-        select case (Field%Dim)
-        case (1)
-            write(11, 1001) "Index", "Type", "State", "X", "V",         &
-                            "Mass", "Density",                          &
-                            "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "Viscosity",             &
-                            "DivDistance",                              &
-                            "Displacement_X",                           &
-                            "StressXX"
-            do i = 1, ntotal
-                if ( present(index) ) then
-                    write(11, "(I8)", advance="no") index(i)
-                else
-                    write(11, "(I8)", advance="no") i
-                end if
-                write(11, "(DT)") Particles(i)
-            end do
-            1001 format(3(A8), 12(A17))
+        if ( Particles(1)%Type <= 100 ) then
+            select case (Field%Dim)
+            case (1)
+                write(11, 1001) "Index", "Type", "State", "X", "V",         &
+                                "Mass", "Density",                          &
+                                "Pressure", "InternalEnergy", "SoundSpeed", &
+                                "SmoothingLength", "Viscosity",             &
+                                "DivDistance",                              &
+                                "Displacement_X",                           &
+                                "StressXX"
+                do i = 1, ntotal
+                    if ( present(index) ) then
+                        write(11, "(I8)", advance="no") index(i)
+                    else
+                        write(11, "(I8)", advance="no") i
+                    end if
+                    write(11, "(DT)") Particles(i)
+                end do
 
-        case (2)
-            write(11, 1002) "Index", "Type", "State",                   &
-                            "X", "Y", "U", "V",                         &
-                            "Mass" , "Density",                         &
-                            "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "Viscosity",             &
-                            "DivDistance",                              &
-                            "Displacement_X", "Displacement_Y",         &
-                            "StressXX", "StressXY",                     &
-                            "StressYX", "StressYY"
-            do i = 1, ntotal
-                if ( present(index) ) then
-                    write(11, "(I8)", advance="no") index(i)
-                else
-                    write(11, "(I8)", advance="no") i
-                end if
-                write(11, "(DT)") Particles(i)
-            end do
-            1002 format(3(A8), 18(A17))
+            case (2)
+                write(11, 1001) "Index", "Type", "State",                   &
+                                "X", "Y", "U", "V",                         &
+                                "Mass" , "Density",                         &
+                                "Pressure", "InternalEnergy", "SoundSpeed", &
+                                "SmoothingLength", "Viscosity",             &
+                                "DivDistance",                              &
+                                "Displacement_X", "Displacement_Y",         &
+                                "StressXX", "StressXY",                     &
+                                "StressYX", "StressYY"
+                do i = 1, ntotal
+                    if ( present(index) ) then
+                        write(11, "(I8)", advance="no") index(i)
+                    else
+                        write(11, "(I8)", advance="no") i
+                    end if
+                    write(11, "(DT)") Particles(i)
+                end do
 
-        case (3)
-            write(11, 1003) "Index", "Type", "State",                   &
-                            "X", "Y", "Z", "U", "V", "W",               &
-                            "Mass" , "Density",                         &
-                            "Pressure", "InternalEnergy", "SoundSpeed", &
-                            "SmoothingLength", "Viscosity",             &
-                            "DivDistance",                              &
-                            "Displacement_X", "Displacement_Y",         &
-                            "Displacement_Z",                           &
-                            "StressXX", "StressXY", "StressXZ",         &
-                            "StressYX", "StressYY", "StressYZ",         &
-                            "StressZX", "StressZY", "StressZZ"
-            do i = 1, ntotal
-                if ( present(index) ) then
-                    write(11, "(I8)", advance="no") index(i)
-                else
-                    write(11, "(I8)", advance="no") i
-                end if
-                write(11, "(DT)") Particles(i)
-            end do
-            1003 format(3(A8), 25(A17))
+            case (3)
+                write(11, 1001) "Index", "Type", "State",                   &
+                                "X", "Y", "Z", "U", "V", "W",               &
+                                "Mass" , "Density",                         &
+                                "Pressure", "InternalEnergy", "SoundSpeed", &
+                                "SmoothingLength", "Viscosity",             &
+                                "DivDistance",                              &
+                                "Displacement_X", "Displacement_Y",         &
+                                "Displacement_Z",                           &
+                                "StressXX", "StressXY", "StressXZ",         &
+                                "StressYX", "StressYY", "StressYZ",         &
+                                "StressZX", "StressZY", "StressZZ"
+                do i = 1, ntotal
+                    if ( present(index) ) then
+                        write(11, "(I8)", advance="no") index(i)
+                    else
+                        write(11, "(I8)", advance="no") i
+                    end if
+                    write(11, "(DT)") Particles(i)
+                end do
 
-        end select
+            end select
+        else
+            select case (Field%Dim)
+            case (1)
+                write(11, 1001) "Index", "Type", "State", "X", "V",         &
+                                "Mass", "Density",                          &
+                                "Pressure", "InternalEnergy", "SoundSpeed", &
+                                "SmoothingLength", "Viscosity",             &
+                                "DivDistance",                              &
+                                "Displacement_X",                           &
+                                "StressXX", "vonMises"
+                do i = 1, ntotal
+                    if ( present(index) ) then
+                        write(11, "(I8)", advance="no") index(i)
+                    else
+                        write(11, "(I8)", advance="no") i
+                    end if
+                    write(11, "(DT, ES24.16e3)") Particles(i), vonMises(Particles(i)%Stress)
+                end do
+
+            case (2)
+                write(11, 1001) "Index", "Type", "State",                   &
+                                "X", "Y", "U", "V",                         &
+                                "Mass" , "Density",                         &
+                                "Pressure", "InternalEnergy", "SoundSpeed", &
+                                "SmoothingLength", "Viscosity",             &
+                                "DivDistance",                              &
+                                "Displacement_X", "Displacement_Y",         &
+                                "StressXX", "StressXY",                     &
+                                "StressYX", "StressYY", "vonMises"
+                do i = 1, ntotal
+                    if ( present(index) ) then
+                        write(11, "(I8)", advance="no") index(i)
+                    else
+                        write(11, "(I8)", advance="no") i
+                    end if
+                    write(11, "(DT, ES24.16e3)") Particles(i), vonMises(Particles(i)%Stress)
+                end do
+
+            case (3)
+                write(11, 1001) "Index", "Type", "State",                   &
+                                "X", "Y", "Z", "U", "V", "W",               &
+                                "Mass" , "Density",                         &
+                                "Pressure", "InternalEnergy", "SoundSpeed", &
+                                "SmoothingLength", "Viscosity",             &
+                                "DivDistance",                              &
+                                "Displacement_X", "Displacement_Y",         &
+                                "Displacement_Z",                           &
+                                "StressXX", "StressXY", "StressXZ",         &
+                                "StressYX", "StressYY", "StressYZ",         &
+                                "StressZX", "StressZY", "StressZZ", "vonMises"
+                do i = 1, ntotal
+                    if ( present(index) ) then
+                        write(11, "(I8)", advance="no") index(i)
+                    else
+                        write(11, "(I8)", advance="no") i
+                    end if
+                    write(11, "(DT, ES24.16e3)") Particles(i), vonMises(Particles(i)%Stress)
+                end do
+
+            end select
+        end if
+
+        1001 format(3(A8), *(A17))
 
         close(11)
 
@@ -173,7 +234,6 @@ contains
 
         ntotal = size(Particles)
         open(11, file = fileDir)
-        1001 format(*(ES24.16e3, 3X))
 
         !!! Write Header and particle coordinates
         write (11, "(A)") "# vtk DataFile Version 3.0, "//now()
@@ -268,6 +328,14 @@ contains
                             (0.0, d = 1, 9-Field%Dim**2)
         end do
 
+        if ( Particles(1)%Type > 100 ) then
+            !!! Write particle von Mises stress
+            write (11, "(A)") "TENSORS vonMises float"
+            do i = 1, ntotal
+                write(11, 1001) real(vonMises(Particles(i)%Stress))
+            end do
+        end if
+
         if ( present(Delta) ) then
             !!! Write particle acceleration
             write (11, "(A)") "VECTORS Acceleration float"
@@ -276,8 +344,23 @@ contains
             end do
         end if
 
+        1001 format(*(ES24.16e3, 3X))
+
         close(11)
 
     end subroutine write_vtk
+
+    pure function vonMises(cauchyStress) result(Mises)
+        real(8), intent(in) :: cauchyStress(:,:)
+        real(8) :: Mises
+        integer :: Dim
+
+        Mises = sqrt((cauchyStress(1,1)+cauchyStress(2,2)+cauchyStress(3,3))**2 &
+                            - 3*(cauchyStress(2,2)*cauchyStress(3,3)  &
+                                +cauchyStress(3,3)*cauchyStress(1,1)  &
+                                +cauchyStress(1,1)*cauchyStress(2,2)) &
+                            + 3*(cauchyStress(1,2)**2+cauchyStress(1,3)**2+cauchyStress(2,3)**2))
+
+    end function vonMises
 
 end module output_m

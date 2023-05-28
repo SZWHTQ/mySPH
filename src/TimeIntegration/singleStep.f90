@@ -76,12 +76,12 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length
-    if ( Config%open_boundary_w) then
-        call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
-    else
-        call search_particles(ntotal, Particles(1:N))
-    end if
-    ! call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
+    ! if ( Config%open_boundary_w) then
+    !     call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
+    ! else
+    !     call search_particles(ntotal, Particles(1:N))
+    ! end if
+    call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
 
     if ( Config%kernel_correciton_w ) call kernelGradientCorrection(ntotal, Particles)
 

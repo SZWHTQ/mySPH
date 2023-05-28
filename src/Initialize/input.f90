@@ -1368,8 +1368,8 @@ contains
     subroutine cantileverBeam3D(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        real(8) :: dx = 1e-3, bulk=2e7, rho0=1100, c
-        integer :: nx = 101, ny = 3, nz = 5
+        real(8) :: dx = 5e-4, bulk=2e7, rho0=1100, c
+        integer :: nx = 201, ny = 5, nz = 9
 
         integer i, j, k, l
 
@@ -1393,8 +1393,8 @@ contains
                     P(l)%SmoothingLength = dx * 2
                     if ( i == 1 ) then
                         P(l)%Boundary = 1
-                    else if ( j == ny ) then
-                        P(l)%Boundary = 3
+                    ! else if ( j == ny ) then
+                    !     P(l)%Boundary = 3
                     end if
                 end do
             end do

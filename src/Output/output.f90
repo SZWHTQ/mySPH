@@ -330,7 +330,7 @@ contains
 
         if ( Particles(1)%Type > 100 ) then
             !!! Write particle von Mises stress
-            write (11, "(A)") "TENSORS vonMises float"
+            write (11, "(A)") "SCALARS vonMises float 1"
             do i = 1, ntotal
                 write(11, 1001) real(vonMises(Particles(i)%Stress))
             end do

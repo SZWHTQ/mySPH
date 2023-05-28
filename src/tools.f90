@@ -190,7 +190,9 @@ contains
     !!! Modified by Teng Qing (@SZWHTQ)
     ! 出力処理(Any)が全て終わった後に呼び出す
     ! value / max : % (value out of max)
-    ! isflushed : Flushする予定があるときに使う. 主にプログレスバーとともに出力結果も同時に出したいときに使う. 使わないときはfalseに設定する。
+    ! isflushed : Flushする予定があるときに使う.
+    !             主にプログレスバーとともに出力結果も同時に出したいときに使う.
+    !             使わないときはfalseに設定する。
     subroutine pbout(value, max, isflushed)
         integer,intent(in) :: value, max
         double precision,save :: rate = 0d0, time = 0d0

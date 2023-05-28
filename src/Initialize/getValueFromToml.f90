@@ -81,14 +81,16 @@ contains
         !$ use omp_lib
         type(toml_table), allocatable :: sph_file
         type(toml_table), pointer :: subtable
-        integer :: file_unit
+        integer :: fileUnit
 #ifdef _OPENMP
         character(len=512) :: buffer
 #endif
 
-        open (newunit=file_unit, file=Project%in_path//"/sph.toml", status='old')
-        call toml_parse(sph_file, file_unit)
-        close (file_unit)
+        open (newunit=fileUnit, file=Project%in_path//"/sph.toml", &
+              status='old', form="formatted", action="read", &
+              encoding="UTF-8", access="sequential")
+        call toml_parse(sph_file, fileUnit)
+        close(fileUnit)
 
         call get_value(sph_file, 'name', Project%project_name, 'untitled')
         call get_value(sph_file, 'nick', Project%nick,         'unknown')
@@ -182,7 +184,7 @@ contains
         call get_value(subtable, 'writeVTKfile',           Config%write_vtk_w,     .true.)
         call get_value(subtable, 'writeDummyParticle2VTK', Config%write_dp_vtk_w,  .true.)
 
-        nullify (subtable)
+        nullify(subtable)
 
     end subroutine get_details_from_sph_toml
 

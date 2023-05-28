@@ -26,11 +26,12 @@ contains
         case (2)
             call link_list_search(ntotal, Particles)
         case (3)
-            call tree_search(Particles)
+            ! call tree_search(Particles)
+            error stop "Unsafe search method"
         end select
 
 #if CHECK_NEIGHBOR_LIST
-        do i = 1, size(x, 2)
+        do i = 1, size(Particles)
             do k = 1, Particles(i)%neighborNum
                 j = Particles(i)%neighborList(k)
                 if ( j == 0 ) then
@@ -241,136 +242,136 @@ contains
     ! end function judge
     end subroutine link_list_search
 
-    subroutine tree_search(P)
-        use tree_m
-        use link_list_m
-        use geometry_m
-        type(Particle), intent(inout) :: P(:)
-        integer :: ntotal, kpair
-        real(8) :: this_w, this_dwdx(Field%Dim)
-        real(8) :: mhsml
-        class(geometry_t), allocatable :: domain, range
-        type(tree_t)      :: tree
-        type(link_list_t) :: found
-        class(*), allocatable :: j
-        real(8) :: scale, min(Field%Dim), max(Field%Dim), length(Field%Dim)
-        real(8) :: dx(Field%Dim), dr, r
-        integer :: scale_k
-        logical :: flag
-        integer i, k, d
+!     subroutine tree_search(P)
+!         use tree_m
+!         use link_list_m
+!         use geometry_m
+!         type(Particle), intent(inout) :: P(:)
+!         integer :: ntotal, kpair
+!         real(8) :: this_w, this_dwdx(Field%Dim)
+!         real(8) :: mhsml
+!         class(geometry_t), allocatable :: domain, range
+!         type(tree_t)      :: tree
+!         type(link_list_t) :: found
+!         class(*), allocatable :: j
+!         real(8) :: scale, min(Field%Dim), max(Field%Dim), length(Field%Dim)
+!         real(8) :: dx(Field%Dim), dr, r
+!         integer :: scale_k
+!         logical :: flag
+!         integer i, k, d
 
-        found%length = 0
+!         found%length = 0
 
-        select case (Config%skf)
-        case (1)
-            scale_k = 2
-        case (2, 3)
-            scale_k = 3
-        case default
-            scale_k = 1
-        end select
+!         select case (Config%skf)
+!         case (1)
+!             scale_k = 2
+!         case (2, 3)
+!             scale_k = 3
+!         case default
+!             scale_k = 1
+!         end select
 
-        ntotal = size(P)
-        kpair = size(P(1)%neighborList)
+!         ntotal = size(P)
+!         kpair = size(P(1)%neighborList)
 
-        scale = 1.2
-        min = huge(0._8)
-        max = -huge(0._8)
-        do i = 1, ntotal
-            do d = 1, Field%Dim
-                if ( P(i)%x(d) > max(d) ) then
-                    max(d) = P(i)%x(d)
-                end if
-                if ( P(i)%x(d) < min(d) ) then
-                    min(d) = P(i)%x(d)
-                end if
-            end do
-        end do
-        length = scale * (max - min)
-        select case (Field%Dim)
-        case (1)
-            domain = line_t((min+max)/2, length(1), 0)
-        case (2)
-            domain = rectangle_t((min+max)/2, length, 0)
-        case (3)
-            domain = cuboid_t((min+max)/2, length, 0)
-        end select
+!         scale = 1.2
+!         min = huge(0._8)
+!         max = -huge(0._8)
+!         do i = 1, ntotal
+!             do d = 1, Field%Dim
+!                 if ( P(i)%x(d) > max(d) ) then
+!                     max(d) = P(i)%x(d)
+!                 end if
+!                 if ( P(i)%x(d) < min(d) ) then
+!                     min(d) = P(i)%x(d)
+!                 end if
+!             end do
+!         end do
+!         length = scale * (max - min)
+!         select case (Field%Dim)
+!         case (1)
+!             domain = line_t((min+max)/2, length(1), 0)
+!         case (2)
+!             domain = rectangle_t((min+max)/2, length, 0)
+!         case (3)
+!             domain = cuboid_t((min+max)/2, length, 0)
+!         end select
 
-        tree%domain   = domain
-        tree%capacity = 4
-        allocate(tree%points(0))
-        do i = 1, ntotal
-            call tree%insert(point_t(P(i)%x(:), i), flag)
-            if ( .not. flag ) then
-                write(err, *) i
-                error stop "Tree insert"
-            end if
-        end do
+!         tree%domain   = domain
+!         tree%capacity = 4
+!         allocate(tree%points(0))
+!         do i = 1, ntotal
+!             call tree%insert(point_t(P(i)%x(:), i), flag)
+!             if ( .not. flag ) then
+!                 write(err, *) i
+!                 error stop "Tree insert"
+!             end if
+!         end do
 
-        deallocate(domain)
+!         deallocate(domain)
 
-        ! !$OMP PARALLEL DO PRIVATE(i, j, k, d, range, found, mhsml, dx, dr, r, this_w, this_dwdx) &
-        ! !$OMP SHARED(P) &
-        ! !$OMP SCHEDULE(dynamic, chunkSize)
-        do i = 1, ntotal - 1
-            select case (Field%Dim)
-            case (1)
-                range = line_t(P(i)%x(:), scale_k*P(i)%SmoothingLength*2, 0)
-            case (2)
-                range = circle_t(P(i)%x(:), scale_k*P(i)%SmoothingLength, 0)
-            case (3)
-                range = sphere_t(P(i)%x(:), scale_k*P(i)%SmoothingLength, 0)
-            end select
-            ! !$OMP CRITICAL
-            call tree%query(range, found)
-            ! !$OMP END CRITICAL
-            do k = 1, found%length
-                call found%fetch(j)
-                select type (j)
-                type is (integer)
-                    if ( j > i ) then
-                        mhsml = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
-                        dx(1) = P(i)%x(1) - P(j)%x(1)
-                        dr = dx(1) * dx(1)
-                        do d = 2, Field%Dim
-                            dx(d) = P(i)%x(d) - P(j)%x(d)
-                            dr = dr + dx(d)*dx(d)
-                        end do
-                        r = sqrt(dr)
-                        ! !$OMP CRITICAL
-                        !!! Neighbor particle ant tottal neighbor number for each particle
-                        P(i)%neighborNum = P(i)%neighborNum + 1
-                        P(j)%neighborNum = P(j)%neighborNum + 1
-#if CHECK_NEIGHBOR_NUM
-                        if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
-                            write(err,"(A)",advance="no") ESC//"[31m"
-                            write(err,*) i, j, P([i,j])%neighborNum, kpair
-                            write(err,"(A)",advance="no") ESC//"[0m"
-                            error stop "Too many neighbors"
-                        end if
-#endif
-                        P(i)%neighborList(P(i)%neighborNum) = j
-                        P(j)%neighborList(P(j)%neighborNum) = i
-                        !!! Kernel and derivations of kernel
-                        call kernel(r, dx, mhsml, this_w, this_dwdx)
-                        P(i)%w(P(i)%neighborNum) = this_w
-                        P(j)%w(P(j)%neighborNum) = this_w
-                        P(i)%dwdx(:, P(i)%neighborNum) =   this_dwdx
-                        P(j)%dwdx(:, P(j)%neighborNum) = - this_dwdx
-                        ! !$OMP END CRITICAL
-                    end if
-                class default
-                    error stop "Tree query"
-                end select
-                ! deallocate(j)
-            end do
-            ! deallocate(range)
-        end do
-        ! !$OMP END PARALLEL DO
+!         ! !$OMP PARALLEL DO PRIVATE(i, j, k, d, range, found, mhsml, dx, dr, r, this_w, this_dwdx) &
+!         ! !$OMP SHARED(P) &
+!         ! !$OMP SCHEDULE(dynamic, chunkSize)
+!         do i = 1, ntotal - 1
+!             select case (Field%Dim)
+!             case (1)
+!                 range = line_t(P(i)%x(:), scale_k*P(i)%SmoothingLength*2, 0)
+!             case (2)
+!                 range = circle_t(P(i)%x(:), scale_k*P(i)%SmoothingLength, 0)
+!             case (3)
+!                 range = sphere_t(P(i)%x(:), scale_k*P(i)%SmoothingLength, 0)
+!             end select
+!             ! !$OMP CRITICAL
+!             call tree%query(range, found)
+!             ! !$OMP END CRITICAL
+!             do k = 1, found%length
+!                 call found%fetch(j)
+!                 select type (j)
+!                 type is (integer)
+!                     if ( j > i ) then
+!                         mhsml = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)
+!                         dx(1) = P(i)%x(1) - P(j)%x(1)
+!                         dr = dx(1) * dx(1)
+!                         do d = 2, Field%Dim
+!                             dx(d) = P(i)%x(d) - P(j)%x(d)
+!                             dr = dr + dx(d)*dx(d)
+!                         end do
+!                         r = sqrt(dr)
+!                         ! !$OMP CRITICAL
+!                         !!! Neighbor particle ant tottal neighbor number for each particle
+!                         P(i)%neighborNum = P(i)%neighborNum + 1
+!                         P(j)%neighborNum = P(j)%neighborNum + 1
+! #if CHECK_NEIGHBOR_NUM
+!                         if ( P(i)%neighborNum > kpair .or. P(j)%neighborNum > kpair ) then
+!                             write(err,"(A)",advance="no") ESC//"[31m"
+!                             write(err,*) i, j, P([i,j])%neighborNum, kpair
+!                             write(err,"(A)",advance="no") ESC//"[0m"
+!                             error stop "Too many neighbors"
+!                         end if
+! #endif
+!                         P(i)%neighborList(P(i)%neighborNum) = j
+!                         P(j)%neighborList(P(j)%neighborNum) = i
+!                         !!! Kernel and derivations of kernel
+!                         call kernel(r, dx, mhsml, this_w, this_dwdx)
+!                         P(i)%w(P(i)%neighborNum) = this_w
+!                         P(j)%w(P(j)%neighborNum) = this_w
+!                         P(i)%dwdx(:, P(i)%neighborNum) =   this_dwdx
+!                         P(j)%dwdx(:, P(j)%neighborNum) = - this_dwdx
+!                         ! !$OMP END CRITICAL
+!                     end if
+!                 class default
+!                     error stop "Tree query"
+!                 end select
+!                 ! deallocate(j)
+!             end do
+!             ! deallocate(range)
+!         end do
+!         ! !$OMP END PARALLEL DO
 
-        call tree%clean()
+!         call tree%clean()
 
-    end subroutine tree_search
+!     end subroutine tree_search
 
 
     subroutine print_statistics(Particles)

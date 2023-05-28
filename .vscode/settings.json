@@ -1,11 +1,12 @@
 {
-    "makefile.extensionOutputFolder": "./.vscode",
+    // "makefile.extensionOutputFolder": "./.vscode",
     "fortran.linter.modOutput": "${workspaceFolder}/module/",
     "cmake.configureOnOpen": false,
     "cmake.configureArgs": [
         "-DOMP=off",
         "-Wno-dev",
         "-DCMAKE_Fortran_COMPILER=gfortran",
+        // "-DCMAKE_Fortran_FLAGS='-O3'",
     ],
     "cmake.configureOnEdit": false,
     "cmake.ctest.parallelJobs": 12,
@@ -39,7 +40,7 @@
         }
     },
     "cmake.debugConfig": {
-        "args": ["../data/waterImpact"],
+        "args": ["../data/cantileverBeam3D"],
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "latex-workshop.latex.autoBuild.run": "onSave",

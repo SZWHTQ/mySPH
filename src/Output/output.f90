@@ -276,6 +276,8 @@ contains
             end do
         end if
 
+        close(11)
+
     end subroutine write_vtk
 
 end module output_m

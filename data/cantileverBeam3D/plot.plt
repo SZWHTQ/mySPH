@@ -2,9 +2,10 @@
 set terminal qt size 1200, 600 position 200, 50 font "Times New Roman, 24"
 # set terminal gif size 1200, 600 enhanced animate delay 10 font "Times New Roman, 24"
 
+
 E = 11.9589e6     # N/m^2
 h = 0.004         # m
-b = 1             # m
+b = 0.002         # m
 l = 0.1           # m
 I = (b*h**3)/12   # m^4
 rho = 1100        # kg/m^3
@@ -34,9 +35,9 @@ do for [i=1:150:1] {
     set title sprintf('%.1fms', i*4)
     # plot sprintf('./output/Type_102_%d.dat', i) using 4:5:($18*1e-6) palette pt 7 ps 0.75, \
     #      w(x) w l lt rgb "#000000" lw 2
-    plot sprintf('./output/Type_102_%d.dat', i) using 4:5:(sqrt(($18+$22+$26)**2-3*($22*$26+$26*$18+$18*$22-$19**2-$20**2-$25**2))*1e-6) palette pt 7 ps 0.75, \
+    plot sprintf('./output/Type_102_%d.dat', i) using 4:5:(sqrt($18**2+$21**2-$18*$21+3*$19*$20)*1e-6) palette pt 7 ps 0.75, \
          w(x) w l lt rgb "#bf2029" lw 2
-    pause 0.1
+    pause -1
 }
 
 pause -1

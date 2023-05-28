@@ -36,7 +36,7 @@ contains
 
         do i = 1, ntotal
             if ( P(i)%Boundary == 1 ) then
-                D(i)%Velocity = 0
+                D(i)%Velocity(:) = 0
             end if
         end do
 
@@ -100,6 +100,24 @@ contains
 
     end subroutine spongeLayer
 
+    subroutine prescribedDisplacement(ntotal, P, D)
+        integer, intent(in) :: ntotal
+        type(Particle), intent(in) :: P(:)
+        type(Update), intent(inout) :: D(:)
+
+        integer i
+
+        select case(Project%nick)
+        case("can_beam_3d")
+            do i = 1, ntotal
+                if ( P(i)%Boundary == 3 ) then
+                    D(i)%Velocity(2) = 0
+                end if
+            end do
+        end select
+
+    end subroutine prescribedDisplacement
+
     subroutine doNothing(ntotal, P, D)
         integer, intent(in) :: ntotal
         type(Particle), intent(in) :: P(:)
@@ -113,7 +131,7 @@ contains
                 if ( abs(P(i)%x(1)) > 0.55 .or. abs(P(i)%x(2)) > 0.55 ) then
                     D(i)%Density = 0
                     D(i)%Energy = 0
-                    D(i)%Velocity = 0
+                    D(i)%Velocity(:) = 0
                 end if
             end do
         end select

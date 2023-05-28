@@ -49,7 +49,7 @@ contains
             case("can_beam")
                 do i = 1, ntotal
                     dvdt(Field%Dim, i) = gravity! * &
-                        ! step(real(Config%i_time_step,8), real(Config%print_interval,8))
+                        ! step(real(Config%i_time_step,8), real(10*Config%print_interval,8))
                 end do
             case default
                 do i = 1, ntotal

@@ -1,0 +1,65 @@
+## Project Name
+name = "Three-dimensional Cantilever Beam"
+nick = "can_beam_3d"
+
+[Parameter]
+
+## Dimension
+DIM = 3
+
+## Maximum Number of Particles
+maxN = 9045
+
+## Number of average particle interaction pairs: max_interaction = kpair*maxn
+kPair = 300
+
+## Indicator Variables for Particle Approximation
+SPH = 2
+
+## Indicator Variables for the Nearest Neighbor Particle Search (NNPS):
+##    1. Direct Search Method
+##    2. Background-Grid Link List Search Method
+##    3. Tree Search Method
+NNPS = 2
+
+## Indicator Variables for Smooth Length Estimation
+SLE = 0
+
+## Smooth Kernel Function : 
+##    1. cubic spline kernel by w4 - spline (monaghan 1985)
+##    2. gauss kernel   (gingold and monaghan 1981)
+##    3. quintic kernel (morris 1997)
+SKF = 1
+
+## Serial Number of the Monitored Particle
+monitorParticle = 500
+
+printStatistics = true
+
+printInterval = 10000
+
+saveInterval = 2000
+
+maxTimeStep = 200000
+
+## Time Step
+deltaT = 2e-6
+
+summationDensity    = false
+dummyParticle       = true
+viscosity           = true # Must be true for Solid
+gravity             = true
+artificialViscosity = true
+# artificialHeat      = true
+averageVelocity     = false
+# normalizeDensity    = true
+kernelCorrection    = true
+# shifting = true
+artificialStress = false
+
+[Parallel]
+
+# OMP_NUM_THREADS = 6  # Overwrite the environment variable OMP_NUM_THREADS
+
+[postProcess]
+writeDummyParticle2VTK = true

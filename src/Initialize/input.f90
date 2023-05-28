@@ -49,23 +49,23 @@ contains
 
         select case(Project%nick)
         case("shear_cavity")
-            call shear_cavity(ntotal, Particles)
+            call shearCavity(ntotal, Particles)
         case("shock_tube")
             ntotal = Field%ntotal
-            call shock_tube(ntotal, Particles)
+            call shockTube(ntotal, Particles)
         case("tnt_bar")
             ntotal = Field%ntotal
-            call tnt_bar(ntotal, Particles)
+            call tntBar(ntotal, Particles)
         case("tnt_cylinder")
-            call tnt_cylinder(ntotal, Particles)
+            call tntCylinder(ntotal, Particles)
         case("undex_cylinder")
-            call undex_cylinder(ntotal, Particles)
+            call undexCylinder(ntotal, Particles)
         case("undex_chamber")
-            call undex_chamber(ntotal, Particles)
+            call undexChamber(ntotal, Particles)
         case("UNDEX")
             call undex(ntotal, Particles)
         case("undex_plate")
-            call undex_plate(ntotal, Particles)
+            call undexPlate(ntotal, Particles)
         case("dam_break")
             call damBreak(ntotal, Particles)
         case("db_gate")
@@ -73,12 +73,14 @@ contains
         case("water_impact")
             call waterImpact(ntotal, Particles)
         case ("taylor_rod")
-            call taylor_rod(ntotal, Particles)
+            call taylorRod(ntotal, Particles)
         case ("can_beam")
-            call cantilever_beam(ntotal, Particles)
+            call cantileverBeam(ntotal, Particles)
         case ("beam_oil")
             write(*, "(A)") "!!! Unfinished Project !!!"
             call clammpedBeamwithOil(ntotal, Particles)
+        case ("can_beam_3d")
+            call cantileverBeam3D(ntotal, Particles)
         end select
 
         call output(ini, Particles(1:ntotal))
@@ -89,7 +91,7 @@ contains
 
     end subroutine write_initial_file
 
-    subroutine shock_tube(ntotal, P)
+    subroutine shockTube(ntotal, P)
         integer, intent(in) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: dx
@@ -129,9 +131,9 @@ contains
             P(i)%SoundSpeed      = sqrt(gamma * P(i)%Pressure / P(i)%Density)
         end do
 
-    end subroutine shock_tube
+    end subroutine shockTube
 
-    subroutine shear_cavity(ntotal, P)
+    subroutine shearCavity(ntotal, P)
         use eos_m, only: arti_water_eos_2
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
@@ -174,9 +176,9 @@ contains
         end do
 
 
-    end subroutine shear_cavity
+    end subroutine shearCavity
 
-    subroutine tnt_bar(ntotal, P)
+    subroutine tntBar(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: space_x
@@ -198,9 +200,9 @@ contains
             P(i)%SmoothingLength = space_x * 1.5
         end do
 
-    end subroutine tnt_bar
+    end subroutine tntBar
 
-    subroutine tnt_cylinder(ntotal, P)
+    subroutine tntCylinder(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: rho0 = 1630, e0 = 4.29e6
@@ -246,9 +248,9 @@ contains
             end do
         end do
 
-    end subroutine tnt_cylinder
+    end subroutine tntCylinder
 
-    subroutine undex_cylinder(ntotal, P)
+    subroutine undexCylinder(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: rho0(2) = [1630., 1000.], e0(2) = [4.29e6, 0.]
@@ -309,9 +311,9 @@ contains
             end do
         end do
 
-    end subroutine undex_cylinder
+    end subroutine undexCylinder
 
-    subroutine undex_chamber(ntotal, P)
+    subroutine undexChamber(ntotal, P)
         use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
@@ -581,7 +583,7 @@ contains
         !     ntotal = k
         ! end do
 
-    end subroutine undex_chamber
+    end subroutine undexChamber
 
     subroutine undex(ntotal, P)
         use geometry_m, only: rectangle_t, circle_t, point_t
@@ -942,7 +944,7 @@ contains
 
     ! end subroutine undex
 
-    subroutine undex_plate(ntotal, P)
+    subroutine undexPlate(ntotal, P)
         use geometry_m, only: rectangle_t, circle_t, point_t
         use eos_m, only: mie_gruneisen_eos_of_water, jwl_eos
         integer, intent(inout) :: ntotal
@@ -1024,7 +1026,7 @@ contains
 
         ntotal = k
 
-    end subroutine undex_plate
+    end subroutine undexPlate
 
     subroutine damBreak(ntotal, P)
         use eos_m, only: arti_water_eos_1
@@ -1297,7 +1299,7 @@ contains
 
     end subroutine clammpedBeamwithOil
 
-    subroutine taylor_rod(ntotal, P)
+    subroutine taylorRod(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: solid_domain(4) = [0., 0.760, &
@@ -1329,9 +1331,9 @@ contains
 
         ntotal = Nx * Ny
 
-    end subroutine taylor_rod
+    end subroutine taylorRod
 
-    subroutine cantilever_beam(ntotal, P)
+    subroutine cantileverBeam(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
         real(8) :: dx = 5e-4, bulk=2e7, rho0=1100, c
@@ -1347,12 +1349,12 @@ contains
                 P(k)%x(:)            = [i-1, j-1-ny/2] * dx
                 P(k)%v(:)            = 0
                 P(k)%Density         = rho0
-                P(k)%Mass            = P(k)%Density * dx * dx
+                P(k)%Mass            = P(k)%Density * dx**2
                 P(k)%Pressure        = 0
                 P(k)%InternalEnergy  = 0
                 P(k)%SoundSpeed      = c
                 P(k)%Type            = 102
-                P(k)%SmoothingLength = dx! * 2
+                P(k)%SmoothingLength = dx * 2
                 if ( i == 1 ) then
                     P(k)%Boundary = 1
                 end if
@@ -1361,6 +1363,45 @@ contains
 
         ntotal = nx * ny
 
-    end subroutine cantilever_beam
+    end subroutine cantileverBeam
+
+    subroutine cantileverBeam3D(ntotal, P)
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
+        real(8) :: dx = 1e-3, bulk=2e7, rho0=1100, c
+        integer :: nx = 101, ny = 3, nz = 5
+
+        integer i, j, k, l
+
+        ntotal = 0
+        c = sqrt(bulk / rho0)
+
+        do i = 1, nx
+            do j = 1, ny
+                do k = 1, nz
+                    l = (i-1) * ny * nz + (j-1) * nz + k
+                    P(l)%x(1)            = (i-1) * dx
+                    P(l)%x(2)            = (j-1-ny/2) * dx
+                    P(l)%x(3)            = (k-1-nz/2) * dx
+                    P(l)%v(:)            = 0
+                    P(l)%Density         = rho0
+                    P(l)%Mass            = P(l)%Density * (dx**Field%Dim)
+                    P(l)%Pressure        = 0
+                    P(l)%InternalEnergy  = 0
+                    P(l)%SoundSpeed      = c
+                    P(l)%Type            = 102
+                    P(l)%SmoothingLength = dx * 2
+                    if ( i == 1 ) then
+                        P(l)%Boundary = 1
+                    else if ( j == ny ) then
+                        P(l)%Boundary = 3
+                    end if
+                end do
+            end do
+        end do
+
+        ntotal = l
+
+    end subroutine cantileverBeam3D
 
 end module input_m

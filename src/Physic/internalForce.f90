@@ -1,5 +1,5 @@
-#include "../macro.h"
 module in_force_m
+#include "../macro.h"
     use ctrl_dict, only: Config, Field
     use sph,       only: Particle
     ! use boundary_condition_m

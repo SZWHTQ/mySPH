@@ -1,5 +1,5 @@
-#include "../macro.h"
 module nnps_m
+#include "../macro.h"
     use, intrinsic :: iso_fortran_env, only: err => error_unit
     use ctrl_dict, only: Config, Field
     use sph,       only: Particle

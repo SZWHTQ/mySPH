@@ -1,5 +1,5 @@
-#include "../macro.h"
 subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear, dSdt)
+#include "../macro.h"
     use, intrinsic :: iso_fortran_env, only: err => error_unit
     !$ use omp_lib
     use ctrl_dict,          only: Config, Field

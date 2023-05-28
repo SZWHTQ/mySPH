@@ -10,8 +10,16 @@ project(
     VERSION "0.2.0"
 )
 # set(CMAKE_GENERATOR "Ninja")
-add_definitions("-std=f2018 -cpp")
-# add_definitions("-cpp")
+
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+    add_definitions("-std=f2018 -cpp")
+elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
+    if("{CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+        add_definitions("/fpp")
+    else()
+        add_definitions("-fpp")
+    endif()
+endif()
 
 set(srcs)
 add_subdirectory("src")
@@ -28,7 +36,15 @@ endif()
 
 set(OMP ON CACHE BOOL "Enable OpenMP")
 if(OMP)
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -lgomp -fopenmp")
+    if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -lgomp -fopenmp")
+    elseif ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
+        if("{CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+            set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /Qopenmp")
+        else()
+            set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
+        endif()
+    endif()
     message(STATUS "OpenMP enabled")
 else(OMP)
     message(STATUS "OpenMP disabled")
@@ -76,11 +92,11 @@ elseif(NOT LOCAL_TOMLF)
     )
 endif(LOCAL_TOMLF)
 
-target_link_libraries(
-    ${PROJECT_NAME}-lib
-    blas
-    lapack
-)
+# target_link_libraries(
+#     ${PROJECT_NAME}-lib
+#     blas
+#     lapack
+# )
 
 add_executable(
     ${PROJECT_NAME}

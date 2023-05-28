@@ -1,5 +1,5 @@
-#include "../macro.h"
 module time_integration_m
+#include "../macro.h"
     use sph
     use tools_m
     implicit none

@@ -1,5 +1,5 @@
-#include "../macro.h"
 module sph
+#include "../macro.h"
     implicit none
     private
 

@@ -121,9 +121,9 @@ contains
             if ( mod(Config%i_time_step, Config%print_interval) == 0 ) then
                 call pbflush()
 #ifndef _WIN32
-                write(*, "(A)") repeat("—", 72)
+                write(*, "(A)") repeat("—", 76)
 #else
-                write(*, "(A)") repeat("-", 72)
+                write(*, "(A)") repeat("-", 76)
 #endif
                 write(*, "(2(A, G0))") " Courant Number mean: ", aver_courant, &
                                        " max: ", max_courant
@@ -270,9 +270,9 @@ contains
                                   Delta(Config%monitor_particle)%Velocity(i)
                 end do
 #ifndef _WIN32
-                write(*, "(A)") repeat("—", 72)
+                write(*, "(A)") repeat("—", 76)
 #else
-                write(*, "(A)") repeat("-", 72)
+                write(*, "(A)") repeat("-", 76)
 #endif
                 write(*,*)
                 call pbout(Config%i_time_step, Config%max_time_step, .true.)

@@ -64,8 +64,13 @@ contains
                 stop
             end if
         end select
+#ifndef _WIN32
         Project%out_path = Project%in_path//"/output"
         Project%vtk_path = Project%in_path//"/vtk"
+#elif
+    Project%out_path = Project%in_path//"\output"
+    Project%vtk_path = Project%in_path//"\vtk"
+#endif
 
         call create_directory(Project%out_path)
         call create_directory(Project%vtk_path)

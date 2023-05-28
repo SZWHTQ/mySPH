@@ -355,12 +355,13 @@ contains
         real(8) :: Mises
         integer :: Dim
 
-        select case(dim)
+        Dim = size(cauchyStress,1)
+        select case(Dim)
         case(1)
             Mises = abs(cauchyStress(1,1))
         case(2)
             Mises = sqrt((cauchyStress(1,1)+cauchyStress(2,2))**2 &
-                            - 3*cauchyStress(1,1)*cauchyStress(2,2) &
+                            - 3*(cauchyStress(1,1)*cauchyStress(2,2)) &
                             + 3*(cauchyStress(1,2)**2))
         case(3)
             Mises = sqrt((cauchyStress(1,1)+cauchyStress(2,2)+cauchyStress(3,3))**2 &

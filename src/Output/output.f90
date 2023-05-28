@@ -355,11 +355,22 @@ contains
         real(8) :: Mises
         integer :: Dim
 
-        Mises = sqrt((cauchyStress(1,1)+cauchyStress(2,2)+cauchyStress(3,3))**2 &
-                            - 3*(cauchyStress(2,2)*cauchyStress(3,3)  &
-                                +cauchyStress(3,3)*cauchyStress(1,1)  &
-                                +cauchyStress(1,1)*cauchyStress(2,2)) &
-                            + 3*(cauchyStress(1,2)**2+cauchyStress(1,3)**2+cauchyStress(2,3)**2))
+        select case(dim)
+        case(1)
+            Mises = abs(cauchyStress(1,1))
+        case(2)
+            Mises = sqrt((cauchyStress(1,1)+cauchyStress(2,2))**2 &
+                            - 3*cauchyStress(1,1)*cauchyStress(2,2) &
+                            + 3*(cauchyStress(1,2)**2))
+        case(3)
+            Mises = sqrt((cauchyStress(1,1)+cauchyStress(2,2)+cauchyStress(3,3))**2 &
+                                - 3*(cauchyStress(2,2)*cauchyStress(3,3)  &
+                                    +cauchyStress(3,3)*cauchyStress(1,1)  &
+                                    +cauchyStress(1,1)*cauchyStress(2,2)) &
+                                + 3*(cauchyStress(1,2)**2 &
+                                    +cauchyStress(1,3)**2 &
+                                    +cauchyStress(2,3)**2))
+        end select
 
     end function vonMises
 

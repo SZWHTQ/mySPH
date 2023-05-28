@@ -1336,8 +1336,8 @@ contains
     subroutine cantileverBeam(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        real(8) :: dx = 5e-4, bulk=2e7, rho0=1100, c
-        integer :: nx = 201, ny = 9
+        real(8) :: dx = 1e-3, bulk=2e7, rho0=1100, c
+        integer :: nx = 101, ny = 5
 
         integer i, j, k
 

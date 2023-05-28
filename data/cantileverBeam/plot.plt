@@ -30,11 +30,11 @@ set cbrange [0:0.16]
 set cbtics 0.02
 set cblabel "Mises/MPa"
 
-do for [i=1:150:1] {
+do for [i=1:50:1] {
     set title sprintf('%.1fms', i*4)
     # plot sprintf('./output/Type_102_%d.dat', i) using 4:5:($18*1e-6) palette pt 7 ps 0.75, \
     #      w(x) w l lt rgb "#000000" lw 2
-    plot sprintf('./output/Type_102_%d.dat', i) using 4:5:(sqrt($18**2+$22**2-$18*$22+3*$19**2))*1e-6) palette pt 7 ps 0.75, \
+    plot sprintf('./output/Type_102_%d.dat', i) using 4:5:(sqrt($18**2+$21**2-$18*$21+3*$19**2)*1e-6) palette pt 7 ps 0.75, \
          w(x) w l lt rgb "#bf2029" lw 2
     pause 0.1
 }

@@ -86,9 +86,9 @@ contains
         character(len=512) :: buffer
 #endif
 
-        open (newunit=fileUnit, file=Project%in_path//"/sph.toml", &
-              status='old', form="formatted", action="read", &
-              encoding="UTF-8", access="sequential")
+        open(newunit=fileUnit, file=Project%in_path//"/sph.toml", &
+             status='old', form="formatted", action="read", &
+             encoding="UTF-8", access="sequential")
         call toml_parse(sph_file, fileUnit)
         close(fileUnit)
 

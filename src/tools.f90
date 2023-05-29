@@ -2,6 +2,7 @@ module tools_m
     use, intrinsic :: iso_fortran_env, only: stdout => output_unit
     implicit none
     character(len=*), parameter :: BS  = char(8)
+    character(len=*), parameter :: LF  = char(10)
     character(len=*), parameter :: CR  = char(13)
     character(len=*), parameter :: ESC = char(27)
     real(8), parameter :: PI = acos(-1.0_8)
@@ -170,18 +171,18 @@ contains
 #elif __GNUC__
         inquire(File=buffer, Exist=alive)
 #endif
-            if ( .not. alive ) then
-                if ( present(info) ) then
-                    info = "Created directory: "//trim(adjustl(buffer))
-                end if
-                call execute_command_line('mkdir '//trim(adjustl(buffer)))
-            else
-                if ( present(info) ) then
-                    info = "Directory already exists: "//trim(adjustl(buffer))
-                end if
+        if ( .not. alive ) then
+            if ( present(info) ) then
+                info = "Created directory: "//trim(adjustl(buffer))
             end if
+            call execute_command_line('mkdir '//trim(adjustl(buffer)))
+        else
+            if ( present(info) ) then
+                info = "Directory already exists: "//trim(adjustl(buffer))
+            end if
+        end if
 
-            deallocate(buffer)
+        deallocate(buffer)
 
     end subroutine create_directory
 
@@ -262,6 +263,9 @@ contains
                     "]", 100d0*rate, "% ", minutes, "m", seconds, "s", CR
             end if
         end if
+#ifdef __INTEL_COMPILER
+        write(*,*) LF
+#endif
     
         if (value == max) then
             write (*, *)

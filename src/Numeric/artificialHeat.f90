@@ -30,9 +30,11 @@ contains
                 q_j = alpha * P(j)%SmoothingLength*P(j)%SoundSpeed &
                     + beta * (P(j)%SmoothingLength**2)             &
                            * (abs(P(j)%divergenceVelocity)-P(j)%divergenceVelocity)  !! @todo: P375 ?
-                ! q_i = (alpha*P(i)%SmoothingLength*P(i)%Density*P(i)%SoundSpeed + beta*(P(i)%SmoothingLength**2)*P(i)%Density*abs(P(i)%divergenceVelocity)) &  !! P123
+                ! q_i = (alpha*P(i)%SmoothingLength*P(i)%Density*P(i)%SoundSpeed &
+                !           + beta*(P(i)%SmoothingLength**2)*P(i)%Density*abs(P(i)%divergenceVelocity)) &  !! P123
                 !       * abs(P(i)%divergenceVelocity)
-                ! q_j = (alpha*P(j)%SmoothingLength*P(j)%Density*P(j)%SoundSpeed + beta*(P(j)%SmoothingLength**2)*P(j)%Density*abs(P(j)%divergenceVelocity)) &
+                ! q_j = (alpha*P(j)%SmoothingLength*P(j)%Density*P(j)%SoundSpeed &
+                !           + beta*(P(j)%SmoothingLength**2)*P(j)%Density*abs(P(j)%divergenceVelocity)) &
                 !       * abs(P(j)%divergenceVelocity)
                 q_ij    = 0.5_8 * (q_i + q_j)
                 hsml_ij = 0.5_8 * (P(i)%SmoothingLength + P(j)%SmoothingLength)

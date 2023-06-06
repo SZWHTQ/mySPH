@@ -45,7 +45,7 @@ do for [i=0:maxStep/100:timeStep/100] {
     set yrange [3:7]
     plot sprintf('./output/Type_5_%d.dat', i) u 4:($9*1e-6) with lines lw 2 lt rgb "black"
 
-    pause 0.2
+    pause 0.05
     
     unset multiplot
 }

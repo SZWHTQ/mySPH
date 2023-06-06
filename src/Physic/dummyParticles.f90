@@ -134,7 +134,7 @@ contains
             ndummy = ndummy + 1
             P(ntotal+ndummy)%x(1)            = -0.6 - dx / 4 * (i+1)
             P(ntotal+ndummy)%v(1)            =  0
-            P(ntotal+ndummy)%SmoothingLength =  dx * 1.5
+            P(ntotal+ndummy)%SmoothingLength =  dx * 2
             P(ntotal+ndummy)%Type            = -1
             P(ntotal+ndummy)%Density         =  1
             P(ntotal+ndummy)%Mass            =  P(ntotal+ndummy)%Density * dx / 4
@@ -229,7 +229,7 @@ contains
             P(ntotal+ndummy)%x(1)            = 0 -  space_x * i
             P(ntotal+ndummy)%v(1)            = 0
             P(ntotal+ndummy)%Mass            = rho0 * space_x
-            P(ntotal+ndummy)%SmoothingLength = space_x * 1.5
+            P(ntotal+ndummy)%SmoothingLength = space_x * 1.8
             P(ntotal+ndummy)%Type            = -P(1)%Type
             P(ntotal+ndummy)%InternalEnergy  = E0
             P(ntotal+ndummy)%Density         = rho0

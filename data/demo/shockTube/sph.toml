@@ -41,7 +41,7 @@ monitorParticle = 70
 
 printInterval = 250
 
-saveInterval = 50
+saveInterval = 25
 
 maxTimeStep = 5000
 

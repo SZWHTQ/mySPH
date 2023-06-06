@@ -39,7 +39,7 @@ printStatistics = true
 
 ## Time Step
 deltaT = 1e-9
-printInterval = 1000
+printInterval = 1500
 saveInterval  = 100
 maxTimeStep   = 15000
 
@@ -47,9 +47,9 @@ summationDensity    = true
 averageVelocity     = false
 dummyParticle       = true
 artificialViscosity = true
-artificialHeat      = false
+artificialHeat      = true
 normalizeDensity    = false
-kernelCorrection    = true
+kernelCorrection    = false
 
 # symmetry of the problem
 # nsym = 0 : no symmetry,

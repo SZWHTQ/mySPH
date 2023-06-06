@@ -60,7 +60,7 @@ contains
             thickness = 0.05
             exponential = 50
             do i = 1, ntotal
-                if ( P(i)%Boundary == 2 ) then
+                ! if ( P(i)%Boundary == 2 ) then
                     if ( P(i)%x(1) < -boundary ) then
                         distance = -boundary - P(i)%x(1)
                     else if ( P(i)%x(1) > boundary ) then
@@ -74,8 +74,9 @@ contains
                     end if
                     lambda = distance / thickness
                     factor = ( 1. - 1./(100**((0.9)**(exponential*lambda))) )
-                    D(i)%Density = factor * D(i)%Density
-                end if
+                    D(i)%Density  = factor * D(i)%Density
+                    D(i)%Velocity = factor * D(i)%Velocity
+                ! end if
             end do
         case("undex_plate")
             thickness = 0.05

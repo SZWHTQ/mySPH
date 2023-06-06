@@ -55,7 +55,7 @@ artificialViscosity = true
 # normalizeDensity    = true
 kernelCorrection    = true
 # shifting            = true
-# artificialStress    = true
+artificialStress    = true
 
 
 [Parallel]

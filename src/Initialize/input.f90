@@ -111,7 +111,7 @@ contains
             P(i)%x(1)            = -0.6 + dx / 4 * (i-1)
             P(i)%v(:)            = 0
             P(i)%Type            = 1
-            P(i)%SmoothingLength = dx * 1.5
+            P(i)%SmoothingLength = dx * 2
             P(i)%Density         = 1
             P(i)%Mass            = P(i)%Density * dx / 4
             P(i)%Pressure        = 1
@@ -196,8 +196,8 @@ contains
             P(i)%Mass            = P(i)%Density * space_x
             P(i)%Pressure        = 0
             P(i)%InternalEnergy  = E0
-            P(i)%Type           = 0
-            P(i)%SmoothingLength = space_x * 1.5
+            P(i)%Type            = 0
+            P(i)%SmoothingLength = space_x * 1.8
         end do
 
     end subroutine tntBar
@@ -1336,8 +1336,8 @@ contains
     subroutine cantileverBeam(ntotal, P)
         integer, intent(inout) :: ntotal
         type(Particle), intent(inout) :: P(:)
-        real(8) :: dx = 1e-3, bulk=2e7, rho0=1100, c
-        integer :: nx = 101, ny = 5
+        real(8) :: dx = 5e-4, bulk=2e7, rho0=1100, c
+        integer :: nx = 201, ny = 9
 
         integer i, j, k
 

@@ -36,14 +36,14 @@ monitorParticle = 500
 
 printStatistics = true
 
-printInterval = 10000
+printInterval = 20000
 
-saveInterval = 2000
+saveInterval = 4000
 
-maxTimeStep = 200000
+maxTimeStep = 400000
 
 ## Time Step
-deltaT = 2e-6
+deltaT = 1e-6
 
 summationDensity    = false
 dummyParticle       = true
@@ -51,9 +51,9 @@ viscosity           = true # Must be true for Solid
 gravity             = true
 artificialViscosity = true
 # artificialHeat      = true
-averageVelocity     = false
+averageVelocity     = true
 # normalizeDensity    = true
-kernelCorrection    = true
+kernelCorrection    = false
 # shifting = true
 artificialStress = false
 

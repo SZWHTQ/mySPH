@@ -19,9 +19,9 @@ w(x, y) = q*x**2/(24*E*I)*(x**2-4*l*x+6*l**2) \
 set xlabel "x/m"
 set ylabel "y/m"
 set zlabel "z/m"
-set xrange [-0.01:0.11]
-set yrange [-0.06:0.06]
-set zrange [-0.02:0.02]
+set xrange [-0.001:0.101]
+set yrange [-0.051:0.051]
+set zrange [-0.020:0.010]
 set xtics 0.02
 set ytics 0.02
 set ztics 0.01
@@ -35,16 +35,14 @@ set palette rgbformulae 22, 13, -31
 # set cbrange [-0.05:0.05]
 # set cbtics 0.025
 # set cblabel "Stress_{xx}/MPa"
-set cbrange [0:0.16]
+set cbrange [0:0.1]
 set cbtics 0.02
 set cblabel "Mises/MPa"
 
-do for [i=1:150:1] {
+do for [i=1:47:1] {
     set title sprintf('%.1fms', i*4)
-    # plot sprintf('./output/Type_102_%d.dat', i) using 4:5:($18*1e-6) palette pt 7 ps 0.75, \
-    #      w(x) w l lt rgb "#000000" lw 2
-    splot sprintf('./output/Type_102_%d.dat', i) using 4:5:6:(sqrt(($21+$25+$29)**2-3*($25*$29+$29*$21+$21*$25-$22**2-$23**2-$28**2))*1e-4) palette pt 7 ps 0.5, \
-         w(x, y) w l lt rgb "#bf2029" lw 1
+    splot sprintf('./output/Type_102_%d.dat', i) using 4:5:6:($30*1e-6) palette pt 7 ps 0.5, \
+          w(x, y) w l lt rgb "#bf2029" lw 1
     pause 0.1
 }
 

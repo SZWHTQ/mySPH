@@ -154,7 +154,7 @@ contains
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2)*dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
-                    case (102, 103)
+                    case (102, 103, 105)
                         Shear_prev(:, :, i) = Shear(:, :, i)
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2)*dSdt(:, :, i)
                     case (104)
@@ -194,7 +194,7 @@ contains
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2) * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
-                    case (102, 103)
+                    case (102, 103, 105)
                         Shear(:, :, i) = Shear(:, :, i) + (Config%delta_t/2) * dSdt(:, :, i)
                     case (104)
                         SigmaY = 3e8
@@ -229,7 +229,7 @@ contains
                         Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
                         J2 = sum( Shear(:, :, i)**2 )
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
-                    case (102, 103)
+                    case (102, 103, 105)
                         Shear(:, :, i) = Shear_prev(:, :, i) + Config%delta_t * dSdt(:, :, i)
                     case (104)
                         SigmaY = 3e8

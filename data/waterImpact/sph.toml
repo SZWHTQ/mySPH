@@ -5,20 +5,20 @@ nick = "water_impact"
 [Parameter]
 
 DIM   = 2
-maxN  = 20582
-kPair = 100
+maxN  = 22000
+kPair = 200
 SPH  = 2
 NNPS = 2
 SLE  = 0
 SKF  = 1
-monitorParticle = 10898
+monitorParticle = 1#10898
 printStatistics = true
-printInterval = 2000
-saveInterval  = 1000
+printInterval = 20000
+saveInterval  = 10000
 maxTimeStep   = 2000000
 
 ## Time Step
-deltaT = 5e-6
+deltaT = 5e-7
 
 summationDensity    = false
 # averageVelocity     = true
@@ -27,8 +27,8 @@ viscosity           = true
 gravity             = true
 artificialViscosity = true
 # normalizeDensity    = true
-# kernelCorrection = true
-# artificialStress = true
+# kernelCorrection    = true
+artificialStress    = true
 
 
 [Parallel]

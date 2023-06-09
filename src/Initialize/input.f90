@@ -81,6 +81,8 @@ contains
             call clammpedBeamwithOil(ntotal, Particles)
         case ("can_beam_3d")
             call cantileverBeam3D(ntotal, Particles)
+        case ("can_beam_f")
+            call cantileverBeamPointLoad(ntotal, Particles)
         end select
 
         call output(ini, Particles(1:ntotal))
@@ -951,19 +953,20 @@ contains
         type(Particle), intent(inout) :: P(:)
         type(rectangle_t) :: water, solid, sponge
         type(circle_t) :: tnt
-        real(8) :: dx, distance, thickness
+        real(8) :: dx, distance, radius, thickness
         integer :: nx, ny
 
         integer i, j, k
 
         dx = 0.0025
         distance = 0.3
+        radius = 0.05
         thickness = 0.015
         ntotal = 0
         k = 0
 
         water  = rectangle_t([real(8) :: 0.00, 0.00], [1.00, 0.50], 0)
-        tnt    = circle_t(   [real(8) :: distance/2, 0.00], 0.05, 0)
+        tnt    = circle_t(   [real(8) :: distance/2, 0.00], radius, 0)
         solid  = rectangle_t([real(8) ::-distance/2-thickness/2, 0.00], [real(8) :: thickness, 0.40], 0)
         sponge = rectangle_t([real(8) :: 0.00, 0.00], [1.10, 0.60], 0)
 
@@ -1193,6 +1196,7 @@ contains
         ntotal = ntotal + nx * ny
 
         !!! Solid
+        dx = dx / 2
         domain = rectangle_t([0.292, 0.04], [0.012, 0.08], 0)
         nx = int((domain%length(1)) / dx) + 1
         ny = int((domain%length(2)) / dx) + 1
@@ -1209,7 +1213,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%SoundSpeed      = 11.489
                 P(k)%Type            = 103
-                P(k)%SmoothingLength = dx * 1.2
+                P(k)%SmoothingLength = dx * 1.5
                 if ( j == 1 ) then
                     P(k)%Boundary = 1
                 end if
@@ -1309,8 +1313,8 @@ contains
 
         integer i, j, k
 
-        Nx = floor((solid_domain(2) - solid_domain(1)) / dx)
-        Ny = floor((solid_domain(4) - solid_domain(3)) / dx)
+        Nx = int((solid_domain(2) - solid_domain(1)) / dx)
+        Ny = int((solid_domain(4) - solid_domain(3)) / dx)
         do j = 1, Ny
             do i = 1, Nx
                 ! k = (i-1) * Ny + j
@@ -1403,5 +1407,46 @@ contains
         ntotal = l
 
     end subroutine cantileverBeam3D
+
+    subroutine cantileverBeamPointLoad(ntotal, P)
+        use geometry_m, only: rectangle_t
+        integer, intent(inout) :: ntotal
+        type(Particle), intent(inout) :: P(:)
+        type(rectangle_t) :: beam
+        real(8) :: dx = 1e-2, rho0=2400, E=22e9, nu=0.3, bulk, c
+        integer :: nx, ny
+
+        integer i, j, k
+
+        beam = rectangle_t([0, 0], [1.0, 0.2], 0)
+        bulk = E / (3 * (1 - 2 * nu))
+        c = sqrt(bulk / rho0)
+
+        nx = int(beam%length(1) / dx)
+        ny = int(beam%length(2) / dx)
+        do i = 1, nx
+            do j = 1, ny
+                k = (i-1) * ny + j
+                P(k)%x(:)            = [i-0.5, j-0.5-ny/2] * dx
+                P(k)%v(:)            = 0
+                P(k)%Density         = rho0
+                P(k)%Mass            = P(k)%Density * dx**2
+                P(k)%Pressure        = 0
+                P(k)%InternalEnergy  = 0
+                P(k)%SoundSpeed      = c
+                P(k)%Type            = 105
+                P(k)%SmoothingLength = dx * 1.2
+                if ( i == 1 ) then
+                    P(k)%Boundary = 1
+                end if
+                if ( i == nx ) then
+                    P(k)%Boundary = 4
+                end if
+            end do
+        end do
+
+        ntotal = nx * ny
+
+    end subroutine cantileverBeamPointLoad
 
 end module input_m

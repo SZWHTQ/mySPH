@@ -158,6 +158,8 @@ contains
                 call arti_eos_of_103(P(i)%Density, P(i)%Pressure)
             case (104)
                 call arti_eos_of_Aluminium(P(i)%Density, P(i)%Pressure)
+            case (105)
+                call arti_eos_of_105(P(i)%Density, P(i)%Pressure)
             end select
 
             !!! Deviatoric Stress Rate Tensor

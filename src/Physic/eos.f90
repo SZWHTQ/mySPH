@@ -239,12 +239,23 @@ contains
     !!! Aluminium(Al5086) EoS
     !!! Type = 104
     elemental subroutine arti_eos_of_Aluminium(rho, p)
-    real(8), intent(in)  :: rho
-    real(8), intent(inout) :: p
-    real(8), parameter :: rho0 = 2700, K = 7.235e10, cc = K / rho0
+        real(8), intent(in)  :: rho
+        real(8), intent(inout) :: p
+        real(8), parameter :: rho0 = 2700, K = 7.235e10, cc = K / rho0
 
-    p = cc * (rho - rho0)
+        p = cc * (rho - rho0)
 
-end subroutine arti_eos_of_Aluminium
+    end subroutine arti_eos_of_Aluminium
+
+    !!! Solid EoS
+    !!! Type = 105
+    elemental subroutine arti_eos_of_105(rho, p)
+        real(8), intent(in)  :: rho
+        real(8), intent(inout) :: p
+        real(8), parameter :: rho0 = 2400, K = 1.833e10, cc = K / rho0
+
+        p = cc * (rho - rho0)
+
+    end subroutine arti_eos_of_105
 
 end module eos_m

@@ -24,6 +24,8 @@ contains
 
         call prescribedDisplacement(ntotal, P, D)
 
+        call pointLoad(ntotal, P, D)
+
         ! call doNothing(ntotal, P, D)
 
 
@@ -120,6 +122,30 @@ contains
         end select
 
     end subroutine prescribedDisplacement
+
+    subroutine pointLoad(ntotal, P, D)
+        integer, intent(in) :: ntotal
+        type(Particle), intent(in) :: P(:)
+        type(Update), intent(inout) :: D(:)
+        real(8) :: S, delta, F, rho
+
+        integer i
+
+        select case (Project%nick)
+        case("can_beam_f")
+            S = 0.2*1
+            delta = 0.01
+            F = 8e3
+            rho = 2400
+            do i = 1, ntotal
+                if ( P(i)%Boundary == 4 ) then
+                    D(i)%Velocity(2) = D(i)%Velocity(2) - F/(rho*S*delta)
+                end if
+            end do
+        end select
+    
+        
+    end subroutine pointLoad
 
     subroutine doNothing(ntotal, P, D)
         integer, intent(in) :: ntotal

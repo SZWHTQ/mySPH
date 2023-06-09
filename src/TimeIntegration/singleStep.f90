@@ -12,7 +12,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
     use density_m,          only: sum_density, con_density, con_density_riemann, &
                                   sum_density_dsph, norm_density
     use visc_m,             only: viscosity
-    use divergence_m,       only: divergence
+    use divergence_m,       only: divergenceVelocity, divergencePosition
     use in_force_m,         only: internal_force
     use arti_visc_m,        only: arti_visc
     use arti_heat_m,        only: arti_heat
@@ -76,12 +76,14 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     !!! Interactions parameters, calculating neighboring particles
     !!! and optimizing smoothing length
-    if ( Config%open_boundary_w) then
-        call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
-    else
-        call search_particles(ntotal, Particles(1:N))
-    end if
-    ! call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
+    ! if ( Config%open_boundary_w) then
+    !     call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
+    ! else
+    !     call search_particles(ntotal, Particles(1:N))
+    ! end if
+    call BGGS(Particles(1:ntotal), Particles(1:N), skipItsSelf=.true.)
+
+    call divergencePosition(ntotal, Particles)
 
     if ( Config%kernel_correciton_w ) call kernelGradientCorrection(ntotal, Particles)
 
@@ -108,7 +110,7 @@ subroutine single_step(ntotal, ndummy, nbuffer, Particles, Delta, aver_v, Shear,
 
     call detonation_wave(Config%i_time_step, Config%delta_t, Particles(1:ntotal))
 
-    call divergence(ntotal, Particles)
+    call divergenceVelocity(ntotal, Particles)
 
     !!! Internal forces
 #if SOLID

@@ -40,7 +40,7 @@
         }
     },
     "cmake.debugConfig": {
-        "args": ["../data/tntBar"],
+        "args": ["../data/cantileverBeamPointLoad"],
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "latex-workshop.latex.autoBuild.run": "onSave",

@@ -25,7 +25,7 @@ contains
             case("taylor_rod")
                 alpha = 0.5
                 beta  = 0.5
-            case("can_beam", "can_beam_3d")
+            case("can_beam", "can_beam_3d", "can_beam_f")
                 alpha = 0.5
                 beta  = 0.5
             case("beam_oil")

@@ -186,6 +186,9 @@ contains
                 do ycell = minxcell(2), maxxcell(2) !! Loop over all cells at y direction
                     do xcell = minxcell(1), maxxcell(1) !! Loop over all cells at x direction
                         j = grid(xcell, ycell, zcell) !! Fetch Particle j from grid
+                        ! if ( (abs(P(j)%Type)-100)*(abs(P(i)%Type)-100) < 0 ) then
+                        !     cycle
+                        ! end if
                         do while ( j > i )
                             ! if ( (abs(P(i)%Type)-100)*(abs(P(j)%Type)-100) < 0 ) cycle
                             ! if ( judge(P(i)%State, P(j)%State) ) then

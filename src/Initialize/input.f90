@@ -958,10 +958,10 @@ contains
 
         integer i, j, k
 
-        dx = 0.0025
-        distance = 0.15
-        radius = 0.025
-        thickness = 0.015
+        dx = 2.5e-3
+        distance = 0.3
+        radius = 2.5e-2
+        thickness = 2e-2
         ntotal = 0
         k = 0
 
@@ -1029,15 +1029,18 @@ contains
                     P(k)%SoundSpeed      = 5177
                     P(k)%Type            = 104
                     P(k)%SmoothingLength = dx! * 2
-                    if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx) ) then
-                        k = k - 1
-                        cycle
-                    else if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx*2) ) then
+                    ! if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx) ) then
+                    !     k = k - 1
+                    !     cycle
+                    ! else if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx*2) ) then
+                    !     P(K)%Boundary = 1
+                    ! end if
+                    ! if ( abs(P(k)%x(1) - solid%center(1)) > (solid%length(1)/2-dx) ) then
+                    !     k = k - 1
+                    !     cycle
+                    ! end if
+                    if ( abs(P(k)%x(2)) > (solid%length(2)/2-dx*2) ) then
                         P(K)%Boundary = 1
-                    end if
-                    if ( abs(P(k)%x(1) - solid%center(1)) > (solid%length(1)/2-dx) ) then
-                        k = k - 1
-                        cycle
                     end if
                 else if ( water%contain(point_t(P(k)%x, 0)) ) then
                     k = k - 1

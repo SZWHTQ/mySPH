@@ -4,13 +4,12 @@ set terminal qt size 800, 880 position 200, 50 font "Times New Roman, 24"
 
 # set output "solid.gif"
 
+distance  = 0.3
 thickness = 0.015
-# array center = [-0.15,0]
-# startTime = 28
-# array center = [-0.05,0]
-# startTime = 12
-array center = [-0.075-thickness/2,0]
-startTime = 16
+
+array center = [-distance/2-thickness/2,0]
+startTime = 45
+# startTime = 16
 
 set xlabel "x/m"
 set ylabel "y/m"
@@ -23,15 +22,15 @@ set size 1, 1
 unset key
 set palette rgbformulae 22, 13, -31
 # set cbrange [0:10]
-set cbrange [-1e-2:0]
+set cbrange [-2.5e-2:0]
 # unset colorbox
 
-do for [i=startTime:200:1] {
-    set title sprintf('%.1fμs', i*2.5)
-    plot sprintf('./output/Type_104_%d.dat', i) using 4:5:16 pt 7 ps 1 palette, \
-         sprintf('./output/Type_6_%d.dat', i)   using 4:5    pt 7 ps 1 lt rgb "#7bbeff", \
-         sprintf('./output/Type_5_%d.dat', i)   using 4:5    pt 7 ps 1 lt rgb "#bf2029"
-    pause 0.02
+do for [i=startTime:200:5] {
+    set title sprintf('%.1fμs', i*2)
+    plot sprintf('./output/Type_104_%d.dat', i) using 4:5:16 pt 7 ps 0.75 palette, \
+         sprintf('./output/Type_6_%d.dat', i)   using 4:5    pt 7 ps 0.75 lt rgb "#7bbeff", \
+         sprintf('./output/Type_5_%d.dat', i)   using 4:5    pt 7 ps 0.75 lt rgb "#bf2029"
+    # pause 0.02
 }
 
 pause -1

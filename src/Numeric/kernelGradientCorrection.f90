@@ -22,7 +22,7 @@ contains
 
         !$omp parallel do private(i, j, k, d, e, dx, Temp, B) reduction(+:A)
         do i = 1, ntotal
-            if ( P(i)%Type <= 100 ) cycle
+            ! if ( P(i)%Type <= 100 ) cycle
             do k = 1, P(i)%neighborNum
                 j = P(i)%neighborList(k)
                 ! if ( (abs(P(i)%Type)-100)*(abs(P(j)%Type)-100) < 0 ) cycle

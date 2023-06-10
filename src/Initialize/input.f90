@@ -959,8 +959,8 @@ contains
         integer i, j, k
 
         dx = 0.0025
-        distance = 0.3
-        radius = 0.05
+        distance = 0.15
+        radius = 0.025
         thickness = 0.015
         ntotal = 0
         k = 0
@@ -970,7 +970,6 @@ contains
         solid  = rectangle_t([real(8) ::-distance/2-thickness/2, 0.00], [real(8) :: thickness, 0.40], 0)
         sponge = rectangle_t([real(8) :: 0.00, 0.00], [1.10, 0.60], 0)
 
-        !!! Water
         nx = int((sponge%length(1)) / dx) + 1
         ny = int((sponge%length(2)) / dx) + 1
         do i = 1, nx
@@ -985,6 +984,42 @@ contains
                     P(k)%Type             = 5
                     P(k)%SmoothingLength  = 1.5 * dx
                     call jwl_eos(P(k)%Density, P(k)%InternalEnergy, P(k)%Pressure)
+                else if ( solid%contain(point_t(P(k)%x, 0)) ) then
+                    k = k - 1
+                    cycle
+                else if ( water%contain(point_t(P(k)%x, 0)) ) then
+                    P(K)%v(:)            = 0
+                    P(k)%Density         = 1000
+                    P(k)%Mass            = P(k)%Density * dx * dx
+                    P(k)%InternalEnergy  = 0
+                    P(k)%Type            = 6
+                    P(k)%SmoothingLength = dx
+                    call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                    P(k)%Pressure, P(k)%SoundSpeed)
+                else
+                    P(K)%v(:)            = 0
+                    P(k)%Density         = 1000
+                    P(k)%Mass            = P(k)%Density * dx * dx
+                    P(k)%InternalEnergy  = 0
+                    P(k)%Type            = 6
+                    P(k)%SmoothingLength = dx
+                    P(k)%Boundary        = 2
+                    call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
+                                                    P(k)%Pressure, P(k)%SoundSpeed)
+                end if
+            end do
+        end do
+        
+        ! dx = dx * 0.2
+        nx = int((sponge%length(1)) / dx) + 1
+        ny = int((sponge%length(2)) / dx) + 1
+        do i = 1, nx
+            do j = 1, ny
+                k = k + ntotal + 1
+                P(k)%x(:) = sponge%center - sponge%length/2 + [i-0.5, j-0.5] * dx
+                if ( tnt%contain(point_t(P(k)%x, 0)) ) then
+                    k = k - 1
+                    cycle
                 else if ( solid%contain(point_t(P(k)%x, 0)) ) then
                     P(k)%v(:)            = 0
                     P(k)%Density         = 2700
@@ -1005,24 +1040,11 @@ contains
                         cycle
                     end if
                 else if ( water%contain(point_t(P(k)%x, 0)) ) then
-                    P(K)%v(:)            = 0
-                    P(k)%Density         = 1000
-                    P(k)%Mass            = P(k)%Density * dx * dx
-                    P(k)%InternalEnergy  = 0
-                    P(k)%Type            = 6
-                    P(k)%SmoothingLength = dx
-                    call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
-                                                    P(k)%Pressure, P(k)%SoundSpeed)
+                    k = k - 1
+                    cycle
                 else
-                    P(K)%v(:)            = 0
-                    P(k)%Density         = 1000
-                    P(k)%Mass            = P(k)%Density * dx * dx
-                    P(k)%InternalEnergy  = 0
-                    P(k)%Type            = 6
-                    P(k)%SmoothingLength = dx
-                    P(k)%Boundary        = 2
-                    call mie_gruneisen_eos_of_water(P(k)%Density, P(k)%InternalEnergy, &
-                                                    P(k)%Pressure, P(k)%SoundSpeed)
+                    k = k - 1
+                    cycle
                 end if
             end do
         end do
@@ -1196,7 +1218,7 @@ contains
         ntotal = ntotal + nx * ny
 
         !!! Solid
-        dx = dx / 2
+        dx = dx! / 2
         domain = rectangle_t([0.292, 0.04], [0.012, 0.08], 0)
         nx = int((domain%length(1)) / dx) + 1
         ny = int((domain%length(2)) / dx) + 1
@@ -1213,7 +1235,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%SoundSpeed      = 11.489
                 P(k)%Type            = 103
-                P(k)%SmoothingLength = dx * 1.5
+                P(k)%SmoothingLength = dx! * 1.5
                 if ( j == 1 ) then
                     P(k)%Boundary = 1
                 end if

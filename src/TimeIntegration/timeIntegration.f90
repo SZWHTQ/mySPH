@@ -93,17 +93,18 @@ contains
                     Config%save_interval = 100
                 else
                     if ( first ) then
-                        Config%i_time_step = Config%i_time_step * 100
+                        Config%i_time_step = Config%i_time_step * 10
                         first = .false.
                     end if
-                    Config%delta_t = 5e-7
-                    Config%print_interval = 20000
-                    Config%save_interval  = 10000
+                    Config%delta_t = 5e-6
+                    Config%print_interval = 2000
+                    Config%save_interval  = 1000
                 end if
             case("undex_plate")
-                if ( time < 8.25e-5 ) then
+                ! if ( time < 8.25e-5 ) then
                 ! if ( time < 1.3e-5 ) then
                 ! if ( time < 0.6e-5 ) then
+                if ( time < 4e-5 ) then
                     Config%delta_t = 1e-7
                     Config%print_interval = 100
                     Config%save_interval = 25

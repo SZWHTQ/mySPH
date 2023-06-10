@@ -133,6 +133,13 @@ contains
                 call jwl_eos_of_PETN(P(i)%Density, P(i)%InternalEnergy, P(i)%Pressure)
             end select !! abs(P(i)%Type)
 
+            do d = 1, Field%Dim
+                do dd = 1, Field%Dim
+                    P(i)%Stress(d, dd) = P(i)%Viscosity * edot(d, dd, i)
+                end do
+                P(i)%Stress(d, d) = P(i)%Stress(d, d) - P(i)%Pressure
+            end do
+
 #if SOLID
         else if ( present(Shear) ) then !! Solid
 
@@ -230,48 +237,25 @@ contains
         case (2)
             !$OMP PARALLEL DO PRIVATE(i, j, k, aux)
             do i = 1, ntotal  !! All particles
-                if ( abs(P(i)%Type) <= 100 ) then !! Fluid
-                    do k = 1, P(i)%neighborNum !! All neighbors of each particle
-                        j = P(i)%neighborList(k)
+                do k = 1, P(i)%neighborNum
+                    j = P(i)%neighborList(k)
 
-                        !!! Auxiliary variables
-                        aux = (P(i)%Pressure/P(i)%Density**2 + P(j)%Pressure/P(j)%Density**2)
-
-                        !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(: ,i)                                          &
-                            + P(j)%Mass                                                  &
-                            * ( - aux * P(i)%dwdx(:, k)                                  &
-                                + matmul(  P(i)%Viscosity*edot(:, :, i)/P(i)%Density**2  &
-                                         + P(j)%Viscosity*edot(:, :, j)/P(j)%Density**2, &
-                                         P(i)%dwdx(:, k)) )
-
-                        !!! Conservation of Energy
-                        dedt(i) = dedt(i)   &
-                            + P(j)%Mass * aux &
-                            * dot_product( P(i)%v(:)-P(j)%v(:), P(i)%dwdx(:, k) )
-
-                    end do !! k
-                else if ( present(Shear) ) then!! Solid
-                    do k = 1, P(i)%neighborNum
-                        j = P(i)%neighborList(k)
-
-                        do d = 1, Field%Dim
-                            do dd = 1, Field%Dim
-                                !!! Conservation of Momentum
-                                dvdt(d, i) = dvdt(d, i) &
-                                    + P(j)%Mass * ( P(i)%Stress(d, dd) / P(i)%Density**2   &
-                                                  + P(j)%Stress(d, dd) / P(j)%Density**2 ) &
-                                              * P(i)%dwdx(dd, k)
-                            end do
-                            !!! Conservation of Energy
-                            dedt(i) = dedt(i) &
-                                + P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
-                                              + P(j)%Pressure / P(j)%Density**2 ) &
-                                * ( P(i)%v(d)-P(j)%v(d) ) * P(i)%dwdx(d, k)
+                    do d = 1, Field%Dim
+                        do dd = 1, Field%Dim
+                            !!! Conservation of Momentum
+                            dvdt(d, i) = dvdt(d, i) &
+                                + P(j)%Mass * ( P(i)%Stress(d, dd) / P(i)%Density**2   &
+                                              + P(j)%Stress(d, dd) / P(j)%Density**2 ) &
+                                            * P(i)%dwdx(dd, k)
                         end do
+                        !!! Conservation of Energy
+                        dedt(i) = dedt(i) &
+                            + P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
+                                          + P(j)%Pressure / P(j)%Density**2 ) &
+                            * ( P(i)%v(d)-P(j)%v(d) ) * P(i)%dwdx(d, k)
+                    end do
 
-                    end do !! k
-                end if !! Fluid or Solid
+                end do !! k
             end do !! i
             !$OMP END PARALLEL DO
 

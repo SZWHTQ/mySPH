@@ -69,8 +69,8 @@ contains
                 beta  = 1
                 psi   = 0.1
                 if ( P(i)%Type > 100 ) then
-                    alpha = 2
-                    beta  = 2
+                    alpha = 1
+                    beta  = 1
                 end if
             case default
                 alpha = 1

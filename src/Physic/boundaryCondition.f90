@@ -50,7 +50,7 @@ contains
         integer, intent(in) :: ntotal
         type(Particle), intent(in) :: P(:)
         type(Update), intent(inout) :: D(:)
-        real(8) :: boundary, thickness, distance, lambda, factor, exponential
+        real(8) :: boundaryWidth, thickness, distance, lambda, factor, exponential
 
         integer i
 
@@ -58,19 +58,19 @@ contains
 
         select case(Project%nick)
         case("undex_chamber")
-            boundary = 0.45
+            boundaryWidth = 0.45
             thickness = 0.05
             exponential = 50
             do i = 1, ntotal
-                ! if ( P(i)%Boundary == 2 ) then
-                    if ( P(i)%x(1) < -boundary ) then
-                        distance = -boundary - P(i)%x(1)
-                    else if ( P(i)%x(1) > boundary ) then
-                        distance = P(i)%x(1) - boundary
-                    else if ( P(i)%x(2) < -boundary ) then
-                        distance = -boundary - P(i)%x(2)
-                    else if ( P(i)%x(2) > boundary ) then
-                        distance = P(i)%x(2) - boundary
+                ! if ( P(i)%boundary == 2 ) then
+                    if ( P(i)%x(1) < -boundaryWidth ) then
+                        distance = -boundaryWidth - P(i)%x(1)
+                    else if ( P(i)%x(1) > boundaryWidth ) then
+                        distance = P(i)%x(1) - boundaryWidth
+                    else if ( P(i)%x(2) < -boundaryWidth ) then
+                        distance = -boundaryWidth - P(i)%x(2)
+                    else if ( P(i)%x(2) > boundaryWidth ) then
+                        distance = P(i)%x(2) - boundaryWidth
                     else
                         cycle
                     end if
@@ -99,7 +99,8 @@ contains
                 ! end if
                 lambda = distance / thickness
                 factor = ( 1. - 1./(100**((0.9)**(exponential*lambda))) )
-                D(i)%Density = factor * D(i)%Density
+                D(i)%Density  = factor * D(i)%Density
+                D(i)%Velocity = factor * D(i)%Velocity
             end do
         end select
 

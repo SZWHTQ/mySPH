@@ -4,8 +4,9 @@ module cour_num_m
 
 contains
 
-    elemental function courant_num(hsml, div_v, c) result(xi)
-        real(8), intent(in)  :: hsml, div_v, c
+    elemental function courant_num(hsml, div_v, c, Type) result(xi)
+        real(8), intent(in) :: hsml, div_v, c
+        integer, intent(in) :: Type
         real(8) :: xi
         real(8) :: alpha, beta
 
@@ -37,17 +38,17 @@ contains
             case("water_impact")
                 alpha = 1
                 beta  = 1
-                ! if ( P(i)%Type > 100 ) then
-                !     alpha = 1
-                !     beta  = 1
-                ! end if
+                if ( Type > 100 ) then
+                    alpha = 1
+                    beta  = 1
+                end if
             case("undex_plate")
                 alpha = 1
                 beta  = 1
-                ! if ( P(i)%Type > 100 ) then
-                !     alpha = 2
-                !     beta  = 2
-                ! end if
+                if ( Type > 100 ) then
+                    alpha = 1
+                    beta  = 1
+                end if
             case default
                 alpha = 1
                 beta  = 1

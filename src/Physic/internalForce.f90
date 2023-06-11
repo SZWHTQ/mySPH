@@ -82,16 +82,16 @@ contains
             else if ( present(Shear) ) then !! Solid
                 do k = 1, P(i)%neighborNum !! All neighbors of each particle
                     j = P(i)%neighborList(k)
-                        dv = P(j)%v(:) - P(i)%v(:)
-                        do d = 1, Field%Dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
-                            do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
-                                vab = 0.5 * P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k)
-                                vba = 0.5 * P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k)
+                    dv = P(j)%v(:) - P(i)%v(:)
+                    do d = 1, Field%Dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
+                        do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2
+                            vab = 0.5 * P(j)%Mass/P(j)%Density * dv(d) * P(i)%dwdx(dd, k)
+                            vba = 0.5 * P(j)%Mass/P(j)%Density * dv(dd) * P(i)%dwdx(d, k)
 
-                                edot(d, dd, i) = edot(d, dd, i) + (vab + vba)
-                                rdot(d, dd, i) = rdot(d, dd, i) + (vab - vba)
-                            end do !! dd
-                        end do !! d
+                            edot(d, dd, i) = edot(d, dd, i) + (vab + vba)
+                            rdot(d, dd, i) = rdot(d, dd, i) + (vab - vba)
+                        end do !! dd
+                    end do !! d
                 end do !! k
             end if !! Fluid or Solid
 #endif
@@ -215,9 +215,9 @@ contains
                         aux = (P(i)%Pressure + P(j)%Pressure) * rhoij
 
                         !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(: ,i)                    &
-                            + P(j)%Mass                            &
-                            * ( - aux * P(i)%dwdx(:, k)            &
+                        dvdt(:, i) = dvdt(: ,i)                          &
+                            + P(j)%Mass                                  &
+                            * ( - aux * P(i)%dwdx(:, k)                  &
                                 + matmul(  P(i)%Viscosity*edot(:, :, i)  &
                                          + P(j)%Viscosity*edot(:, :, j), &
                                          P(i)%dwdx(:, k)) * rhoij )
@@ -239,6 +239,67 @@ contains
             do i = 1, ntotal  !! All particles
                 do k = 1, P(i)%neighborNum
                     j = P(i)%neighborList(k)
+                    ! if ( abs(P(i)%Type) < 100 ) then
+                    !     if ( abs(P(j)%Type) < 100 ) then
+                    !         do d = 1, Field%Dim
+                    !             do dd = 1, Field%Dim
+                    !                 !!! Conservation of Momentum
+                    !                 dvdt(d, i) = dvdt(d, i) &
+                    !                     + P(j)%Mass * ( P(i)%Stress(d, dd) / P(i)%Density**2   &
+                    !                                   + P(j)%Stress(d, dd) / P(j)%Density**2 ) &
+                    !                                 * P(i)%dwdx(dd, k)
+                    !             end do
+                    !             !!! Conservation of Energy
+                    !             dedt(i) = dedt(i) &
+                    !                 + P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
+                    !                               + P(j)%Pressure / P(j)%Density**2 ) &
+                    !                 * ( P(i)%v(d)-P(j)%v(d) ) * P(i)%dwdx(d, k)
+                    !         end do
+                    !     else
+                    !         do d = 1, Field%Dim
+                    !             !!! Conservation of Momentum
+                    !             dvdt(d, i) = dvdt(d, i) &
+                    !                 - P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
+                    !                               + P(j)%Pressure / P(j)%Density**2 ) &
+                    !                             * P(i)%dwdx(d, k)
+                    !             !!! Conservation of Energy
+                    !             dedt(i) = dedt(i) &
+                    !                 + P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
+                    !                               + P(j)%Pressure / P(j)%Density**2 ) &
+                    !                 * ( P(i)%v(d)-P(j)%v(d) ) * P(i)%dwdx(d, k)
+                    !         end do
+                    !     end if
+                    ! else
+                    !     if ( abs(P(j)%Type) > 100 ) then
+                    !         do d = 1, Field%Dim
+                    !             do dd = 1, Field%Dim
+                    !                 !!! Conservation of Momentum
+                    !                 dvdt(d, i) = dvdt(d, i) &
+                    !                     + P(j)%Mass * ( P(i)%Stress(d, dd) / P(i)%Density**2   &
+                    !                                   + P(j)%Stress(d, dd) / P(j)%Density**2 ) &
+                    !                                 * P(i)%dwdx(dd, k)
+                    !             end do
+                    !             !!! Conservation of Energy
+                    !             dedt(i) = dedt(i) &
+                    !                 + P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
+                    !                               + P(j)%Pressure / P(j)%Density**2 ) &
+                    !                 * ( P(i)%v(d)-P(j)%v(d) ) * P(i)%dwdx(d, k)
+                    !         end do
+                    !     else
+                    !         do d = 1, Field%Dim
+                    !             !!! Conservation of Momentum
+                    !             dvdt(d, i) = dvdt(d, i) &
+                    !                 - P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
+                    !                               + P(j)%Pressure / P(j)%Density**2 ) &
+                    !                             * P(i)%dwdx(d, k)
+                    !             !!! Conservation of Energy
+                    !             dedt(i) = dedt(i) &
+                    !                 + P(j)%Mass * ( P(i)%Pressure / P(i)%Density**2   &
+                    !                               + P(j)%Pressure / P(j)%Density**2 ) &
+                    !                 * ( P(i)%v(d)-P(j)%v(d) ) * P(i)%dwdx(d, k)
+                    !         end do
+                    !     end if
+                    ! end if
 
                     do d = 1, Field%Dim
                         do dd = 1, Field%Dim
@@ -283,8 +344,8 @@ contains
 
                         !!! Riemann Solution
                         p_star = ( Z_l*P(j)%Pressure + Z_r*P(i)%Pressure &
-                            +   Z_l*Z_r*(v_l - v_r) )  &
-                            / ( Z_l + Z_r )
+                               +   Z_l*Z_r*(v_l - v_r) )                 &
+                               / ( Z_l + Z_r )
                         v_star = v_ij * e_ij        &
                             + ( (P(i)%v(:)+P(j)%v(:))/2 &
                                 - ((v_l+v_r)/2)*e_ij )
@@ -292,9 +353,9 @@ contains
                         aux = 2 * p_star * rhoij
 
                         !!! Conservation of Momentum
-                        dvdt(:, i) = dvdt(: ,i)                                 &
-                            + P(j)%Mass                                         &
-                            * ( - aux * P(i)%dwdx(:, k)                         &
+                        dvdt(:, i) = dvdt(: ,i)                          &
+                            + P(j)%Mass                                  &
+                            * ( - aux * P(i)%dwdx(:, k)                  &
                                 + matmul(  P(i)%Viscosity*edot(:, :, i)  &
                                          + P(j)%Viscosity*edot(:, :, j), &
                                          P(i)%dwdx(:, k)) * rhoij )

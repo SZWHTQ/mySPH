@@ -226,7 +226,7 @@ contains
                         Shear(:, :, i) = Shear(:, :, i) * min(1._8, sqrt(((SigmaY**2)/3)/J2))
                     end select
 #endif
-                    cntemp = courant_num(P(i)%SmoothingLength, P(i)%divergenceVelocity, P(i)%SoundSpeed)
+                    cntemp = courant_num(P(i)%SmoothingLength, P(i)%divergenceVelocity, P(i)%SoundSpeed, P(i)%Type)
                     aver_courant = aver_courant + cntemp
                     if ( cntemp > max_courant ) max_courant = cntemp
                 end do

@@ -13,12 +13,12 @@ SLE  = 0
 SKF  = 1
 monitorParticle = 1#10898
 printStatistics = true
-printInterval = 20000
-saveInterval  = 10000
-maxTimeStep   = 2000000
+printInterval = 200
+saveInterval  = 100
+maxTimeStep   = 20000
 
 ## Time Step
-deltaT = 5e-7
+deltaT = 5e-5
 
 summationDensity    = false
 # averageVelocity     = true
@@ -28,7 +28,7 @@ gravity             = true
 artificialViscosity = true
 # normalizeDensity    = true
 # kernelCorrection    = true
-artificialStress    = true
+# artificialStress    = true
 
 
 [Parallel]

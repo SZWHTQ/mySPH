@@ -40,9 +40,9 @@ contains
         case (2)
             !$omp parallel do private(i, j, k, d, theta, c, s, aux, principalStress, Temp)
             do i = 1, ntotal
-                if ( P(i)%Type < 100 ) then
-                    cycle
-                end if
+                ! if ( P(i)%Type < 100 ) then
+                !     cycle
+                ! end if
                 aux = (P(i)%Stress(1,1)-P(i)%Stress(2,2))
                 if (aux == 0 ) then
                     theta = 0.5 * PI
@@ -73,9 +73,9 @@ contains
             do i = 1, ntotal
                 do k = 1, P(i)%neighborNum
                     j = P(i)%neighborList(k)
-                    if ( P(j)%Type < 100 ) then
-                        cycle
-                    end if
+                    ! if ( P(j)%Type < 100 ) then
+                    !     cycle
+                    ! end if
 
                     Temp = 0
                     call kernel(delta, 1*Temp, P(i)%SmoothingLength, wd, Temp)

@@ -8,8 +8,8 @@ set xlabel "x/m"
 set ylabel "y/m"
 set xtics  font ",12"
 set ytics  font ",12"
-set xrange [-0.022:0.60]
-set yrange [-0.022:0.376]
+set xrange [-0.016:0.598]
+set yrange [-0.016:0.376]
 set grid
 set size 1, 1
 unset key

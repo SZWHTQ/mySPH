@@ -6,18 +6,18 @@ nick = "db_gate"
 
 DIM = 2
 maxN = 20000
-kPair = 50
+kPair = 100
 SPH = 2
 NNPS = 2
 SLE = 0
 SKF = 1
 monitorParticle = 14171
-printInterval = 100
-saveInterval  = 1000
-maxTimeStep   = 400000
+printInterval = 50
+saveInterval  = 500
+maxTimeStep   = 200000
 
 ## Time Step
-deltaT = 1e-6
+deltaT = 2e-6
 
 summationDensity    = false
 # averageVelocity     = true

@@ -14,14 +14,14 @@ set grid
 set size 1, 1
 unset key
 set palette rgbformulae 22, 13, -31
-set cbrange [0:20]
+set cbrange [0:1]
 # unset colorbox
 
 do for [i=1:400:1] {
     set title sprintf('%.2fms', i)
-    plot sprintf('./output/Type_2_%d.dat', i) using 4:5:(($6**2+$7**2)**0.5) pt 7 ps 1 palette, \
-         sprintf('./output/Type_-2_%d.dat', i) using 4:5 pt 1 ps 1 lt rgb "#ffaa00", \
-         sprintf('./output/Type_102_%d.dat', i) using 4:5 pt 7 ps 1 lt rgb "#23a9f2"
+    plot sprintf('./output/Type_2_%d.dat',   i) using 4:5:(($6**2+$7**2)**0.5) pt 7 ps 1 palette, \
+         sprintf('./output/Type_-2_%d.dat',  i) using 4:5                      pt 1 ps 1 lt rgb "#ffaa00", \
+         sprintf('./output/Type_102_%d.dat', i) using 4:5                      pt 7 ps 1 lt rgb "#23a9f2"
     pause 0.02
 }
 

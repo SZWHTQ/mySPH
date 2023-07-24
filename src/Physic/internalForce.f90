@@ -55,6 +55,7 @@ contains
 #endif
                 do k = 1, P(i)%neighborNum !! All neighbors of each particle
                     j = P(i)%neighborList(k)
+                    ! if ( abs(P(j)%Type) > 100 ) cycle
                     dv = P(j)%v(:) - P(i)%v(:)
                     do d = 1, Field%Dim !! All dimensions For the First Order of Strain Rate Tensor, Loop 1
                         do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain Rate Tensor, Loop 2
@@ -82,6 +83,7 @@ contains
             else if ( present(Shear) ) then !! Solid
                 do k = 1, P(i)%neighborNum !! All neighbors of each particle
                     j = P(i)%neighborList(k)
+                    if ( abs(P(j)%Type) <= 100 ) cycle
                     dv = P(j)%v(:) - P(i)%v(:)
                     do d = 1, Field%Dim !! All dimensions For the First Order of Strain/Rotation Rate Tensor, Loop 1
                         do dd = 1, Field%Dim !! All dimensions For the Second Order of Strain/Rotation Rate Tensor, Loop 2

@@ -140,33 +140,33 @@ contains
                                 + factor_p * (pe**n1 - pe**n2) * dx(:) / r**2
                         end if
                     else if ( .not. (P(i)%Type > 100 .and. P(j)%Type > 100) ) then
-                        !!! Calculate the distance 'r' between particle i and j
-                        dx(1) = P(i)%x(1) - P(j)%x(1)
-                        dr = dx(1)*dx(1)
-                        do d = 2, Field%Dim
-                            dx(d) = P(i)%x(d) - P(j)%x(d)
-                            dr = dr + dx(d)*dx(d)
-                        end do
-                        r = sqrt(dr)
-                        eta = r / 0.75 / ((P(i)%SmoothingLength + P(j)%SmoothingLength)*0.5)
-                        chi = 1 - r / delta
-                        if ( chi < 0 .or. chi > 1 ) then
-                            chi = 0
-                        end if
+                        ! !!! Calculate the distance 'r' between particle i and j
+                        ! dx(1) = P(i)%x(1) - P(j)%x(1)
+                        ! dr = dx(1)*dx(1)
+                        ! do d = 2, Field%Dim
+                        !     dx(d) = P(i)%x(d) - P(j)%x(d)
+                        !     dr = dr + dx(d)*dx(d)
+                        ! end do
+                        ! r = sqrt(dr)
+                        ! eta = r / 0.75 / ((P(i)%SmoothingLength + P(j)%SmoothingLength)*0.5)
+                        ! chi = 1 - r / delta
+                        ! if ( chi < 0 .or. chi > 1 ) then
+                        !     chi = 0
+                        ! end if
 
-                        if ( eta <= 0 .or. eta >= 2 ) then
-                            factor_c = 0
-                        else if ( eta <= 2._8 / 3 ) then
-                            factor_c = 2._8 / 3
-                        else if ( eta <= 1 ) then
-                            factor_c = 2 * eta - 1.5 * eta*eta
-                        else if ( eta < 2 ) then
-                            factor_c = 0.5*(2-eta)**2
-                        end if
+                        ! if ( eta <= 0 .or. eta >= 2 ) then
+                        !     factor_c = 0
+                        ! else if ( eta <= 2._8 / 3 ) then
+                        !     factor_c = 2._8 / 3
+                        ! else if ( eta <= 1 ) then
+                        !     factor_c = 2 * eta - 1.5 * eta*eta
+                        ! else if ( eta < 2 ) then
+                        !     factor_c = 0.5*(2-eta)**2
+                        ! end if
 
-                        dvdt(:, i) = dvdt(:, i)               &
-                            + 0.01 * P(i)%SoundSpeed**2 * chi &
-                                * factor_c * dx(:) / r**2
+                        ! dvdt(:, i) = dvdt(:, i)               &
+                        !     + 0.01 * P(i)%SoundSpeed**2 * chi &
+                        !         * factor_c * dx(:) / r**2
                     end if
                 end if
             end do !! k

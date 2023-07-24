@@ -1141,7 +1141,7 @@ contains
 
         !!! Fluid
         domain = rectangle_t([0.05, 0.07], [0.10, 0.14], 0)
-        nx = int((domain%length(1)) / dx)
+        nx = int((domain%length(1)) / dx) + 1
         ny = int((domain%length(2)) / dx) + 1
         do i = 1, nx
             do j = 1, ny
@@ -1171,7 +1171,7 @@ contains
                 k = ntotal + (i-1) * ny + j
                 P(k)%x(:)            = domain%center        &
                                         - domain%length / 2 &
-                                        + [i-0.5, j+0.5] * dx
+                                        + [i-0.5, j-0.5] * dx
                 P(K)%v(:)            = 0
                 P(k)%Density         = 1100
                 P(k)%Mass            = P(k)%Density * dx * dx
@@ -1179,7 +1179,7 @@ contains
                 P(k)%InternalEnergy  = 0
                 P(k)%SoundSpeed      = 134.84
                 P(k)%Type            = 102
-                P(k)%SmoothingLength = dx
+                P(k)%SmoothingLength = dx! * 2
                 if ( j == ny ) then
                     P(k)%Boundary = 1
                 end if

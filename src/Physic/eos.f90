@@ -37,6 +37,8 @@ contains
             c = 50
         case ("water_impact")
             c = 10
+        case default
+            c = 50
         end select
         b = c**2 * rho0 / gamma
 

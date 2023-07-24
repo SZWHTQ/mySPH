@@ -224,6 +224,11 @@ contains
                             if ( present(skipItsSelf) ) then
                                 if ( skipItsSelf .and. (i == j) ) cycle
                             end if ! present(skipItsSelf)
+                            if ( Targets(i)%Type > 100 ) then
+                                if ( Sources(j)%Type < 0 .and. Sources(j)%Type > -100 ) then
+                                    cycle
+                                end if
+                            end if
                             dx = Targets(i)%x(1) - Sources(j)%x(1)
                             dr = dx(1) ** 2
                             do d = 2, Field%Dim

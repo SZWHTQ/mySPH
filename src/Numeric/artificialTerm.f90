@@ -25,6 +25,8 @@ contains
         end do
 
         select case(Project%nick)
+        case ("taylor_rod")
+            delta = 0.00038
         case ("waterImpact")
             delta = 0.002
         case ("can_beam")
@@ -73,9 +75,9 @@ contains
             do i = 1, ntotal
                 do k = 1, P(i)%neighborNum
                     j = P(i)%neighborList(k)
-                    ! if ( P(j)%Type < 100 ) then
-                    !     cycle
-                    ! end if
+                    if ( P(j)%Type < 100 ) then
+                        cycle
+                    end if
 
                     Temp = 0
                     call kernel(delta, 1*Temp, P(i)%SmoothingLength, wd, Temp)
